@@ -56,6 +56,9 @@ ap.add_argument("--external", default=None, help="trip parquet from another sour
 ap.add_argument("--seed", type=int, default=42)
 ap.add_argument("--tune-iter", type=int, default=20, help="RandomizedSearchCV iterations (0 = no tuning)")
 ap.add_argument("--tune-folds", type=int, default=5)
+ap.add_argument("--reuse-params", action="store_true",
+                help="skip tuning; load tuned_params from models/meta_<task>.json "
+                     "(or results_<task>/best_params.json)")
 a = ap.parse_args()
 SEED = a.seed
 rng = np.random.default_rng(SEED)
@@ -212,10 +215,43 @@ if "mean_load" in SELECTED["full"]:
     print(f"\n[full_no_load] {len(SELECTED['full_no_load'])} features (full minus mean_load)")
 else:
     print("\n[full_no_load] skipped: mean_load was not selected in the full set")
+# EPA ratings per vehicle (07_join_epa.py + 02_build_datasets.py --epa): full + EPA columns
+epa_cols = [c for c in mf.EPA_FEATURES if c in df and df[c].notna().mean() > 0.5]
+if a.task == "trip" and epa_cols:
+    SELECTED["full_epa"] = SELECTED["full"] + [c for c in epa_cols if c not in SELECTED["full"]]
+    print(f"[full_epa] {len(SELECTED['full_epa'])} features (full + {epa_cols}), "
+          f"EPA coverage {df[epa_cols[0]].notna().mean():.1%} of trips")
+else:
+    print("[full_epa] skipped: no EPA columns in the data (run 02_build_datasets.py --epa ...)")
+
+
+def load_params():
+    """Tuned params from an earlier run; feature sets without saved params (e.g. full_epa)
+    reuse the full set's params."""
+    for p, key in [(OUT / f"meta_{a.task}.json", "tuned_params"), (REP / "best_params.json", None)]:
+        if p.exists():
+            d = json.loads(p.read_text())
+            d = d.get(key) if key else d
+            if d:
+                print(f"reusing tuned params from {p}")
+                break
+    else:
+        raise SystemExit("--reuse-params: no tuned params found; run once without it")
+    out = {}
+    for fs in SELECTED:
+        src = fs if fs in d else ("full" if fs.startswith("full") and "full" in d else None)
+        out[fs] = d.get(src, {}) if src else {}
+        print(f"  {fs}: params from {src or 'model defaults'}")
+    return out
+
 
 # ---------------- 2b. light hyper-parameter tuning (training vehicles only) ----------------
-print("\n=== Tuning (RandomizedSearchCV, GroupKFold) ===")
-PARAMS = {fs: tune(train, cols, fs) for fs, cols in SELECTED.items()}
+if a.reuse_params:
+    print("\n=== Tuning skipped (--reuse-params) ===")
+    PARAMS = load_params()
+else:
+    print("\n=== Tuning (RandomizedSearchCV, GroupKFold) ===")
+    PARAMS = {fs: tune(train, cols, fs) for fs, cols in SELECTED.items()}
 (REP / "best_params.json").write_text(json.dumps(PARAMS, indent=2))
 print(f"best params saved -> {REP / 'best_params.json'}")
 
@@ -274,10 +310,11 @@ for name in ["LightGBM", "RandomForest", "Ridge"]:
     b = cv[(cv.model == name) & (cv.feature_set == "behaviour_only")].sort_values("fold")["rmse"].to_numpy()
     f = cv[(cv.model == name) & (cv.feature_set == "full")].sort_values("fold")["rmse"].to_numpy()
     lines.append(f"{name}: behaviour_only vs full Wilcoxon p={stats.wilcoxon(b, f).pvalue:.5f}")
-    if "full_no_load" in SELECTED:
-        n = cv[(cv.model == name) & (cv.feature_set == "full_no_load")].sort_values("fold")["rmse"].to_numpy()
-        lines.append(f"{name}: full_no_load vs full mean RMSE diff={np.mean(n - f):+.4f} "
-                     f"Wilcoxon p={stats.wilcoxon(n, f).pvalue:.5f}")
+    for other in ["full_no_load", "full_epa"]:
+        if other in SELECTED:
+            n = cv[(cv.model == name) & (cv.feature_set == other)].sort_values("fold")["rmse"].to_numpy()
+            lines.append(f"{name}: {other} vs full mean RMSE diff={np.mean(n - f):+.4f} "
+                         f"Wilcoxon p={stats.wilcoxon(n, f).pvalue:.5f}")
 print("\n=== Significance tests (per-fold RMSE) ===\n" + "\n".join(lines))
 (REP / "significance.txt").write_text("\n".join(lines))
 
