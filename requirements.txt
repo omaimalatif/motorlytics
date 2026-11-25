@@ -1,0 +1,10 @@
+pandas>=2.1
+numpy
+scikit-learn>=1.4
+lightgbm
+scipy
+matplotlib
+pyarrow
+openpyxl
+joblib
+requests

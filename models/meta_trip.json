@@ -1,0 +1,56 @@
+{
+  "task": "trip",
+  "target": "l_per_100km",
+  "models": {
+    "behaviour_only/Ridge": {
+      "path": "models\\trip_behaviour_only_Ridge.joblib",
+      "cv_rmse": 1.6239028048544006,
+      "rmse": 1.8227474914757302,
+      "mae": 1.3937624232591102,
+      "r2": 0.6103520061947951,
+      "mape": 14.232745598830856
+    },
+    "behaviour_only/RandomForest": {
+      "path": "models\\trip_behaviour_only_RandomForest.joblib",
+      "cv_rmse": 1.5587782967825847,
+      "rmse": 1.7204359509238154,
+      "mae": 1.3389837662068633,
+      "r2": 0.6528665661165178,
+      "mape": 13.406386062680037
+    },
+    "behaviour_only/LightGBM": {
+      "path": "models\\trip_behaviour_only_LightGBM.joblib",
+      "cv_rmse": 1.4968705557240158,
+      "rmse": 1.6788950215018636,
+      "mae": 1.3182803342643623,
+      "r2": 0.6694276625650308,
+      "mape": 13.176674048046536
+    },
+    "full/Ridge": {
+      "path": "models\\trip_full_Ridge.joblib",
+      "cv_rmse": 1.233698379109638,
+      "rmse": 1.309184923260972,
+      "mae": 0.9292773475640288,
+      "r2": 0.7989882629193472,
+      "mape": 9.100965039600082
+    },
+    "full/RandomForest": {
+      "path": "models\\trip_full_RandomForest.joblib",
+      "cv_rmse": 1.309151721397417,
+      "rmse": 1.4824363145195394,
+      "mae": 1.0737433996197399,
+      "r2": 0.7422661172926597,
+      "mape": 10.274135291627282
+    },
+    "full/LightGBM": {
+      "path": "models\\trip_full_LightGBM.joblib",
+      "cv_rmse": 1.1449250551686494,
+      "rmse": 1.206188268488912,
+      "mae": 0.8692975605098593,
+      "r2": 0.8293722647501311,
+      "mape": 8.289976751744492
+    }
+  },
+  "best_behaviour_only": "behaviour_only/LightGBM",
+  "best_full": "full/LightGBM"
+}
