@@ -478,6 +478,63 @@ def recommend(bundle: dict, trip: pd.Series, eco_profile: dict, petrol_pkr_per_l
     return res
 
 
+# ------------------------------------------------------------------------------
+# 7. Per-car calibration store (models/calibration.json)
+# ------------------------------------------------------------------------------
+# External tests showed most of the error on unseen cars is a per-car offset, so each car keeps a
+# factor k = median(measured / predicted) per model tier, from its most recent calibration entries:
+#   "maf"    one trip with MAF:   ratio = measured L/100 km / predicted L/100 km
+#   "fillup" a fill-up over trips: ratio = litres filled / sum(predicted litres over those trips)
+CALIB_PATH = MODELS / "calibration.json"
+CALIB_MAX_TRIPS = 10
+
+
+def load_calibration(path=None) -> dict:
+    p = Path(path or CALIB_PATH)
+    if p.exists():
+        import json
+        return json.loads(p.read_text())
+    return {"cars": {}}
+
+
+def save_calibration(store: dict, path=None) -> None:
+    import json
+    p = Path(path or CALIB_PATH)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(store, indent=2, default=str))
+
+
+def add_calibration(store: dict, car_id: str, ratios: dict, n_trips: int, kind: str,
+                    when: str, detail: dict = None) -> None:
+    """Append one calibration entry (ratios per tier), then keep only the entries covering the
+    CALIB_MAX_TRIPS most recent trips (the newest entry is always kept)."""
+    car = store.setdefault("cars", {}).setdefault(str(car_id), {"entries": []})
+    car["entries"].append({"kind": kind, "when": str(when), "trips": int(n_trips),
+                           "ratios": {k: float(v) for k, v in ratios.items() if v and np.isfinite(v)},
+                           **(detail or {})})
+    car["entries"].sort(key=lambda e: e["when"])
+    kept, total = [], 0
+    for e in reversed(car["entries"]):
+        if kept and total + e["trips"] > CALIB_MAX_TRIPS:
+            break
+        kept.append(e)
+        total += e["trips"]
+    car["entries"] = list(reversed(kept))
+    car["updated"] = pd.Timestamp.now().isoformat(timespec="seconds")
+
+
+def car_k(store: dict, car_id, tier: str) -> dict:
+    """{'k', 'n_trips', 'n_entries', 'last'} for a car and tier, or {} if not calibrated for that tier."""
+    car = store.get("cars", {}).get(str(car_id)) if car_id is not None else None
+    if not car:
+        return {}
+    es = [e for e in car["entries"] if tier in e["ratios"]]
+    if not es:
+        return {}
+    return {"k": float(np.median([e["ratios"][tier] for e in es])), "n_trips": sum(e["trips"] for e in es),
+            "n_entries": len(es), "last": es[-1]["when"]}
+
+
 def predict_style(bundle: dict, trips_df: pd.DataFrame) -> list:
     """Assign eco / normal / aggressive with the saved k-means model."""
     X = pd.DataFrame({c: trips_df[c] if c in trips_df else np.nan for c in bundle["features"]}).astype(float)
