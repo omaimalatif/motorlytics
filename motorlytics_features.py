@@ -274,7 +274,12 @@ def parse_static(static: pd.DataFrame) -> pd.DataFrame:
     out = pd.DataFrame({"vehid": s["VehId"]})
     out["veh_type"] = s["Vehicle Type"].astype(str).str.strip()
     out["veh_class"] = s["Vehicle Class"].astype(str).str.strip().replace({"NO DATA": "unknown"})
-    out["cylinders"] = pd.to_numeric(eng.str.extract(r"^(\d+)")[0], errors="coerce")
+    # VED mostly writes "4-FI 2.0L", but some rows use "I4 2.4L", "V6 3.5L", "H-4 2.5L",
+    # "2.3L Gasoline I4" or "3.0L 6cyl", so try those forms too (never a leading "2.3L")
+    cyl = eng.str.extract(r"^\s*(\d{1,2})\s*-")[0]
+    cyl = cyl.fillna(eng.str.extract(r"(?i)\b[IVHW]\s*-?\s*(\d{1,2})\b")[0])
+    cyl = cyl.fillna(eng.str.extract(r"(?i)(\d{1,2})\s*-?\s*cyl")[0])
+    out["cylinders"] = pd.to_numeric(cyl, errors="coerce")
     out["disp_L"] = pd.to_numeric(eng.str.extract(r"(\d+(?:\.\d+)?)\s*L")[0], errors="coerce")
     out["boost"] = eng.str.contains(r"T/C|S/C", regex=True).astype(float)
     out["is_diesel"] = eng.str.contains("DIESEL", case=False)
@@ -307,6 +312,81 @@ def join_weather(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFrame:
     trips = trips.merge(weather, on="hour_key", how="left")
     trips["cold"] = (trips["temp_c"] < 5).astype(float).where(trips["temp_c"].notna())
     return trips.drop(columns="hour_key")
+
+
+# ------------------------------------------------------------------------------
+# 5b. EPA fuel-economy ratings (Data/database.csv), matched on engine specs
+# ------------------------------------------------------------------------------
+MPG_TO_L100 = 235.215                      # L/100 km = 235.215 / US mpg
+EPA_FEATURES = ["epa_city_l100", "epa_hwy_l100", "epa_comb_l100"]
+EPA_COLS = ["Year", "Make", "Model", "Class", "Engine Cylinders", "Engine Displacement",
+            "Turbocharger", "Supercharger", "Fuel Type 1", "Fuel Type 2", "Alternative Fuel/Technology",
+            "Electric Motor", "City MPG (FT1)", "Highway MPG (FT1)", "Combined MPG (FT1)"]
+
+
+def _flag(s: pd.Series) -> pd.Series:
+    """EPA turbo/supercharger columns: a marker such as 'T' / 'S' means yes, empty means no."""
+    t = s.astype(str).str.strip().str.lower()
+    return s.notna() & ~t.isin(["", "nan", "0", "false", "n", "no"])
+
+
+def epa_coarse_class(cls: pd.Series) -> pd.Series:
+    """EPA size class -> Car / SUV / Truck-Van (VED's static file uses Car / SUV)."""
+    c = cls.astype(str).str.lower()
+    out = pd.Series("Car", index=cls.index, dtype=object)
+    out[c.str.contains("sport utility")] = "SUV"
+    out[c.str.contains("pickup|van|special purpose")] = "Truck-Van"
+    return out.where(cls.notna(), None)
+
+
+def load_epa(path, years=(2005, 2018)) -> pd.DataFrame:
+    """Gasoline, non-hybrid, non-electric EPA rows within the model-year window, with L/100 km."""
+    e = pd.read_csv(path, usecols=lambda c: c in EPA_COLS, low_memory=False)
+    e = e[e["Year"].between(*years)]
+    gas = e["Fuel Type 1"].astype(str).str.contains("Gasoline", case=False)
+    alt = e.get("Alternative Fuel/Technology", pd.Series(np.nan, index=e.index)).astype(str)
+    hybrid = alt.str.contains("hybrid|electric|plug", case=False) | e.get(
+        "Electric Motor", pd.Series(np.nan, index=e.index)).notna()
+    e = e[gas & ~hybrid].copy()
+    e["disp_L"] = pd.to_numeric(e["Engine Displacement"], errors="coerce").round(1)
+    e["cylinders"] = pd.to_numeric(e["Engine Cylinders"], errors="coerce")
+    e["boost"] = (_flag(e["Turbocharger"]) | _flag(e["Supercharger"])).astype(float)
+    e["epa_class"] = epa_coarse_class(e["Class"])
+    for src, dst in [("City MPG (FT1)", "epa_city_l100"), ("Highway MPG (FT1)", "epa_hwy_l100"),
+                     ("Combined MPG (FT1)", "epa_comb_l100")]:
+        mpg = pd.to_numeric(e[src], errors="coerce")
+        e[dst] = MPG_TO_L100 / mpg.where(mpg > 0)
+    return e.dropna(subset=["disp_L", "cylinders", "epa_comb_l100"]).reset_index(drop=True)
+
+
+def match_epa(epa: pd.DataFrame, disp_L, cylinders, boost, veh_class=None, min_n: int = 3) -> dict:
+    """Median EPA ratings for one vehicle, trying strict to loose matches:
+      1. same displacement (0.1 L), cylinders, turbo/supercharged, and class (if known)
+      2. same without class
+      3. displacement within +-0.1 L, same cylinders and boost
+    A level is used once it has at least `min_n` EPA rows (otherwise the next level is tried;
+    the loosest level is accepted with >= 1 row). Returns {} when nothing matches."""
+    if pd.isna(disp_L) or pd.isna(cylinders):
+        return {}
+    d, cyl, b = round(float(disp_L), 1), float(cylinders), float(boost or 0)
+    base = (epa["cylinders"] == cyl) & (epa["boost"] == b)
+    known_cls = veh_class if veh_class in ("Car", "SUV", "Truck-Van") else None
+    levels = []
+    if known_cls:
+        levels.append((1, base & (epa["disp_L"] == d) & (epa["epa_class"] == known_cls)))
+    levels.append((2, base & (epa["disp_L"] == d)))
+    levels.append((3, base & (epa["disp_L"] - d).abs().le(0.1 + 1e-9)))
+    for i, (lvl, m) in enumerate(levels):
+        c = epa[m]
+        if len(c) >= min_n or (i == len(levels) - 1 and len(c) >= 1):
+            q = c["epa_comb_l100"].quantile([0.25, 0.75])
+            return {"epa_city_l100": float(c["epa_city_l100"].median()),
+                    "epa_hwy_l100": float(c["epa_hwy_l100"].median()),
+                    "epa_comb_l100": float(c["epa_comb_l100"].median()),
+                    "epa_comb_l100_iqr": float(q.iloc[1] - q.iloc[0]),
+                    "epa_class": c["epa_class"].mode().iloc[0] if c["epa_class"].notna().any() else None,
+                    "epa_n_candidates": int(len(c)), "epa_match_level": lvl}
+    return {}
 
 
 # ------------------------------------------------------------------------------
