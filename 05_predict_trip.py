@@ -88,6 +88,7 @@ eco_profiles = style["eco_profile"]
 results = []
 for _, t in trips.iterrows():
     r = mf.recommend(tip_bundle, t, eco_profiles, a.petrol, eco_p75=style.get("eco_p75"))
+    tip_pred, tip_eco = r["pred_l_per_100km"], r["eco_l_per_100km"]   # both from the behaviour model
     if tip_bundle is not bundle:                  # prediction from the chosen tier, tips from behaviour
         r["pred_l_per_100km"] = round(float(bundle["model"].predict(
             mf.to_matrix(t.to_frame().T, bundle["features"]))[0]), 2)
@@ -98,9 +99,14 @@ for _, t in trips.iterrows():
     measured = float(t["l_per_100km"]) if "l_per_100km" in t and pd.notna(t["l_per_100km"]) else None
     if measured is not None:
         r["measured_l_per_100km_from_maf"] = round(measured, 2)
+        # scale the eco estimate to the measured figure: eco_measured = measured x (eco_model / pred_model)
+        eco_measured = measured * (tip_eco / tip_pred) if tip_pred > 0 else measured
+        r["eco_l_per_100km_model"] = tip_eco
+        r["eco_l_per_100km"] = round(eco_measured, 2)
         if a.petrol:                              # the measured figure is the main one, so cost uses it
             r["trip_cost_pkr"] = round(measured / 100 * t["dist_km"] * a.petrol, 0)
             r["cost_per_100km_pkr"] = round(measured * a.petrol, 0)
+            r["eco_saving_pkr_per_100km"] = round((measured - eco_measured) * a.petrol, 0)
     results.append(r)
     print(f"\nTrip {r['trip']}: {r['dist_km']} km, {r['duration_min']} min, avg {r['avg_speed']} km/h, "
           f"idle {r['idle_pct']}%  road={r['road_type']}  style={r['style']}")
@@ -109,7 +115,8 @@ for _, t in trips.iterrows():
               f"model ({fs}) predicted {r['pred_l_per_100km']}")
     else:
         print(f"  predicted {r['pred_l_per_100km']} L/100 km (model: {fs})")
-    print(f"  eco-driving estimate {r['eco_l_per_100km']} L/100 km (behaviour model) "
+    print(f"  eco-driving estimate {r['eco_l_per_100km']} L/100 km "
+          f"({'scaled to measured' if measured is not None else 'behaviour model'}) "
           f"-> up to {r['possible_saving_pct']}% saving")
     if "trip_cost_pkr" in r:
         print(f"  trip cost about PKR {r['trip_cost_pkr']:.0f}; eco driving saves about "
