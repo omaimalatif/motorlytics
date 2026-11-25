@@ -1,5 +1,5 @@
 """
-14 Matplotlib figures for the report, saved to plots/, plus plots/plot_notes.txt
+Matplotlib figures for the report (16, plus 2 real-world vs EPA figures when the trips have EPA ratings), saved to plots/, plus plots/plot_notes.txt
 with the numbers behind each figure so you can write the interpretations.
 
     python 06_make_plots.py          (run after 02, 03 --task trip, 04; 03 --task row optional)
@@ -229,6 +229,71 @@ if rp.exists():
     save(fig, "row_level_fuel_rate", f"{len(R):,} samples; fuel rate at accel>2 m/s² = "
          f"{R.loc[R.accel > 2, 'fuel_Lph'].mean():.2f} L/h vs cruising (|a|<0.3) = "
          f"{R.loc[R.accel.abs() < 0.3, 'fuel_Lph'].mean():.2f} L/h")
+
+# 17-18 real-world vs EPA ratings (needs 07_join_epa.py + 02_build_datasets.py --epa)
+if "epa_comb_l100" in T and T["epa_comb_l100"].notna().any():
+    E = T[T["epa_comb_l100"].notna()].copy()
+    E["road_type"] = mf.road_type(E["avg_speed"]).to_numpy()
+    # gap % = (measured - EPA) / EPA; road-type version compares city trips with the EPA city
+    # rating, highway trips with the EPA highway rating, mixed trips with EPA combined
+    E["gap_comb"] = (E["l_per_100km"] / E["epa_comb_l100"] - 1) * 100
+    ref = np.select([E["road_type"] == "city", E["road_type"] == "highway"],
+                    [E["epa_city_l100"], E["epa_hwy_l100"]], E["epa_comb_l100"])
+    E["gap_road"] = (E["l_per_100km"] / ref - 1) * 100
+
+    # 17 vehicle-level scatter: median measured vs EPA combined
+    V = E.groupby("vehid").agg(measured=("l_per_100km", "median"), epa=("epa_comb_l100", "first"),
+                               trips=("l_per_100km", "size"))
+    V = V[V["trips"] >= 5]
+    fig, ax = plt.subplots(figsize=(6, 5.5))
+    ax.scatter(V["epa"], V["measured"], s=np.clip(V["trips"], 10, 120), alpha=0.55, color=C[0],
+               edgecolor="white", linewidth=0.5)
+    lim = [min(V["epa"].min(), V["measured"].min()) * 0.9, max(V["epa"].max(), V["measured"].max()) * 1.05]
+    ax.plot(lim, lim, color=INK2, lw=1.2, ls="--")
+    ax.text(lim[1], lim[1], " y = x", color=INK2, va="center")
+    ax.set(xlim=lim, ylim=lim, title="Real-world consumption vs EPA rating, per vehicle",
+           xlabel="EPA combined rating (L/100 km, median of matching engines)",
+           ylabel="Measured median (L/100 km)")
+    vg = (V["measured"] / V["epa"] - 1) * 100
+    r = V["measured"].corr(V["epa"])
+    save(fig, "real_world_vs_epa", f"{len(V)} vehicles with >=5 trips (point size = trips); "
+         f"Pearson r={r:.2f}; vehicle median gap={vg.median():+.1f}% (IQR {vg.quantile(.25):+.1f} to "
+         f"{vg.quantile(.75):+.1f}); {(vg > 0).mean():.0%} of vehicles above their EPA rating. "
+         "EPA values are the median of all EPA engines with the same displacement/cylinders/boost, "
+         "so they rate the engine type, not the exact car.")
+
+    # 18 median gap by road type and by driving style
+    road = E.groupby("road_type")["gap_road"].agg(["median", "size"]).reindex(mf.ROAD_TYPES)
+    fig, axs = plt.subplots(1, 2, figsize=(10, 4), sharey=True)
+    axs[0].bar(road.index, road["median"], color=C[:3], width=0.55)
+    for i, (v, k) in enumerate(zip(road["median"], road["size"])):
+        axs[0].text(i, v, f"{v:+.0f}%\nn={k}", ha="center", va="bottom" if v >= 0 else "top", color=INK)
+    axs[0].axhline(0, color=INK2, lw=1)
+    axs[0].set(title="Gap vs EPA by road type", ylabel="Median gap, measured vs EPA (%)",
+               xlabel="city vs EPA city, mixed vs combined, highway vs EPA highway")
+    note_style = ""
+    sp = mf.PROC / "trip_styles.parquet"
+    if sp.exists():
+        E = E.merge(pd.read_parquet(sp)[["trip_key", "style"]], on="trip_key", how="left")
+        order = [s for s in ["eco", "normal", "aggressive"] if s in set(E["style"].dropna())]
+        sty = E.groupby("style")["gap_comb"].agg(["median", "size"]).reindex(order)
+        axs[1].bar(sty.index, sty["median"], color=[C[2], C[0], C[1]][:len(order)], width=0.55)
+        for i, (v, k) in enumerate(zip(sty["median"], sty["size"])):
+            axs[1].text(i, v, f"{v:+.0f}%\nn={k}", ha="center", va="bottom" if v >= 0 else "top", color=INK)
+        axs[1].axhline(0, color=INK2, lw=1)
+        axs[1].set(title="Gap vs EPA combined by style", xlabel="Driving style (K-Means)")
+        note_style = "; by style (vs EPA combined): " + ", ".join(
+            f"{s} {v:+.1f}% (n={k})" for s, v, k in zip(sty.index, sty["median"], sty["size"]))
+    lo, hi = axs[0].get_ylim()                       # room for the value labels above/below bars
+    pad = (hi - lo) * 0.25
+    axs[0].set_ylim(min(lo, 0) - pad, max(hi, 0) + pad)
+    ov = E["gap_comb"]
+    save(fig, "epa_gap_by_road_and_style",
+         f"trip-level gap % = (measured - EPA) / EPA x 100, {len(E):,} trips with an EPA match. "
+         f"Overall median vs EPA combined {ov.median():+.1f}% (IQR {ov.quantile(.25):+.1f} to "
+         f"{ov.quantile(.75):+.1f}); by road type: " + ", ".join(
+             f"{r_} {v:+.1f}% (n={k})" for r_, v, k in zip(road.index, road["median"], road["size"]))
+         + note_style)
 
 (OUT / "plot_notes.txt").write_text("\n".join(notes))
 print(f"\n{n[0]} plots in {OUT}/, numbers for interpretation in {OUT / 'plot_notes.txt'}")
