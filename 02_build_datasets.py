@@ -25,6 +25,8 @@ ap.add_argument("--row-frac", type=float, default=0.03, help="share of rows kept
 ap.add_argument("--rows-per-vehicle", type=int, default=4000)
 ap.add_argument("--weather", default=None, help="UTC weather CSV (default: weather_annarbor_utc.csv, else the API file)")
 ap.add_argument("--eved", default=None, help="optional eVED trip file with grade/elevation per trip")
+ap.add_argument("--epa", default=None,
+                help="optional EPA lookup per VehId from 07_join_epa.py (e.g. Data/processed/epa_lookup.csv)")
 ap.add_argument("--seed", type=int, default=42)
 a = ap.parse_args()
 rng = np.random.default_rng(a.seed)
@@ -81,6 +83,13 @@ print(f"\ntrip filter kept {len(trips):,} of {n0:,} trips")
 # ---------------- joins ----------------
 spec_cols = ["vehid", "veh_class", "disp_L", "cylinders", "boost", "weight"]
 trips = trips.merge(static[spec_cols], on="vehid", how="left")
+if a.epa:                                                   # optional EPA ratings per vehicle
+    epa_cols = mf.EPA_FEATURES + ["epa_comb_l100_iqr", "epa_class", "epa_n_candidates", "epa_match_level"]
+    lk = pd.read_csv(a.epa)
+    lk = lk[["vehid"] + [c for c in epa_cols if c in lk]]
+    trips = trips.merge(lk, on="vehid", how="left")
+    print(f"EPA ratings matched for {trips['epa_comb_l100'].notna().mean():.1%} of trips "
+          f"({trips.loc[trips['epa_comb_l100'].notna(), 'vehid'].nunique()} vehicles) from {a.epa}")
 if weather is not None:
     trips = mf.join_weather(trips, weather)
     print(f"weather matched for {trips['temp_c'].notna().mean():.1%} of trips")
@@ -103,7 +112,7 @@ rows = rows[rows["trip_key"].isin(trips["trip_key"])]
 rows = rows.sample(frac=1, random_state=a.seed)                 # shuffle, then cap per vehicle
 rows = rows[rows.groupby("vehid").cumcount() < a.rows_per_vehicle]
 ctx = ["trip_key", "veh_class", "disp_L", "cylinders", "boost", "weight", "temp_c", "humidity",
-       "precip_mm", "wind_kmh"] + [c for c in trips if c.startswith("cls_")]
+       "precip_mm", "wind_kmh"] + [c for c in trips if c.startswith("cls_")] + mf.EPA_FEATURES
 rows = rows.merge(trips[[c for c in ctx if c in trips]], on="trip_key", how="left")
 cap = rows["fuel_Lph"].quantile(0.999)
 rows = rows[rows["fuel_Lph"].between(0, cap)]
