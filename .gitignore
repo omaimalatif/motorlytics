@@ -1,7 +1,19 @@
 .venv/
-Data/
 Data.zip
 models/*.joblib
-plots/
+models/calibration.json
 __pycache__/
 *.parquet
+
+# data stays local, except selected result files for teammates
+Data/*
+!Data/processed/
+Data/processed/*
+!Data/processed/results_trip/
+Data/processed/results_trip/*
+!Data/processed/results_trip/generalisation.txt
+!Data/processed/results_trip/external_exp1.txt
+
+# figures stay local, except the calibration result
+plots/*
+!plots/generalisation_calibration_mape.png
