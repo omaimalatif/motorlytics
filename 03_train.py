@@ -149,8 +149,8 @@ def tune(data, cols, tag):
         rs.fit(X, y, groups=data["vehid"])
         bp = {k: (v.item() if hasattr(v, "item") else v) for k, v in rs.best_params_.items()}
         best_params[name] = bp
-        print(f"  [{tag}] {name}: tuned CV RMSE={-rs.best_score_:.3f}  "
-              f"(default params: see CV below)  {bp}  ({time.perf_counter() - t:.0f}s)")
+        print(f"  [{tag}] {name}: best {a.tune_folds}-fold CV RMSE={-rs.best_score_:.3f}  "
+              f"{bp}  ({time.perf_counter() - t:.0f}s)")
         pd.DataFrame(rs.cv_results_).to_csv(REP / f"tuning_{tag}_{name}.csv", index=False)
     return best_params
 
@@ -314,7 +314,7 @@ if "disp_L" in train:
     test_rows.append({"feature_set": "baseline", "model": "median per disp_L", **metrics(y_te, p),
                       "fit_s": time.perf_counter() - t, "infer_ms_per_1k": np.nan})
     print(f"baseline median per disp_L: {n_unseen} test trips with an unseen disp_L -> global median")
-meta["best_params"] = PARAMS
+meta["tuned_params"] = PARAMS
 test_res = pd.DataFrame(test_rows).round(3)
 test_res.to_csv(REP / "test_metrics.csv", index=False)
 print("\n=== Held-out TEST vehicles ===")

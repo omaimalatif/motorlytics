@@ -114,7 +114,10 @@
       "mape": 10.373481234506063
     }
   },
-  "best_params": {
+  "best_behaviour_only": "behaviour_only/LightGBM",
+  "best_full": "full/LightGBM",
+  "best_full_no_load": "full_no_load/LightGBM",
+  "tuned_params": {
     "behaviour_only": {
       "LightGBM": {
         "colsample_bytree": 0.7200762468698007,
@@ -157,8 +160,5 @@
         "randomforestregressor__max_features": 0.5
       }
     }
-  },
-  "best_behaviour_only": "behaviour_only/LightGBM",
-  "best_full": "full/LightGBM",
-  "best_full_no_load": "full_no_load/LightGBM"
+  }
 }
