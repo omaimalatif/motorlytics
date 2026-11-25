@@ -394,14 +394,33 @@ print("\n" + "\n".join(ea_lines))
 
 # ---------------- 6. optional external validation (unseen data source) ----------------
 if a.external and a.task == "trip":
-    ext = pd.read_parquet(a.external).dropna(subset=[target])
-    lines = [f"External validation on {a.external}: {len(ext)} trips"]
+    ext = pd.read_parquet(a.external).dropna(subset=[target]).reset_index(drop=True)
+    lines = [f"External validation on {a.external}: {len(ext)} trips, {ext['vehid'].nunique()} vehicles"]
     for fs in SELECTED:
         b = joblib.load(OUT / f"{a.task}_{fs}_{meta['best_' + fs].split('/')[1]}.joblib")
         p = b["model"].predict(mf.to_matrix(ext, b["features"]))
+        ext[f"pred_{fs}"] = p
         m = metrics(ext[target].to_numpy(), p)
         bias = float(np.mean(p - ext[target]))
-        lines.append(f"  {fs}: {json.dumps({k: round(v, 3) for k, v in m.items()})}  mean bias={bias:+.2f}")
+        missing = [c for c in b["features"] if c not in ext or ext[c].notna().mean() < 0.5]
+        lines.append(f"  {fs}: n_trips={len(ext)} n_vehicles={ext['vehid'].nunique()} "
+                     f"{json.dumps({k: round(v, 3) for k, v in m.items()})}  mean bias={bias:+.2f}  "
+                     f"missing features: {missing or 'none'}")
+    # per-vehicle view for the behaviour model (the app's default tier for non-VED logs)
+    if "pred_behaviour_only" in ext:
+        lab = "veh_label" if "veh_label" in ext else "vehid"
+        ext["err"] = ext["pred_behaviour_only"] - ext[target]
+        pv = ext.groupby(lab).agg(disp_L=("disp_L", "first"), trips=(target, "size"),
+                                  measured_median=(target, "median"),
+                                  predicted_median=("pred_behaviour_only", "median"),
+                                  mae=("err", lambda e: e.abs().mean()), bias=("err", "mean"))
+        pv["bias_pct"] = pv["bias"] / pv["measured_median"] * 100
+        pv = pv.sort_values("mae")
+        pv.round(3).to_csv(REP / "external_per_vehicle_behaviour_only.csv")
+        within = (pv["bias_pct"].abs() <= 15).mean()
+        lines.append(f"\nper vehicle, behaviour_only ({len(pv)} vehicles; |bias| <= 15% for {within:.0%}; "
+                     f"median per-vehicle MAE {pv['mae'].median():.2f}):\n{pv.round(2).to_string()}")
+    ext.to_parquet(REP / "external_predictions.parquet", index=False)
     (REP / "external_validation.txt").write_text("\n".join(lines))
     print("\n" + "\n".join(lines))
 
