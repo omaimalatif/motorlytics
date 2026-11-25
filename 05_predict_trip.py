@@ -29,8 +29,9 @@ ap.add_argument("--weight", type=float, default=np.nan)
 ap.add_argument("--cls", default="Car", help="vehicle class as in VED static data, e.g. Car, SUV")
 ap.add_argument("--temp", type=float, default=np.nan, help="air temperature, deg C")
 ap.add_argument("--petrol", type=float, default=None, help="petrol price, PKR per litre")
-ap.add_argument("--feature-set", choices=["full", "behaviour_only"], default=None,
-                help="default: full if the log has RPM, else behaviour_only")
+ap.add_argument("--feature-set", choices=["full", "full_no_load", "behaviour_only"], default=None,
+                help="default: full if the log has engine load, full_no_load if it has RPM but no load, "
+                     "else behaviour_only")
 ap.add_argument("--out", default="prediction.json")
 a = ap.parse_args()
 
@@ -51,8 +52,25 @@ trips["veh_class"] = a.cls
 trips[f"cls_{a.cls}"] = 1.0
 
 meta = json.loads((mf.MODELS / "meta_trip.json").read_text())
-fs = a.feature_set or ("full" if "rpm" in df and df["rpm"].notna().mean() > 0.5 else "behaviour_only")
+
+
+def has(col):
+    return col in df and df[col].notna().mean() > 0.5
+
+
+# model tier: full (RPM + load) > full_no_load (RPM only) > behaviour_only (speed only)
+if a.feature_set:
+    fs, why = a.feature_set, "chosen with --feature-set"
+elif has("rpm") and has("load"):
+    fs, why = "full", "log has RPM and engine load"
+elif has("rpm"):
+    fs, why = "full_no_load", "log has RPM but no engine load"
+else:
+    fs, why = "behaviour_only", "log has no RPM"
+if f"best_{fs}" not in meta and fs == "full_no_load":    # older meta_trip.json without this tier
+    fs, why = "full", why + "; no full_no_load model saved, using full (load is imputed)"
 bundle = joblib.load(meta["models"][meta[f"best_{fs}"]]["path"])
+print(f"\nmodel tier: {fs} ({why}) -> {meta[f'best_{fs}']}")
 style = joblib.load(mf.MODELS / "driving_style.joblib")
 trips["style"] = mf.predict_style(style, trips)
 # eco profile per road type (city / mixed / highway); recommend() picks the one matching each trip
