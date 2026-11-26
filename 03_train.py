@@ -123,6 +123,7 @@ print(f"train: {len(train):,} rows / {train['vehid'].nunique()} vehicles | "
       f"test: {len(test):,} rows / {test['vehid'].nunique()} vehicles")
 
 
+CLIP_Q = 1.0                                               # clip inputs to the 1st-99th training percentile
 COURSE = ["DecisionTree", "MLP", "kNN", "LWR"]            # course outline
 REFERENCE = ["Ridge", "RandomForest", "LightGBM"]          # beyond the syllabus, comparison only
 GROUP = {**{m: "course" for m in COURSE}, **{m: "reference" for m in REFERENCE}}
@@ -154,8 +155,11 @@ def make_models(params=None):
                                   random_state=SEED, verbose=-1),
     }
     for name, p in params.items():
-        models[name].set_params(**p)
-    return models
+        if name in models:
+            models[name].set_params(**p)
+    # every model clips its inputs to the training 1st-99th percentile before predicting (fair comparison;
+    # limits extrapolation on other countries' cars / loggers). Params above apply to the inner model.
+    return {name: mf.ClipInputs(m, q=CLIP_Q) for name, m in models.items()}
 
 
 SEARCH_SPACES = {
@@ -185,13 +189,15 @@ def tune(data, cols, tag, names):
         if n_iter <= 0:
             continue
         t = time.perf_counter()
+        space = {f"estimator__{k}": v for k, v in space.items()}         # tune the model inside ClipInputs
         rs = RandomizedSearchCV(make_models()[name], space, n_iter=n_iter,
                                 cv=GroupKFold(n_splits=a.tune_folds),
                                 scoring="neg_root_mean_squared_error",
                                 n_jobs=2 if name in COURSE else 1,  # small models: 2 workers; low RAM
                                 random_state=SEED, refit=False)
         rs.fit(X, y, groups=data["vehid"])
-        bp = {k: (v.item() if hasattr(v, "item") else v) for k, v in rs.best_params_.items()}
+        bp = {k.removeprefix("estimator__"): (v.item() if hasattr(v, "item") else v)
+              for k, v in rs.best_params_.items()}
         best_params[name] = bp
         print(f"  [{tag}] {name}: best {a.tune_folds}-fold CV RMSE={-rs.best_score_:.3f}  "
               f"{bp}  ({time.perf_counter() - t:.0f}s)")
@@ -379,7 +385,10 @@ for fs, cols in SELECTED.items():
         path = OUT / f"{a.task}_{fs}_{name}.joblib"
         joblib.dump({"model": model, "features": cols, "target": target, "task": a.task,
                      "feature_set": fs, "test_metrics": m,
-                     "params": PARAMS.get(fs, {}).get(name, {})}, path)
+                     "params": PARAMS.get(fs, {}).get(name, {}),
+                     # inputs are clipped to these training percentiles inside model.predict (ClipInputs)
+                     "clip_q": CLIP_Q, "clip_lo": dict(zip(cols, model.clip_lo_.tolist())),
+                     "clip_hi": dict(zip(cols, model.clip_hi_.tolist()))}, path)
         meta["models"][f"{fs}/{name}"] = {"path": str(path), "group": GROUP[name],
                                           "cv_rmse": float(best[(fs, name)]),
                                           "params": PARAMS.get(fs, {}).get(name, {}), **m}

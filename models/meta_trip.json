@@ -5,7 +5,7 @@
     "behaviour_only/DecisionTree": {
       "path": "models\\trip_behaviour_only_DecisionTree.joblib",
       "group": "course",
-      "cv_rmse": 1.8963857150846124,
+      "cv_rmse": 1.7779496323309882,
       "params": {
         "decisiontreeregressor__min_samples_leaf": 50,
         "decisiontreeregressor__max_depth": 10
@@ -13,12 +13,12 @@
       "rmse": 1.9654114120394228,
       "mae": 1.4914081006676683,
       "r2": 0.5469706147762944,
-      "mape": 14.769060855862847
+      "mape": 14.769060855862845
     },
     "behaviour_only/MLP": {
       "path": "models\\trip_behaviour_only_MLP.joblib",
       "group": "course",
-      "cv_rmse": 1.5296122318728087,
+      "cv_rmse": 1.5541447029863629,
       "params": {
         "mlpregressor__alpha": 8.532678095658718e-05,
         "mlpregressor__hidden_layer_sizes": [
@@ -28,64 +28,64 @@
         ],
         "mlpregressor__learning_rate_init": 0.005254210669345885
       },
-      "rmse": 1.717010119288514,
-      "mae": 1.353652784637084,
-      "r2": 0.6542476540626161,
-      "mape": 13.615392473924604
+      "rmse": 1.7876534619497475,
+      "mae": 1.4026500540373774,
+      "r2": 0.6252116397069201,
+      "mape": 14.316425864241644
     },
     "behaviour_only/kNN": {
       "path": "models\\trip_behaviour_only_kNN.joblib",
       "group": "course",
-      "cv_rmse": 1.7958204931890702,
+      "cv_rmse": 1.8636474299205088,
       "params": {
         "kneighborsregressor__n_neighbors": 13,
         "kneighborsregressor__p": 2
       },
-      "rmse": 1.9121822259663268,
-      "mae": 1.4372632965319905,
-      "r2": 0.5711770894721839,
-      "mape": 13.964476628039787
+      "rmse": 1.930828002911964,
+      "mae": 1.4419684593203326,
+      "r2": 0.5627733718490361,
+      "mape": 13.971501575998893
     },
     "behaviour_only/LWR": {
       "path": "models\\trip_behaviour_only_LWR.joblib",
       "group": "course",
-      "cv_rmse": 1.5126385171350984,
+      "cv_rmse": 1.5521717718502515,
       "params": {
         "bandwidth": 2.0
       },
-      "rmse": 1.7489846972431284,
-      "mae": 1.346037762073875,
-      "r2": 0.6412503836187444,
-      "mape": 13.73085635967822
+      "rmse": 1.7201552566561864,
+      "mae": 1.3352279005946468,
+      "r2": 0.6529798285907887,
+      "mape": 13.63527743482877
     },
     "behaviour_only/Ridge": {
       "path": "models\\trip_behaviour_only_Ridge.joblib",
       "group": "reference",
-      "cv_rmse": 1.6221257019328665,
+      "cv_rmse": 1.6643657535156524,
       "params": {},
-      "rmse": 1.82798824959768,
-      "mae": 1.3850529721256117,
-      "r2": 0.6081081555823598,
-      "mape": 14.069315598025383
+      "rmse": 1.8459024912936934,
+      "mae": 1.388853936535655,
+      "r2": 0.6003894568217267,
+      "mape": 14.067508205497742
     },
     "behaviour_only/RandomForest": {
       "path": "models\\trip_behaviour_only_RandomForest.joblib",
       "group": "reference",
-      "cv_rmse": 1.5435558608698579,
+      "cv_rmse": 1.5651816564225305,
       "params": {
         "randomforestregressor__n_estimators": 300,
         "randomforestregressor__min_samples_leaf": 1,
         "randomforestregressor__max_features": 0.5
       },
-      "rmse": 1.7508716659047492,
-      "mae": 1.3673940087434562,
-      "r2": 0.6404758605909289,
-      "mape": 13.718475487540067
+      "rmse": 1.773986509367246,
+      "mae": 1.3783821413011912,
+      "r2": 0.6309203910969998,
+      "mape": 13.784661822159954
     },
     "behaviour_only/LightGBM": {
       "path": "models\\trip_behaviour_only_LightGBM.joblib",
       "group": "reference",
-      "cv_rmse": 1.4661285711348226,
+      "cv_rmse": 1.4955028448839323,
       "params": {
         "colsample_bytree": 0.7200762468698007,
         "learning_rate": 0.01324458134009936,
@@ -93,28 +93,28 @@
         "n_estimators": 975,
         "num_leaves": 63
       },
-      "rmse": 1.6528154239472215,
-      "mae": 1.2945109803010804,
-      "r2": 0.6796179764581318,
-      "mape": 12.937985855048275
+      "rmse": 1.6612483275818528,
+      "mae": 1.291052328897649,
+      "r2": 0.6763403653549386,
+      "mape": 12.913392606455206
     },
     "full/DecisionTree": {
       "path": "models\\trip_full_DecisionTree.joblib",
       "group": "course",
-      "cv_rmse": 1.668035995345899,
+      "cv_rmse": 1.6896004476976816,
       "params": {
         "decisiontreeregressor__min_samples_leaf": 5,
         "decisiontreeregressor__max_depth": 20
       },
-      "rmse": 1.7669520892798691,
-      "mae": 1.319497459999406,
-      "r2": 0.6338416235879594,
-      "mape": 12.640685631639107
+      "rmse": 1.7974749958762455,
+      "mae": 1.3306795656191377,
+      "r2": 0.621082082672744,
+      "mape": 12.676180215772428
     },
     "full/MLP": {
       "path": "models\\trip_full_MLP.joblib",
       "group": "course",
-      "cv_rmse": 0.9996687715959374,
+      "cv_rmse": 1.1033165154805524,
       "params": {
         "mlpregressor__alpha": 4.207053950287933e-05,
         "mlpregressor__hidden_layer_sizes": [
@@ -122,64 +122,64 @@
         ],
         "mlpregressor__learning_rate_init": 0.0019790947569382467
       },
-      "rmse": 1.2075630763080034,
-      "mae": 0.9189276168398202,
-      "r2": 0.8289830816723249,
-      "mape": 8.837121861769514
+      "rmse": 1.255925745306736,
+      "mae": 0.9456397012933909,
+      "r2": 0.8150103833549963,
+      "mape": 9.049351877830446
     },
     "full/kNN": {
       "path": "models\\trip_full_kNN.joblib",
       "group": "course",
-      "cv_rmse": 1.7578908849051136,
+      "cv_rmse": 1.8452708834421394,
       "params": {
         "kneighborsregressor__n_neighbors": 13,
         "kneighborsregressor__p": 2
       },
-      "rmse": 1.8322137236149734,
-      "mae": 1.3583653346751638,
-      "r2": 0.6062943116672017,
-      "mape": 12.970140953755749
+      "rmse": 1.8577079552746771,
+      "mae": 1.3668420575227689,
+      "r2": 0.5952616956794615,
+      "mape": 13.006423328486427
     },
     "full/LWR": {
       "path": "models\\trip_full_LWR.joblib",
       "group": "course",
-      "cv_rmse": 1.0596829501718925,
+      "cv_rmse": 1.1298928959188093,
       "params": {
         "bandwidth": 2.0
       },
-      "rmse": 1.2587501744350271,
-      "mae": 0.9043171144727761,
-      "r2": 0.814177408041044,
-      "mape": 8.737602605358212
+      "rmse": 1.2350423568767805,
+      "mae": 0.9010440090399172,
+      "r2": 0.8211112082308544,
+      "mape": 8.704740106666238
     },
     "full/Ridge": {
       "path": "models\\trip_full_Ridge.joblib",
       "group": "reference",
-      "cv_rmse": 1.2400880125474036,
+      "cv_rmse": 1.3012408962377893,
       "params": {},
-      "rmse": 1.337741488522717,
-      "mae": 0.9459869044867549,
-      "r2": 0.7901234971769366,
-      "mape": 9.248375117078583
+      "rmse": 1.3703384051790477,
+      "mae": 0.9534840058825717,
+      "r2": 0.7797707067907744,
+      "mape": 9.271677480679335
     },
     "full/RandomForest": {
       "path": "models\\trip_full_RandomForest.joblib",
       "group": "reference",
-      "cv_rmse": 1.2906965811080786,
+      "cv_rmse": 1.318911581483188,
       "params": {
         "randomforestregressor__n_estimators": 300,
         "randomforestregressor__min_samples_leaf": 1,
         "randomforestregressor__max_features": 0.5
       },
-      "rmse": 1.4855451116820266,
-      "mae": 1.0857975152227612,
-      "r2": 0.7411840033527248,
-      "mape": 10.425709601248228
+      "rmse": 1.5204029847123188,
+      "mae": 1.102137071693052,
+      "r2": 0.7288954209202209,
+      "mape": 10.538164687662874
     },
     "full/LightGBM": {
       "path": "models\\trip_full_LightGBM.joblib",
       "group": "reference",
-      "cv_rmse": 1.1045081951465536,
+      "cv_rmse": 1.1293774904321576,
       "params": {
         "colsample_bytree": 0.5866823267538861,
         "learning_rate": 0.02460710982480541,
@@ -187,28 +187,28 @@
         "n_estimators": 587,
         "num_leaves": 31
       },
-      "rmse": 1.210836451788151,
-      "mae": 0.8693958171615148,
-      "r2": 0.8280546642098878,
-      "mape": 8.286585966355162
+      "rmse": 1.2435350288361666,
+      "mae": 0.877785980045445,
+      "r2": 0.818642519934037,
+      "mape": 8.312623039390543
     },
     "full_no_load/DecisionTree": {
       "path": "models\\trip_full_no_load_DecisionTree.joblib",
       "group": "course",
-      "cv_rmse": 1.8544692311299642,
+      "cv_rmse": 1.7400042469201504,
       "params": {
         "decisiontreeregressor__min_samples_leaf": 50,
         "decisiontreeregressor__max_depth": 12
       },
-      "rmse": 1.8491645345857526,
+      "rmse": 1.8491645345857528,
       "mae": 1.3765069995322985,
-      "r2": 0.5989758407727411,
+      "r2": 0.598975840772741,
       "mape": 13.219620580101852
     },
     "full_no_load/MLP": {
       "path": "models\\trip_full_no_load_MLP.joblib",
       "group": "course",
-      "cv_rmse": 1.24487627037148,
+      "cv_rmse": 1.3392386034299948,
       "params": {
         "mlpregressor__alpha": 3.613894271216525e-05,
         "mlpregressor__hidden_layer_sizes": [
@@ -217,64 +217,64 @@
         ],
         "mlpregressor__learning_rate_init": 0.009243897959491428
       },
-      "rmse": 1.502968192850248,
-      "mae": 1.155485458962478,
-      "r2": 0.7350774018599966,
-      "mape": 11.389933227920606
+      "rmse": 1.5114115669724488,
+      "mae": 1.1749096591995218,
+      "r2": 0.7320924768544773,
+      "mape": 11.456476813276748
     },
     "full_no_load/kNN": {
       "path": "models\\trip_full_no_load_kNN.joblib",
       "group": "course",
-      "cv_rmse": 1.777405425427088,
+      "cv_rmse": 1.8623418435806531,
       "params": {
         "kneighborsregressor__n_neighbors": 13,
         "kneighborsregressor__p": 2
       },
-      "rmse": 1.8642149166387048,
-      "mae": 1.3888500084280602,
-      "r2": 0.5924213903853504,
-      "mape": 13.286092531831564
+      "rmse": 1.887408556786454,
+      "mae": 1.3971800684443483,
+      "r2": 0.582216517830217,
+      "mape": 13.324575781507363
     },
     "full_no_load/LWR": {
       "path": "models\\trip_full_no_load_LWR.joblib",
       "group": "course",
-      "cv_rmse": 1.2834700107641281,
+      "cv_rmse": 1.3571123650929797,
       "params": {
         "bandwidth": 2.0
       },
-      "rmse": 1.4987378854240068,
-      "mae": 1.1249230359508406,
-      "r2": 0.7365666241243278,
-      "mape": 11.031695840051286
+      "rmse": 1.4714637848971894,
+      "mae": 1.117044623495239,
+      "r2": 0.7460673284162758,
+      "mape": 10.958044888566597
     },
     "full_no_load/Ridge": {
       "path": "models\\trip_full_no_load_Ridge.joblib",
       "group": "reference",
-      "cv_rmse": 1.44415171823213,
+      "cv_rmse": 1.504061574275433,
       "params": {},
-      "rmse": 1.5426008091743533,
-      "mae": 1.1577160987990518,
-      "r2": 0.7209213999484321,
-      "mape": 11.466210132658885
+      "rmse": 1.5677049149270101,
+      "mae": 1.1616534268695455,
+      "r2": 0.7117641037604228,
+      "mape": 11.463137611477574
     },
     "full_no_load/RandomForest": {
       "path": "models\\trip_full_no_load_RandomForest.joblib",
       "group": "reference",
-      "cv_rmse": 1.413406755462129,
+      "cv_rmse": 1.4356422681600018,
       "params": {
         "randomforestregressor__n_estimators": 300,
         "randomforestregressor__min_samples_leaf": 1,
         "randomforestregressor__max_features": 0.5
       },
-      "rmse": 1.6010193493092562,
-      "mae": 1.2079280546956552,
-      "r2": 0.6993836569214353,
-      "mape": 11.715050703812878
+      "rmse": 1.6276405206973232,
+      "mae": 1.2154153262955747,
+      "r2": 0.6893034630885666,
+      "mape": 11.742769762850278
     },
     "full_no_load/LightGBM": {
       "path": "models\\trip_full_no_load_LightGBM.joblib",
       "group": "reference",
-      "cv_rmse": 1.312317646078401,
+      "cv_rmse": 1.3307873739294986,
       "params": {
         "colsample_bytree": 0.7200762468698007,
         "learning_rate": 0.01324458134009936,
@@ -282,10 +282,10 @@
         "n_estimators": 975,
         "num_leaves": 63
       },
-      "rmse": 1.4206431205362322,
-      "mae": 1.0628456047223747,
-      "r2": 0.7633048215674965,
-      "mape": 10.184596020139287
+      "rmse": 1.4420072537505906,
+      "mae": 1.0676456170606954,
+      "r2": 0.7561322810091511,
+      "mape": 10.195442173331092
     }
   },
   "tuned_params": {
@@ -391,8 +391,45 @@
   },
   "best_behaviour_only": "behaviour_only/LWR",
   "best_reference_behaviour_only": "behaviour_only/LightGBM",
-  "best_full": "full/MLP",
+  "best_full": "full/LWR",
   "best_reference_full": "full/LightGBM",
-  "best_full_no_load": "full_no_load/MLP",
-  "best_reference_full_no_load": "full_no_load/LightGBM"
+  "best_full_no_load": "full_no_load/LWR",
+  "best_reference_full_no_load": "full_no_load/LightGBM",
+  "best_cv_behaviour_only": "behaviour_only/LWR",
+  "best_cv_full_no_load": "full_no_load/MLP",
+  "best_cv_full": "full/MLP",
+  "selection": {
+    "rule": "course model with the lowest enviroCar MAPE after 3-trip calibration among those within 2.0 MAPE points of the best course VED test MAPE",
+    "tiers": {
+      "behaviour_only": {
+        "chosen": "behaviour_only/LWR",
+        "best_course_ved_test_mape": 13.635,
+        "eligible": [
+          "DecisionTree",
+          "MLP",
+          "kNN",
+          "LWR"
+        ],
+        "cv_choice": "behaviour_only/LWR"
+      },
+      "full_no_load": {
+        "chosen": "full_no_load/LWR",
+        "best_course_ved_test_mape": 10.958,
+        "eligible": [
+          "MLP",
+          "LWR"
+        ],
+        "cv_choice": "full_no_load/MLP"
+      },
+      "full": {
+        "chosen": "full/LWR",
+        "best_course_ved_test_mape": 8.705,
+        "eligible": [
+          "MLP",
+          "LWR"
+        ],
+        "cv_choice": "full/MLP"
+      }
+    }
+  }
 }

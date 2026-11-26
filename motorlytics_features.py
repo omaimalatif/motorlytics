@@ -543,6 +543,32 @@ class LocallyWeightedRegression(BaseEstimator, RegressorMixin):
         return out
 
 
+class ClipInputs(BaseEstimator, RegressorMixin):
+    """Wraps any regressor: learns each feature's q-th and (100-q)-th percentile on the training data
+    and clips inputs to that range before every predict. Limits extrapolation on inputs outside the
+    training range (e.g. other countries' cars or loggers); NaN stays NaN for the model's own imputer.
+    """
+
+    def __init__(self, estimator=None, q=1.0):
+        self.estimator = estimator
+        self.q = q
+
+    def fit(self, X, y):
+        from sklearn.base import clone
+        X = np.asarray(X, dtype=np.float64)
+        with np.errstate(all="ignore"):
+            lo, hi = np.nanpercentile(X, [self.q, 100 - self.q], axis=0) if len(X) else (None, None)
+        self.clip_lo_ = np.where(np.isnan(lo), -np.inf, lo)
+        self.clip_hi_ = np.where(np.isnan(hi), np.inf, hi)
+        self.estimator_ = clone(self.estimator).fit(X, y)
+        self.n_features_in_ = X.shape[1]
+        return self
+
+    def predict(self, X):
+        X = np.asarray(X, dtype=np.float64)
+        return self.estimator_.predict(np.clip(X, self.clip_lo_, self.clip_hi_))
+
+
 # ------------------------------------------------------------------------------
 # 7. Per-car calibration store (models/calibration.json)
 # ------------------------------------------------------------------------------
