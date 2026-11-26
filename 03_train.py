@@ -10,19 +10,31 @@ Protocol (vehicles never appear in both train and test):
   2. Feature selection on the training vehicles with 3 methods
      (mutual information filter, Lasso embedded, permutation importance);
      a feature is kept if at least 2 methods keep it.
-  3. 10-fold GroupKFold CV (by vehicle) on the training vehicles for 3 models
+  3. 10-fold GroupKFold CV (by vehicle) on the training vehicles for 7 models
      -> RMSE, MAE, R2, MAPE, fit time, inference time.
   4. Friedman test + pairwise Wilcoxon and paired t-tests (Holm-corrected).
   5. Final fit on all training vehicles, evaluation on the held-out vehicles,
      error analysis by vehicle class, speed band, temperature band, trip length.
 
-Also (trip task):
-  - light tuning: RandomizedSearchCV (n_iter, GroupKFold(5)) on the training vehicles for
-    LightGBM and RandomForest per feature set; the best params are used for CV, tests and the
-    final models (CV scores are therefore slightly optimistic; the held-out test is not affected)
-  - ablation "full_no_load" = selected full features without mean_load
-  - baselines on the held-out vehicles: DummyRegressor (mean) and median L/100 km per disp_L
+Models:
+  COURSE (from the course outline; used by the app):  DecisionTree, MLP (ANN, backpropagation),
+    kNN (distance-weighted), LWR (locally weighted regression, Gaussian kernel)
+  REFERENCE (beyond the syllabus; reported for comparison only): Ridge, RandomForest, LightGBM
+  best_<tier> in meta_<task>.json = best COURSE model by CV RMSE; best_reference_<tier> = best reference.
+  (Feature selection's permutation-importance vote still uses a LightGBM model as a measuring tool.)
+
+Tuning (trip task): RandomizedSearchCV + GroupKFold(5) on the training vehicles. Course models
+  are tuned (--tune-iter-course, default 10); reference models reuse the saved tuned params
+  (--tune-reference to re-tune them, --reuse-params to reuse everything). The best params are used
+  for CV, tests and the final models (CV is slightly optimistic; the held-out test is not affected).
+
+Also: ablation "full_no_load" = selected full features without mean_load; "full_epa" only with
+  --with-epa; baselines on the held-out vehicles: DummyRegressor (mean) and median L/100 km per disp_L.
 """
+import os
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")   # single-threaded BLAS: ~2x faster here for small matrices (MLP, LWR)
+
 import argparse
 import json
 import time
@@ -42,8 +54,11 @@ from sklearn.inspection import permutation_importance
 from sklearn.linear_model import LassoCV, Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import GroupKFold, GroupShuffleSplit, RandomizedSearchCV
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeRegressor
 
 import motorlytics_features as mf
 
@@ -54,11 +69,14 @@ ap.add_argument("--test-size", type=float, default=0.2)
 ap.add_argument("--max-rows", type=int, default=300_000, help="row task: cap for speed")
 ap.add_argument("--external", default=None, help="trip parquet from another source (e.g. enviroCar)")
 ap.add_argument("--seed", type=int, default=42)
-ap.add_argument("--tune-iter", type=int, default=20, help="RandomizedSearchCV iterations (0 = no tuning)")
+ap.add_argument("--tune-iter", type=int, default=20, help="RandomizedSearchCV iterations, reference models")
+ap.add_argument("--tune-iter-course", type=int, default=10, help="RandomizedSearchCV iterations, course models")
 ap.add_argument("--tune-folds", type=int, default=5)
 ap.add_argument("--reuse-params", action="store_true",
-                help="skip tuning; load tuned_params from models/meta_<task>.json "
+                help="skip all tuning; load tuned_params from models/meta_<task>.json "
                      "(or results_<task>/best_params.json)")
+ap.add_argument("--tune-reference", action="store_true", help="re-tune the reference models too")
+ap.add_argument("--with-epa", action="store_true", help="add the full_epa feature set")
 a = ap.parse_args()
 SEED = a.seed
 rng = np.random.default_rng(SEED)
@@ -105,12 +123,25 @@ print(f"train: {len(train):,} rows / {train['vehid'].nunique()} vehicles | "
       f"test: {len(test):,} rows / {test['vehid'].nunique()} vehicles")
 
 
+COURSE = ["DecisionTree", "MLP", "kNN", "LWR"]            # course outline
+REFERENCE = ["Ridge", "RandomForest", "LightGBM"]          # beyond the syllabus, comparison only
+GROUP = {**{m: "course" for m in COURSE}, **{m: "reference" for m in REFERENCE}}
+
+
 def make_models(params=None):
-    # Swap these for algorithms from your course outline if needed
-    # (e.g. KNeighborsRegressor, DecisionTreeRegressor, SVR).
-    # params: {"LightGBM": {...}, "RandomForest": {...}} from tuning (pipeline-style names for RF)
+    # params: {model name: {...}} from tuning (pipeline-style names, e.g. mlpregressor__alpha)
     params = params or {}
+    imp = lambda: SimpleImputer(strategy="median")
     models = {
+        # ---- course models ----
+        "DecisionTree": make_pipeline(imp(), DecisionTreeRegressor(
+            max_depth=10, min_samples_leaf=10 if a.task == "trip" else 50, random_state=SEED)),
+        "MLP": make_pipeline(imp(), StandardScaler(), MLPRegressor(
+            hidden_layer_sizes=(64, 32), alpha=1e-3, learning_rate_init=1e-3, max_iter=300,
+            early_stopping=True, n_iter_no_change=10, random_state=SEED)),
+        "kNN": make_pipeline(imp(), StandardScaler(), KNeighborsRegressor(n_neighbors=15, weights="distance")),
+        "LWR": mf.LocallyWeightedRegression(bandwidth=2.0, max_train=5000, random_state=SEED),
+        # ---- reference models (beyond the syllabus) ----
         "Ridge": make_pipeline(SimpleImputer(strategy="median"), StandardScaler(), Ridge(alpha=1.0)),
         "RandomForest": make_pipeline(
             SimpleImputer(strategy="median"),
@@ -128,6 +159,13 @@ def make_models(params=None):
 
 
 SEARCH_SPACES = {
+    "DecisionTree": {"decisiontreeregressor__max_depth": [4, 6, 8, 10, 12, 15, 20, None],
+                     "decisiontreeregressor__min_samples_leaf": [1, 2, 5, 10, 20, 50, 100]},
+    "MLP": {"mlpregressor__hidden_layer_sizes": [(32,), (64,), (128,), (64, 32), (128, 64), (64, 64, 32)],
+            "mlpregressor__alpha": loguniform(1e-5, 1e-1),
+            "mlpregressor__learning_rate_init": loguniform(5e-4, 1e-2)},
+    "kNN": {"kneighborsregressor__n_neighbors": randint(3, 61), "kneighborsregressor__p": [1, 2]},
+    "LWR": {"bandwidth": [0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0]},
     "LightGBM": {"num_leaves": [15, 31, 63, 127], "learning_rate": loguniform(0.01, 0.1),
                  "n_estimators": randint(200, 1001), "min_child_samples": [10, 20, 40, 80],
                  "colsample_bytree": uniform(0.5, 0.5)},
@@ -137,17 +175,20 @@ SEARCH_SPACES = {
 }
 
 
-def tune(data, cols, tag):
+def tune(data, cols, tag, names):
     """Light RandomizedSearchCV on the training vehicles only (grouped by vehicle)."""
-    if a.tune_iter <= 0:
-        return {}
     X, y = data[cols].to_numpy(np.float32), data[target].to_numpy()
     best_params = {}
-    for name, space in SEARCH_SPACES.items():
+    for name in names:
+        space = SEARCH_SPACES[name]
+        n_iter = a.tune_iter_course if name in COURSE else a.tune_iter
+        if n_iter <= 0:
+            continue
         t = time.perf_counter()
-        rs = RandomizedSearchCV(make_models()[name], space, n_iter=a.tune_iter,
+        rs = RandomizedSearchCV(make_models()[name], space, n_iter=n_iter,
                                 cv=GroupKFold(n_splits=a.tune_folds),
-                                scoring="neg_root_mean_squared_error", n_jobs=1,  # 1 job: low RAM
+                                scoring="neg_root_mean_squared_error",
+                                n_jobs=2 if name in COURSE else 1,  # small models: 2 workers; low RAM
                                 random_state=SEED, refit=False)
         rs.fit(X, y, groups=data["vehid"])
         bp = {k: (v.item() if hasattr(v, "item") else v) for k, v in rs.best_params_.items()}
@@ -217,41 +258,47 @@ else:
     print("\n[full_no_load] skipped: mean_load was not selected in the full set")
 # EPA ratings per vehicle (07_join_epa.py + 02_build_datasets.py --epa): full + EPA columns
 epa_cols = [c for c in mf.EPA_FEATURES if c in df and df[c].notna().mean() > 0.5]
-if a.task == "trip" and epa_cols:
+if a.task == "trip" and epa_cols and a.with_epa:
     SELECTED["full_epa"] = SELECTED["full"] + [c for c in epa_cols if c not in SELECTED["full"]]
     print(f"[full_epa] {len(SELECTED['full_epa'])} features (full + {epa_cols}), "
           f"EPA coverage {df[epa_cols[0]].notna().mean():.1%} of trips")
 else:
-    print("[full_epa] skipped: no EPA columns in the data (run 02_build_datasets.py --epa ...)")
+    print("[full_epa] skipped (add --with-epa; needs 02_build_datasets.py --epa ...)")
 
 
 def load_params():
-    """Tuned params from an earlier run; feature sets without saved params (e.g. full_epa)
-    reuse the full set's params."""
+    """Saved tuned params {feature set: {model: params}}; feature sets without saved params
+    (e.g. full_epa) reuse the full set's params."""
     for p, key in [(OUT / f"meta_{a.task}.json", "tuned_params"), (REP / "best_params.json", None)]:
         if p.exists():
             d = json.loads(p.read_text())
             d = d.get(key) if key else d
             if d:
-                print(f"reusing tuned params from {p}")
+                print(f"saved tuned params found in {p}")
                 break
     else:
-        raise SystemExit("--reuse-params: no tuned params found; run once without it")
+        return {fs: {} for fs in SELECTED}
     out = {}
     for fs in SELECTED:
         src = fs if fs in d else ("full" if fs.startswith("full") and "full" in d else None)
-        out[fs] = d.get(src, {}) if src else {}
-        print(f"  {fs}: params from {src or 'model defaults'}")
+        out[fs] = dict(d.get(src, {})) if src else {}
     return out
 
 
 # ---------------- 2b. light hyper-parameter tuning (training vehicles only) ----------------
-if a.reuse_params:
-    print("\n=== Tuning skipped (--reuse-params) ===")
-    PARAMS = load_params()
-else:
-    print("\n=== Tuning (RandomizedSearchCV, GroupKFold) ===")
-    PARAMS = {fs: tune(train, cols, fs) for fs, cols in SELECTED.items()}
+SAVED = load_params()
+PARAMS = {}
+print("\n=== Tuning (RandomizedSearchCV, GroupKFold) ===")
+for fs, cols in SELECTED.items():
+    have = SAVED.get(fs, {})
+    if a.reuse_params:
+        todo = [m for m in COURSE + REFERENCE if m not in have]   # only models never tuned
+    else:
+        todo = list(COURSE) + [m for m in REFERENCE if a.tune_reference or m not in have]
+    todo = [m for m in todo if m in SEARCH_SPACES]                 # Ridge keeps its fixed alpha
+    reused = {m: p for m, p in have.items() if m in GROUP and m not in todo}
+    print(f"  [{fs}] reusing saved params for {sorted(reused) or 'none'}; tuning {todo or 'none'}")
+    PARAMS[fs] = {**reused, **(tune(train, cols, fs, todo) if todo else {})}
 (REP / "best_params.json").write_text(json.dumps(PARAMS, indent=2))
 print(f"best params saved -> {REP / 'best_params.json'}")
 
@@ -305,8 +352,8 @@ for fs in SELECTED:
         diff = (piv[x] - piv[y]).mean()
         lines.append(f"  {x} vs {y}: mean RMSE diff={diff:+.4f} | Wilcoxon p={w:.5f} (Holm {wa:.5f})"
                      f" | paired t p={t:.5f} (Holm {ta:.5f})")
-# behaviour_only vs full for the best model family
-for name in ["LightGBM", "RandomForest", "Ridge"]:
+# behaviour_only vs full for every model
+for name in COURSE + REFERENCE:
     b = cv[(cv.model == name) & (cv.feature_set == "behaviour_only")].sort_values("fold")["rmse"].to_numpy()
     f = cv[(cv.model == name) & (cv.feature_set == "full")].sort_values("fold")["rmse"].to_numpy()
     lines.append(f"{name}: behaviour_only vs full Wilcoxon p={stats.wilcoxon(b, f).pvalue:.5f}")
@@ -327,13 +374,14 @@ for fs, cols in SELECTED.items():
         t = time.perf_counter(); model.fit(train[cols].to_numpy(np.float32), y_tr); fit_s = time.perf_counter() - t
         t = time.perf_counter(); p = model.predict(test[cols].to_numpy(np.float32)); inf = time.perf_counter() - t
         m = metrics(y_te, p)
-        test_rows.append({"feature_set": fs, "model": name, **m, "fit_s": fit_s,
+        test_rows.append({"feature_set": fs, "group": GROUP[name], "model": name, **m, "fit_s": fit_s,
                           "infer_ms_per_1k": inf / len(test) * 1e6})
         path = OUT / f"{a.task}_{fs}_{name}.joblib"
         joblib.dump({"model": model, "features": cols, "target": target, "task": a.task,
                      "feature_set": fs, "test_metrics": m,
                      "params": PARAMS.get(fs, {}).get(name, {})}, path)
-        meta["models"][f"{fs}/{name}"] = {"path": str(path), "cv_rmse": float(best[(fs, name)]),
+        meta["models"][f"{fs}/{name}"] = {"path": str(path), "group": GROUP[name],
+                                          "cv_rmse": float(best[(fs, name)]),
                                           "params": PARAMS.get(fs, {}).get(name, {}), **m}
         test[f"pred_{fs}_{name}"] = p
 
@@ -341,14 +389,14 @@ for fs, cols in SELECTED.items():
 t = time.perf_counter()
 dummy = DummyRegressor(strategy="mean").fit(np.zeros((len(train), 1)), y_tr)
 p = dummy.predict(np.zeros((len(test), 1)))
-test_rows.append({"feature_set": "baseline", "model": "Dummy(mean)", **metrics(y_te, p),
+test_rows.append({"feature_set": "baseline", "group": "baseline", "model": "Dummy(mean)", **metrics(y_te, p),
                   "fit_s": time.perf_counter() - t, "infer_ms_per_1k": np.nan})
 if "disp_L" in train:
     t = time.perf_counter()
     by_disp = train.groupby("disp_L")[target].median()
     p = test["disp_L"].map(by_disp).fillna(float(np.median(y_tr))).to_numpy()
     n_unseen = int((~test["disp_L"].isin(by_disp.index)).sum())
-    test_rows.append({"feature_set": "baseline", "model": "median per disp_L", **metrics(y_te, p),
+    test_rows.append({"feature_set": "baseline", "group": "baseline", "model": "median per disp_L", **metrics(y_te, p),
                       "fit_s": time.perf_counter() - t, "infer_ms_per_1k": np.nan})
     print(f"baseline median per disp_L: {n_unseen} test trips with an unseen disp_L -> global median")
 meta["tuned_params"] = PARAMS
@@ -357,11 +405,14 @@ test_res.to_csv(REP / "test_metrics.csv", index=False)
 print("\n=== Held-out TEST vehicles ===")
 print(test_res.to_string(index=False))
 
-for fs in SELECTED:
-    name = best.loc[fs].idxmin()
-    meta[f"best_{fs}"] = f"{fs}/{name}"
+for fs in SELECTED:                    # the app uses the best COURSE model; reference kept for comparison
+    meta[f"best_{fs}"] = f"{fs}/{best.loc[fs].loc[COURSE].idxmin()}"
+    meta[f"best_reference_{fs}"] = f"{fs}/{best.loc[fs].loc[REFERENCE].idxmin()}"
 (OUT / f"meta_{a.task}.json").write_text(json.dumps(meta, indent=2))
-print("\nbest per feature set:", {k: v for k, v in meta.items() if k.startswith("best_")})
+print("\nbest course model per feature set (used by the app):",
+      {k: v for k, v in meta.items() if k.startswith("best_") and not k.startswith("best_reference")})
+print("best reference model per feature set (comparison):",
+      {k: v for k, v in meta.items() if k.startswith("best_reference")})
 
 bf, bm = meta["best_full"].split("/")
 test["pred"] = test[f"pred_{bf}_{bm}"]
@@ -397,15 +448,18 @@ if a.external and a.task == "trip":
     ext = pd.read_parquet(a.external).dropna(subset=[target]).reset_index(drop=True)
     lines = [f"External validation on {a.external}: {len(ext)} trips, {ext['vehid'].nunique()} vehicles"]
     for fs in SELECTED:
-        b = joblib.load(OUT / f"{a.task}_{fs}_{meta['best_' + fs].split('/')[1]}.joblib")
-        p = b["model"].predict(mf.to_matrix(ext, b["features"]))
-        ext[f"pred_{fs}"] = p
-        m = metrics(ext[target].to_numpy(), p)
-        bias = float(np.mean(p - ext[target]))
-        missing = [c for c in b["features"] if c not in ext or ext[c].notna().mean() < 0.5]
-        lines.append(f"  {fs}: n_trips={len(ext)} n_vehicles={ext['vehid'].nunique()} "
-                     f"{json.dumps({k: round(v, 3) for k, v in m.items()})}  mean bias={bias:+.2f}  "
-                     f"missing features: {missing or 'none'}")
+        for kind in ["best", "best_reference"]:          # course model (app) and reference model
+            key = meta[f"{kind}_{fs}"]
+            b = joblib.load(OUT / f"{a.task}_{fs}_{key.split('/')[1]}.joblib")
+            p = b["model"].predict(mf.to_matrix(ext, b["features"]))
+            ext[f"pred_{fs}" if kind == "best" else f"pred_ref_{fs}"] = p
+            m = metrics(ext[target].to_numpy(), p)
+            bias = float(np.mean(p - ext[target]))
+            missing = [c for c in b["features"] if c not in ext or ext[c].notna().mean() < 0.5]
+            lines.append(f"  {fs} [{'course' if kind == 'best' else 'reference'}: {key.split('/')[1]}]: "
+                         f"n_trips={len(ext)} n_vehicles={ext['vehid'].nunique()} "
+                         f"{json.dumps({k: round(v, 3) for k, v in m.items()})}  mean bias={bias:+.2f}  "
+                         f"missing features: {missing or 'none'}")
     # per-vehicle view for the behaviour model (the app's default tier for non-VED logs)
     if "pred_behaviour_only" in ext:
         lab = "veh_label" if "veh_label" in ext else "vehid"

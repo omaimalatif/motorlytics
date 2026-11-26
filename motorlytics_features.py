@@ -479,6 +479,71 @@ def recommend(bundle: dict, trip: pd.Series, eco_profile: dict, petrol_pkr_per_l
 
 
 # ------------------------------------------------------------------------------
+# 6b. Locally Weighted Regression (course model; lives here so saved models unpickle anywhere)
+# ------------------------------------------------------------------------------
+from sklearn.base import BaseEstimator, RegressorMixin
+
+
+class LocallyWeightedRegression(BaseEstimator, RegressorMixin):
+    """Locally weighted linear regression with a Gaussian kernel (sklearn-style).
+
+    For each query x: weights w_i = exp(-||x - x_i||^2 / (2 * bandwidth^2)) over the training points
+    (features median-imputed and standardised), then a weighted least-squares line
+    beta = (X'WX + ridge*I)^-1 X'Wy is fitted and evaluated at x. The weights are normalised per
+    query, so `ridge` is a small relative penalty that keeps near-singular cases solvable (the
+    intercept is not penalised). The training set is subsampled to `max_train` points for speed.
+    """
+
+    def __init__(self, bandwidth=3.0, ridge=1e-2, max_train=5000, batch=64, random_state=42):
+        self.bandwidth = bandwidth
+        self.ridge = ridge
+        self.max_train = max_train
+        self.batch = batch
+        self.random_state = random_state
+
+    def _prep(self, X):
+        X = np.asarray(X, dtype=np.float64)
+        X = np.where(np.isnan(X), self.med_, X)
+        return (X - self.mu_) / self.sd_
+
+    def fit(self, X, y):
+        X, y = np.asarray(X, dtype=np.float64), np.asarray(y, dtype=np.float64)
+        self.med_ = np.nanmedian(X, axis=0)
+        self.med_ = np.where(np.isnan(self.med_), 0.0, self.med_)
+        Xi = np.where(np.isnan(X), self.med_, X)
+        self.mu_, self.sd_ = Xi.mean(axis=0), Xi.std(axis=0)
+        self.sd_ = np.where(self.sd_ > 0, self.sd_, 1.0)
+        Z = (Xi - self.mu_) / self.sd_
+        if self.max_train and len(Z) > self.max_train:
+            idx = np.random.default_rng(self.random_state).choice(len(Z), self.max_train, replace=False)
+            Z, y = Z[idx], y[idx]
+        self.Xa_ = np.hstack([np.ones((len(Z), 1)), Z])       # with intercept column
+        self.y_ = y
+        self.sq_ = (Z ** 2).sum(axis=1)
+        self.n_features_in_ = X.shape[1]
+        return self
+
+    def predict(self, X):
+        Q = self._prep(X)
+        Qa = np.hstack([np.ones((len(Q), 1)), Q])
+        P = np.eye(self.Xa_.shape[1]) * self.ridge
+        P[0, 0] = 0.0
+        out = np.empty(len(Q))
+        Z = self.Xa_[:, 1:]
+        for s in range(0, len(Q), self.batch):
+            q = Q[s:s + self.batch]
+            d2 = np.maximum((q ** 2).sum(axis=1)[:, None] + self.sq_[None, :] - 2 * q @ Z.T, 0.0)
+            d2 -= d2.min(axis=1, keepdims=True)                  # avoid underflow; scale-free after norm
+            W = np.exp(-d2 / (2.0 * self.bandwidth ** 2))
+            W /= W.sum(axis=1, keepdims=True)
+            A = np.matmul(self.Xa_.T[None] * W[:, None, :], self.Xa_) + P   # batched X'WX (BLAS)
+            b = (W * self.y_) @ self.Xa_
+            beta = np.linalg.solve(A, b[..., None])[..., 0]
+            out[s:s + self.batch] = (Qa[s:s + self.batch] * beta).sum(axis=1)
+        return out
+
+
+# ------------------------------------------------------------------------------
 # 7. Per-car calibration store (models/calibration.json)
 # ------------------------------------------------------------------------------
 # External tests showed most of the error on unseen cars is a per-car offset, so each car keeps a
