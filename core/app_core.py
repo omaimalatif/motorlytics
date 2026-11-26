@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 import motorlytics_features as mf
-from core import scoring
+from core import pk_reference, scoring
 
 TIERS = ["behaviour_only", "full_no_load", "full"]
 MAX_ROUTE_POINTS = 400
@@ -84,12 +84,15 @@ def add_fillup_entry(store: dict, car_key, litres_filled: float, predicted_litre
 
 
 def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature_set=None,
-                 calibration_path=None, update_calibration=True, fillup_litres=None, verbose=False) -> dict:
+                 calibration_path=None, update_calibration=True, fillup_litres=None, verbose=False,
+                 prior=None) -> dict:
     """Predict every trip of >= 1 km in the given raw logs.
 
     dfs: list of raw DataFrames (one per log file).
     car: {'disp_L', 'cylinders', 'boost' (0), 'weight' (NaN), 'cls' ('Car')}.
     car_key: id in the calibration store (None = uncalibrated, nothing stored).
+    prior: optional PakWheels starting factors (core/pk_reference.prior); used for the speed-only tier
+           while the car has no calibration of its own.
     Returns {'tier', 'why', 'model', 'tips_model', 'calibration', 'calibrated', 'k', 'trips': [...],
              'store_update': {'added': [...], 'now': {...}} or None}.
     Raises ValueError for unusable logs.
@@ -160,6 +163,9 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
         cal_txt = f"uncalibrated estimate (no calibration for car '{car_key}', tier {fs} yet)"
     else:
         cal_txt = "uncalibrated estimate (give --car-id to use per-car calibration)"
+    use_prior = bool(prior) and not cal and fs == "behaviour_only"   # own calibration always wins
+    if use_prior:
+        cal_txt = prior["text"]
 
     style = _style()
     trips["style"] = mf.predict_style(style, trips)
@@ -174,16 +180,17 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
         r = mf.recommend(tip_bundle, t, eco_profiles, petrol, eco_p75=style.get("eco_p75"))
         tip_pred, tip_eco = r["pred_l_per_100km"], r["eco_l_per_100km"]   # both from the behaviour model
         raw_pred = float(preds[fs][i])
-        pred = raw_pred * k
+        k_i = pk_reference.k_for_speed(prior, float(t["avg_speed"])) if use_prior else k
+        pred = raw_pred * k_i
         eco = pred * (tip_eco / tip_pred) if tip_pred > 0 else pred       # eco scaled to the shown prediction
         r.update({"trip": t["trip_key"], "dist_km": round(t["dist_km"], 2),
                   "duration_min": round(t["dur_min"], 1), "avg_speed": round(t["avg_speed"], 1),
                   "idle_pct": round(100 * t["idle_frac"], 1), "style": t["style"], "model": meta[f"best_{fs}"],
-                  "tier": fs, "tips_model": meta["best_behaviour_only"], "calibration": cal_txt, "k": round(k, 4),
+                  "tier": fs, "tips_model": meta["best_behaviour_only"], "calibration": cal_txt, "k": round(k_i, 4),
                   "pred_l_per_100km_uncalibrated": round(raw_pred, 2), "pred_l_per_100km": round(pred, 2),
                   "eco_l_per_100km_model": tip_eco, "eco_l_per_100km": round(eco, 2)})
         for tip in r["tips"]:
-            tip["saving_l_per_100km"] = round(tip["saving_l_per_100km"] * k, 2)
+            tip["saving_l_per_100km"] = round(tip["saving_l_per_100km"] * k_i, 2)
         measured = float(t["l_per_100km"]) if "l_per_100km" in t and pd.notna(t["l_per_100km"]) else None
         main = pred
         if measured is not None:                            # measured is the main figure; eco scaled to it
@@ -201,6 +208,7 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
         r["eco_score"] = float(t["eco_score"])
         r["measured"] = measured is not None
         r["calibrated"] = bool(cal)
+        r["reference_adjusted"] = use_prior
         r["trip_key"] = t["trip_key"]
         r["preds_uncalibrated"] = {tr: round(float(preds[tr][i]), 4) for tr in preds}   # for later fill-ups
         if {"lat", "lon"} <= set(rows.columns):
@@ -237,7 +245,8 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
             mf.save_calibration(store, calibration_path)
             store_update = {"added": added, "now": {tr: c for tr in avail if (c := mf.car_k(store, car_key, tr))}}
 
-    return {"tier": fs, "why": why, "model": meta[f"best_{fs}"], "tips_model": meta["best_behaviour_only"],
+    return {"reference_adjusted": use_prior, "reference": prior if use_prior else None,
+            "tier": fs, "why": why, "model": meta[f"best_{fs}"], "tips_model": meta["best_behaviour_only"],
             "calibration": cal_txt, "calibrated": bool(cal), "k": k, "trips": results, "store_update": store_update}
 
 
@@ -272,8 +281,12 @@ def ingest_logs(user: dict, car: dict, files, temp=np.nan, calibration_path=None
         p.write_bytes(data)
         paths.append(p)
         dfs.append(pd.read_csv(BytesIO(data), low_memory=False))
+    try:                                                 # PakWheels starting factor (None if model unknown)
+        prior = pk_reference.prior(car)
+    except Exception:                                    # never block an upload on the reference table
+        prior = None
     res = predict_logs(dfs, car_spec(car), car_key=car["car_key"], petrol=user.get("petrol_pkr"), temp=temp,
-                       calibration_path=calibration_path)
+                       calibration_path=calibration_path, prior=prior)
     ids = []
     for r in res["trips"]:
         file_idx = int(str(r["trip_key"]).split("_")[0].removeprefix("log") or 1) - 1 \
@@ -288,7 +301,9 @@ def ingest_logs(user: dict, car: dict, files, temp=np.nan, calibration_path=None
             style=r["style"], cost_pkr=r.get("trip_cost_pkr"),
             tips_json={"tips": r["tips"], "eco_l100": r["eco_l_per_100km"], "possible_saving_pct":
                        r["possible_saving_pct"], "idle_pct": r["idle_pct"], "k": r["k"],
-                       "calibration": res["calibration"], "main_l100": main},
+                       "calibration": res["calibration"], "main_l100": main,
+                       "reference_adjusted": r["reference_adjusted"],
+                       "reference_source": (res["reference"] or {}).get("source_url")},
             route_json={"path": r["route"], "speed": r["speed_trace"], "trip_key": r["trip_key"],
                         "preds": r["preds_uncalibrated"]},
             raw_file=str(paths[min(file_idx, len(paths) - 1)])))

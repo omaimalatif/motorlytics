@@ -16,9 +16,10 @@ P = session.PAGES
 
 hour = datetime.now().hour
 greet = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
-cal_text, calibrated = session.calibration_text(car)
+cal_label, cal_kind, cal_text = session.calibration_state(car)
+calibrated = cal_label == "calibrated"
 status = [f"{len(t)} trips" if len(t) else "no trips yet", cars.car_label(car) if car else "no car added",
-          "calibrated" if calibrated else "uncalibrated"]
+          cal_label]
 ui.page_header(f"{greet}, {u['name'].split()[0]}", " · ".join(status))
 
 if not car:
@@ -66,7 +67,7 @@ with c2:
             else:
                 st.caption("Set your city on the Account page to see the temperature.")
     with ui.card("Calibration"):
-        ui.badge("calibrated" if calibrated else "uncalibrated", "good" if calibrated else "warn")
+        ui.badge(cal_label, cal_kind)
         st.caption(cal_text)
 
 if t.empty:

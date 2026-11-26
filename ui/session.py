@@ -37,16 +37,28 @@ def active_car(u: dict) -> dict | None:
     return car
 
 
-def calibration_text(car: dict) -> tuple:
-    """(short text, is_calibrated) for the car's default tier (behaviour_only) or any calibrated tier."""
+def calibration_state(car: dict) -> tuple:
+    """(badge label, badge kind, text): own calibration > PakWheels starting adjustment > uncalibrated."""
+    from core import pk_reference
     if not car:
-        return "no car", False
+        return "no car", "neutral", "no car"
     status = app_core.calibration_status(car["car_key"])
-    if not status:
-        return "Uncalibrated: upload a trip with MAF or log a fill-up", False
-    tier = "behaviour_only" if "behaviour_only" in status else next(iter(status))
-    c = status[tier]
-    return f"Calibrated: k = {c['k']:.2f} from {c['n_trips']} trips", True
+    if status:
+        tier = "behaviour_only" if "behaviour_only" in status else next(iter(status))
+        c = status[tier]
+        return "calibrated", "good", f"Calibrated: k = {c['k']:.2f} from {c['n_trips']} trips"
+    ref = pk_reference.match(car)
+    if ref:
+        return ("PakWheels-adjusted", "info",
+                f"Adjusted to the PakWheels average for {ref['make']} {ref['model']} ({ref['city_kmpl']:.0f} km/L "
+                "city, {:.0f} highway) until you calibrate with a MAF trip or a fill-up".format(ref["highway_kmpl"]))
+    return "uncalibrated", "warn", "Uncalibrated: upload a trip with MAF or log a fill-up"
+
+
+def calibration_text(car: dict) -> tuple:
+    """(short text, is_calibrated) - kept for older callers; see calibration_state."""
+    label, _, text = calibration_state(car)
+    return text, label == "calibrated"
 
 
 def trips_df(u: dict, car_id=None) -> pd.DataFrame:

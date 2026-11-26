@@ -4,7 +4,7 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-from core import app_core, cars, db
+from core import app_core, cars, db, pk_reference
 from ui import components as ui
 from ui import session
 
@@ -31,6 +31,13 @@ for c, (tier, label) in zip(cols, tiers.items()):
             else:
                 ui.badge("uncalibrated", "warn")
                 st.caption("Upload a log with MAF, or log a fill-up below.")
+
+ref = pk_reference.match(car)
+if "behaviour_only" not in status and ref:
+    st.info(f"Until this car has its own calibration, speed-only predictions are adjusted to the PakWheels average "
+            f"for a {ref['make']} {ref['model']} ({ref['city_kmpl']:.0f} km/L city, {ref['highway_kmpl']:.0f} km/L "
+            "highway). Your own calibration below replaces that as soon as it exists, because it reflects your car, "
+            "your driving and your roads.", icon=":material/info:")
 
 st.subheader("Log a fill-up")
 st.caption("Fill the tank to full, note the litres, and select the trips driven since the previous full tank. "

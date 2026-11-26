@@ -96,8 +96,8 @@ with st.sidebar:
             st.markdown(f"**{cars.car_title(car)}**")
         if car:
             ui.car_photo(car, width=200, caption=False)
-        text, ok = session.calibration_text(car)
-        st.badge("calibrated" if ok else "uncalibrated", color="green" if ok else "orange")
+        label, kind, text = session.calibration_state(car)
+        ui.badge(label, kind)
         st.caption(text)
 
 nav.run()

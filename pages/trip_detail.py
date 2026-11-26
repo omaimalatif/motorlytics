@@ -36,7 +36,8 @@ if len(last_upload) > 1 and trip["id"] in last_upload:               # several t
 ui.page_header(f"Trip on {started:%d %b %Y, %H:%M}" if pd.notna(started) else f"Trip {trip['id']}",
                f"{cars.car_label(car)} · {trip['road_type'] or '?'} road · {trip['style'] or '?'} style")
 ui.badges([("measured (MAF)" if measured else "predicted", "good" if measured else "info"),
-           ("calibrated" if trip["calibrated"] else "uncalibrated", "good" if trip["calibrated"] else "warn"),
+           (("calibrated", "good") if trip["calibrated"] else ("adjusted to PakWheels average", "info")
+            if info.get("reference_adjusted") else ("uncalibrated", "warn")),
            (f"model: {trip['model']}", "neutral")])
 
 k1, k2, k3, k4 = st.columns(4)

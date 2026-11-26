@@ -1,0 +1,84 @@
+make,model,variant,engine_cc,transmission,fuel,city_kmpl,highway_kmpl,source_url,retrieved
+Suzuki,Alto,VX,658,Manual,petrol,18,22,https://www.pakwheels.com/new-cars/suzuki/alto/fuel-average/,2026-11-26
+Suzuki,Alto,VXR,658,Manual,petrol,18,22,https://www.pakwheels.com/new-cars/suzuki/alto/fuel-average/,2026-11-26
+Suzuki,Alto,VXL AGS,658,Automatic,petrol,18,20,https://www.pakwheels.com/new-cars/suzuki/alto/fuel-average/,2026-11-26
+Suzuki,Alto,VXR AGS,658,Automatic,petrol,18,22,https://www.pakwheels.com/new-cars/suzuki/alto/fuel-average/,2026-11-26
+Suzuki,Alto,VXR Upgraded,658,Manual,petrol,16,20,https://www.pakwheels.com/new-cars/suzuki/alto/fuel-average/,2026-11-26
+Suzuki,Alto,VXR AGS Upgraded,658,Automatic,petrol,18,22,https://www.pakwheels.com/new-cars/suzuki/alto/fuel-average/,2026-11-26
+Suzuki,Alto,VXL AGS Upgraded,658,Automatic,petrol,18,20,https://www.pakwheels.com/new-cars/suzuki/alto/fuel-average/,2026-11-26
+Suzuki,Cultus,VXL,998,Manual,petrol,16,18,https://www.pakwheels.com/new-cars/suzuki/cultus/fuel-average/,2026-11-26
+Suzuki,Cultus,VXR (2017 - Present),998,Manual,petrol,16,18,https://www.pakwheels.com/new-cars/suzuki/cultus/fuel-average/,2026-11-26
+Suzuki,Cultus,Auto Gear Shift,998,Automatic,petrol,16,17,https://www.pakwheels.com/new-cars/suzuki/cultus/fuel-average/,2026-11-26
+Suzuki,Wagon R,VX,998,Manual,petrol,14,17,https://www.pakwheels.com/new-cars/suzuki/wagon-r/fuel-average/,2026-11-26
+Suzuki,Wagon R,VXR,998,Manual,petrol,16,18,https://www.pakwheels.com/new-cars/suzuki/wagon-r/fuel-average/,2026-11-26
+Suzuki,Wagon R,VXL,998,Manual,petrol,16,18,https://www.pakwheels.com/new-cars/suzuki/wagon-r/fuel-average/,2026-11-26
+Suzuki,Wagon R,AGS,998,Automatic,petrol,16,17,https://www.pakwheels.com/new-cars/suzuki/wagon-r/fuel-average/,2026-11-26
+Suzuki,Swift,GL Manual,1197,Manual,petrol,14,18,https://www.pakwheels.com/new-cars/suzuki/swift/fuel-average/,2026-11-26
+Suzuki,Swift,GLX CVT,1197,Automatic,petrol,14,17,https://www.pakwheels.com/new-cars/suzuki/swift/fuel-average/,2026-11-26
+Suzuki,Swift,GL CVT,1197,Automatic,petrol,14,18,https://www.pakwheels.com/new-cars/suzuki/swift/fuel-average/,2026-11-26
+Suzuki,Swift,GL CVT Limited Edition,1197,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/suzuki/swift/fuel-average/,2026-11-26
+Suzuki,Bolan,VX Euro II,796,Manual,petrol,12,14,https://www.pakwheels.com/new-cars/suzuki/bolan/fuel-average/,2026-11-26
+Suzuki,Bolan,Cargo Van Euro II,796,Manual,petrol,12,13,https://www.pakwheels.com/new-cars/suzuki/bolan/fuel-average/,2026-11-26
+Suzuki,Bolan,VX Euro II AC,796,Manual,petrol,12,13,https://www.pakwheels.com/new-cars/suzuki/bolan/fuel-average/,2026-11-26
+Suzuki,Mehran,VX Euro II,800,Manual,petrol,13,18,https://www.pakwheels.com/new-cars/suzuki/mehran/fuel-average/,2026-11-26
+Suzuki,Mehran,VXR Euro II,800,Manual,petrol,13,18,https://www.pakwheels.com/new-cars/suzuki/mehran/fuel-average/,2026-11-26
+Suzuki,Mehran,VX Euro II (CNG),800,Manual,CNG,13,18,https://www.pakwheels.com/new-cars/suzuki/mehran/fuel-average/,2026-11-26
+Suzuki,Mehran,VXR Euro II (CNG),800,Manual,CNG,13,18,https://www.pakwheels.com/new-cars/suzuki/mehran/fuel-average/,2026-11-26
+Suzuki,Mehran,VX Euro II Limited Edition,800,Manual,petrol,13,18,https://www.pakwheels.com/new-cars/suzuki/mehran/fuel-average/,2026-11-26
+Toyota,Corolla,GLi 1.3 VVTi Special Edition,1298,Manual,petrol,12,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,XLi VVTi,1299,Manual,petrol,12,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,GLi Automatic 1.3 VVTi,1299,Automatic,petrol,12,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,GLi 1.3 VVTi,1299,Manual,petrol,12,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,XLi Automatic,1299,Automatic,petrol,12,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis Automatic 1.6,1598,Automatic,petrol,12,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis Manual 1.6,1598,Manual,petrol,12,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis X Automatic 1.6,1598,Automatic,petrol,12,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis X Manual 1.6,1598,Manual,petrol,12,15,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis X Automatic 1.6 Special Edition,1598,Automatic,petrol,12,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis 1.6 X CVT-i,1598,Automatic,petrol,14,16,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis 1.6 X CVT-i Special Edition,1598,Automatic,petrol,14,17,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis Grande X CVT-i 1.8 Beige Interior,1798,Automatic,petrol,12,14,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis X 1.8,1798,Manual,petrol,9,13,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis X CVT-i 1.8,1798,Automatic,petrol,12,14,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis Grande X CVT-i 1.8 Black Interior,1798,Automatic,petrol,12,14,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis Grande X CVT-i 1.8 Dark Chestnut Interior,1798,Automatic,petrol,12,14,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis Grande CVT-i 1.8,1798,Automatic,petrol,10,13,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis Grande 1.8,1798,Manual,petrol,12,14,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis 1.8,1798,Manual,petrol,9,13,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Corolla,Altis CVT-i 1.8,1798,Automatic,petrol,8,12,https://www.pakwheels.com/new-cars/toyota/corolla/fuel-average/,2026-11-26
+Toyota,Yaris,GLI MT 1.3,1329,Manual,petrol,13,16,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Toyota,Yaris,GLI CVT 1.3,1329,Automatic,petrol,13,15,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Toyota,Yaris,ATIV MT 1.3,1329,Manual,petrol,14,16,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Toyota,Yaris,ATIV CVT 1.3,1329,Automatic,petrol,13,15,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Toyota,Yaris,AERO CVT 1.3,1329,Automatic,petrol,13,16,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Toyota,Yaris,ATIV X MT 1.5,1496,Manual,petrol,13,15,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Toyota,Yaris,ATIV X CVT 1.5,1496,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Toyota,Yaris,AERO CVT 1.5,1496,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Toyota,Yaris,ATIV X CVT 1.5 Beige Interior,1496,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Toyota,Yaris,ATIV X CVT 1.5 Black Interior,1496,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/toyota/yaris/fuel-average/,2026-11-26
+Honda,City,1.2L M/T,1199,Manual,petrol,13,16,https://www.pakwheels.com/new-cars/honda/city/fuel-average/,2026-11-26
+Honda,City,1.2L CVT,1199,Automatic,petrol,11,14,https://www.pakwheels.com/new-cars/honda/city/fuel-average/,2026-11-26
+Honda,City,1.5L CVT,1497,Automatic,petrol,12,16,https://www.pakwheels.com/new-cars/honda/city/fuel-average/,2026-11-26
+Honda,City,1.5L ASPIRE M/T,1497,Manual,petrol,13,16,https://www.pakwheels.com/new-cars/honda/city/fuel-average/,2026-11-26
+Honda,City,1.5L ASPIRE CVT,1497,Automatic,petrol,14,16,https://www.pakwheels.com/new-cars/honda/city/fuel-average/,2026-11-26
+Honda,City,1.5L ASPIRE S CVT,1497,Automatic,petrol,14,16,https://www.pakwheels.com/new-cars/honda/city/fuel-average/,2026-11-26
+Honda,City,Prosmatec 1.5 i-VTEC,1497,Automatic,petrol,11,14,https://www.pakwheels.com/new-cars/honda/city/fuel-average/,2026-11-26
+Honda,Civic,Standard,1498,Automatic,petrol,11,14,https://www.pakwheels.com/new-cars/honda/civic/fuel-average/,2026-11-26
+Honda,Civic,Oriel,1498,Automatic,petrol,11,14,https://www.pakwheels.com/new-cars/honda/civic/fuel-average/,2026-11-26
+Honda,Civic,RS,1498,Automatic,petrol,11,14,https://www.pakwheels.com/new-cars/honda/civic/fuel-average/,2026-11-26
+KIA,Picanto,1.0 MT,998,Manual,petrol,12,15,https://www.pakwheels.com/new-cars/kia/picanto/fuel-average/,2026-11-26
+KIA,Picanto,1.0 AT,998,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/kia/picanto/fuel-average/,2026-11-26
+KIA,Sportage,FWD,1999,Automatic,petrol,10,12,https://www.pakwheels.com/new-cars/kia/sportage/fuel-average/,2026-11-26
+KIA,Sportage,AWD,1999,Automatic,petrol,10,12,https://www.pakwheels.com/new-cars/kia/sportage/fuel-average/,2026-11-26
+KIA,Sportage,Alpha,1999,Automatic,petrol,10,12,https://www.pakwheels.com/new-cars/kia/sportage/fuel-average/,2026-11-26
+KIA,Sportage,Black Limited Edition,1999,Automatic,petrol,10,12,https://www.pakwheels.com/new-cars/kia/sportage/fuel-average/,2026-11-26
+KIA,Sportage,Clear White Limited Edition,1999,Automatic,petrol,10,12,https://www.pakwheels.com/new-cars/kia/sportage/fuel-average/,2026-11-26
+Changan,Alsvin,1.3L MT Comfort,1370,Manual,petrol,13,18,https://www.pakwheels.com/new-cars/changan/alsvin/fuel-average/,2026-11-26
+Changan,Alsvin,1.5L DCT Comfort,1480,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/changan/alsvin/fuel-average/,2026-11-26
+Changan,Alsvin,1.5L DCT Lumiere,1480,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/changan/alsvin/fuel-average/,2026-11-26
+Changan,Alsvin,Black Edition,1480,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/changan/alsvin/fuel-average/,2026-11-26
+Hyundai,Elantra,Hybrid,1580,Automatic,hybrid,22,24,https://www.pakwheels.com/new-cars/hyundai/elantra/fuel-average/,2026-11-26
+Toyota,Corolla Cross,1.8 HEV X,1798,Automatic,hybrid,17,15,https://www.pakwheels.com/new-cars/toyota/corolla-cross/fuel-average/,2026-11-26
+Toyota,Corolla Cross,1.8 HEV,1798,Automatic,hybrid,18,16,https://www.pakwheels.com/new-cars/toyota/corolla-cross/fuel-average/,2026-11-26
+Toyota,Corolla Cross,1.8 X,1798,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/toyota/corolla-cross/fuel-average/,2026-11-26
+Toyota,Corolla Cross,1.8,1798,Automatic,petrol,12,15,https://www.pakwheels.com/new-cars/toyota/corolla-cross/fuel-average/,2026-11-26

@@ -2,7 +2,7 @@
 import pandas as pd
 import streamlit as st
 
-from core import car_photos, cars, db
+from core import car_photos, cars, db, pk_reference
 from ui import components as ui
 from ui import session
 
@@ -92,8 +92,8 @@ if my_cars:
             with cols[i % 3]:
                 st.caption(label)
                 st.markdown(f"**{value}**")
-        text, ok = session.calibration_text(car)
-        ui.badge("calibrated" if ok else "uncalibrated", "good" if ok else "warn")
+        label, kind, text = session.calibration_state(car)
+        ui.badge(label, kind)
         st.caption(text)
         if (car.get("fuel_type") or "petrol") != "petrol":
             st.warning(f"{car['fuel_type']} car: the model was trained on petrol cars, so its estimates are less "
@@ -118,6 +118,27 @@ if my_cars:
         ui.metric_tile("Full-tank range", session.fmt(prof["range_km"], "km", 0),
                        help="Tank size ÷ your average L/100 km × 100." if car.get("tank_litres")
                        else "Add the tank size below to see the range.")
+
+    # ---------------- Pakistani reference (PakWheels) ----------------
+    ref = pk_reference.match(car)
+    with ui.card("Pakistani reference (PakWheels)"):
+        if ref:
+            r1, r2, r3 = st.columns(3)
+            r1.metric("PakWheels city", f"{ref['city_kmpl']:.0f} km/L", help=f"{100 / ref['city_kmpl']:.1f} L/100 km")
+            r2.metric("PakWheels highway", f"{ref['highway_kmpl']:.0f} km/L",
+                      help=f"{100 / ref['highway_kmpl']:.1f} L/100 km")
+            mine = 100 / prof["avg_l100"] if prof.get("avg_l100") else None
+            r3.metric("Your average", f"{mine:.1f} km/L" if mine else "–", help="Distance-weighted over your trips.")
+            st.caption(f"{ref['make']} {ref['model']} around {ref['engine_cc']} cc, median of: "
+                       f"{', '.join(ref['variants'][:6])}{' ...' if len(ref['variants']) > 6 else ''}. "
+                       f"[PakWheels fuel average]({ref['source_url']}), retrieved {ref['retrieved']}. PakWheels does "
+                       "not say whether these are owner reports or manufacturer figures.")
+            if label != "calibrated":
+                st.caption("Until your car is calibrated, speed-only predictions are scaled so that typical city "
+                           "and highway driving matches these figures.")
+        else:
+            st.caption(f"{car.get('make')} {car.get('model')} is not in the PakWheels reference table yet, so "
+                       "predictions are not adjusted. Calibrate with a MAF trip or a fill-up for your own car.")
 
     b1, b2 = st.columns(2)
     for col, key, title in [(b1, "best_trip", "Best trip"), (b2, "worst_trip", "Least efficient trip")]:
