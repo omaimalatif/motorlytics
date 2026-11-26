@@ -270,7 +270,8 @@ def car_spec(car: dict) -> dict:
             "boost": 0, "weight": np.nan, "cls": "Car"}
 
 
-def ingest_logs(user: dict, car: dict, files, temp=np.nan, calibration_path=None) -> dict:
+def ingest_logs(user: dict, car: dict, files, temp=np.nan, calibration_path=None, update_calibration=True,
+                extra_info: dict = None) -> dict:
     """Save uploaded logs, predict their trips (updating the car's calibration from MAF trips) and store
     them in the trips table. files: [(filename, bytes)]. Returns predict_logs' result + 'trip_ids'."""
     from io import BytesIO
@@ -289,7 +290,7 @@ def ingest_logs(user: dict, car: dict, files, temp=np.nan, calibration_path=None
     except Exception:                                    # never block an upload on the reference table
         prior = None
     res = predict_logs(dfs, car_spec(car), car_key=car["car_key"], petrol=user.get("petrol_pkr"), temp=temp,
-                       calibration_path=calibration_path, prior=prior)
+                       calibration_path=calibration_path, prior=prior, update_calibration=update_calibration)
     ids = []
     for r in res["trips"]:
         file_idx = int(str(r["trip_key"]).split("_")[0].removeprefix("log") or 1) - 1 \
@@ -306,7 +307,7 @@ def ingest_logs(user: dict, car: dict, files, temp=np.nan, calibration_path=None
                        r["possible_saving_pct"], "idle_pct": r["idle_pct"], "k": r["k"],
                        "calibration": res["calibration"], "main_l100": main,
                        "reference_adjusted": r["reference_adjusted"],
-                       "reference_source": (res["reference"] or {}).get("source_url")},
+                       "reference_source": (res["reference"] or {}).get("source_url"), **(extra_info or {})},
             route_json={"path": r["route"], "speed": r["speed_trace"], "trip_key": r["trip_key"],
                         "preds": r["preds_uncalibrated"]},
             raw_file=str(paths[min(file_idx, len(paths) - 1)])))
@@ -332,3 +333,29 @@ def log_fillup(car: dict, trips: list, litres: float, date: str, calibration_pat
     mf.save_calibration(store, path)
     fid = db.add_fillup(car["id"], litres, km, date, [t["id"] for t in trips])
     return {"fillup_id": fid, "message": msg, "now": calibration_status(car["car_key"], path)}
+
+
+def demo_car_for(user: dict, fetched: dict) -> dict:
+    """Get or create the demo car for a fetched track / bundled sample, built from the track's own vehicle
+    info and labelled as not the user's car. Never used for the user's calibration."""
+    from core import db
+    make, model, year = fetched.get("make") or "Unknown", fetched.get("model") or "car", fetched.get("year")
+    label = ("enviroCar demo, not your car" if "envirocar" in str(fetched.get("source", "")).lower()
+             else "Sample demo, not your car")
+    for c in db.get_cars(user["id"]):
+        if c.get("is_demo") and c["make"] == make and c["model"] == model and c.get("year") == year                 and c.get("disp_L") == fetched.get("disp_L"):
+            return c
+    return db.add_car(user["id"], make, model, year, fetched.get("disp_L"), fetched.get("cylinders"),
+                      nickname=label, fuel_type="petrol", is_demo=1)
+
+
+def ingest_demo(user: dict, fetched: dict, temp=np.nan, calibration_path=None) -> dict:
+    """Analyse a fetched enviroCar track (or bundled sample) under its own demo car: the user's cars and their
+    calibration are never touched, and the demo car's calibration is not updated either."""
+    car = demo_car_for(user, fetched)
+    res = ingest_logs(user, car, [(fetched["filename"], fetched["bytes"])], temp=temp,
+                      calibration_path=calibration_path, update_calibration=False,
+                      extra_info={"demo": True, "demo_source": fetched.get("source"),
+                                  "demo_track": fetched.get("track_id")})
+    res["demo_car"] = car
+    return res

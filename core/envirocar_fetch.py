@@ -119,6 +119,9 @@ def fetch_unseen_track(max_downloads: int = MAX_DOWNLOADS, timeout: int = 20, ba
                 _remember(t["id"])
                 return {"filename": f"envirocar_{t['id']}.csv", "bytes": buf.getvalue().encode(), "track_id": t["id"],
                         "car": f"{sp.get('manufacturer', '?')} {sp.get('model', '?')} {sp.get('constructionYear', '')}".strip(),
+                        "make": str(sp.get("manufacturer") or "Unknown").strip(),
+                        "model": str(sp.get("model") or "car").strip(),
+                        "year": int(sp["constructionYear"]) if str(sp.get("constructionYear", "")).isdigit() else None,
                         "disp_L": None if np.isnan(disp) else round(float(disp), 2),
                         "cylinders": mf.estimate_cylinders(disp), "dist_km": round(km, 2),
                         "maf_share": round(float(d["maf"].notna().mean()), 3), "begin": t.get("begin"),
@@ -138,7 +141,10 @@ def fallback_sample(exclude=(), seed=None) -> dict:
         idx = pd.read_csv(SAMPLES / "index.csv")
     pref = idx[idx["source"].str.startswith("enviroCar")]
     row = (pref if len(pref) else idx).sample(1, random_state=seed).iloc[0]
+    words = str(row["car"]).split()
+    year = int(words[-1]) if words and words[-1].isdigit() else None
     return {"filename": row["file"], "bytes": (SAMPLES / row["file"]).read_bytes(), "track_id": None,
-            "car": row["car"], "disp_L": float(row["disp_L"]), "cylinders": float(row["cylinders"]),
+            "car": row["car"], "make": words[0] if words else "Unknown",
+            "model": " ".join(words[1:-1] if year else words[1:]) or "car", "year": year, "disp_L": float(row["disp_L"]), "cylinders": float(row["cylinders"]),
             "dist_km": float(row["dist_km"]), "maf_share": None, "begin": None,
             "source": f"bundled sample ({row['source']})"}

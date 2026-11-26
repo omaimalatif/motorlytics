@@ -71,7 +71,8 @@ def require_user() -> dict:
 
 
 def user_cars(u: dict) -> list:
-    return db.get_cars(u["id"])
+    """The user's own cars (demo cars from fetched trips are not offered in car pickers)."""
+    return db.get_cars(u["id"], include_demo=False)
 
 
 def active_car(u: dict) -> dict | None:
@@ -108,20 +109,36 @@ def calibration_text(car: dict) -> tuple:
     return text, label == "calibrated"
 
 
+def display_car(car: dict) -> str:
+    """Car name for lists and headers; demo cars say they are not the user's car."""
+    if not car:
+        return "no car"
+    if car.get("is_demo"):
+        return f"{car.get('nickname') or 'Demo, not your car'} ({cars.car_label(car)})"
+    return cars.car_label(car)
+
+
 def trips_df(u: dict, car_id=None) -> pd.DataFrame:
     """The user's trips as a DataFrame with handy derived columns."""
     t = pd.DataFrame(db.get_trips(u["id"], car_id))
     if t.empty:
         return t
-    t["started"] = pd.to_datetime(t["started_at"], errors="coerce")
+    # format="mixed": start times come with and without fractions of a second; a single inferred format
+    # would turn the others into NaT
+    t["started"] = pd.to_datetime(t["started_at"], errors="coerce", format="mixed")
     t["date"] = t["started"].dt.date
     t["hour"] = t["started"].dt.hour
     t["l100"] = t["measured_l100"].fillna(t["pred_l100"])            # measured where available
     t["litres"] = t["l100"] * t["dist_km"] / 100
     t["source"] = t["measured_l100"].notna().map({True: "measured", False: "predicted"})
-    car_names = {c["id"]: cars.car_label(c) for c in db.get_cars(u["id"])}
+    car_names = {c["id"]: display_car(c) for c in db.get_cars(u["id"])}
     t["car"] = t["car_id"].map(car_names)
     return t
+
+
+def fmt_dt(ts, fmt: str = "%d %b %Y, %H:%M", none: str = "date unknown") -> str:
+    """Format a timestamp; never fails on a missing date."""
+    return ts.strftime(fmt) if ts is not None and pd.notna(ts) else none
 
 
 def open_trip(trip_id: int) -> None:

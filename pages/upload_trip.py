@@ -57,7 +57,6 @@ def analyse(file_list):
             st.stop()
     st.session_state["car_id"] = chosen_car["id"]
     st.session_state["last_upload"] = res["trip_ids"]
-    st.session_state.pop("fetched_log", None)
     st.toast(f"Saved {session.plural(len(res['trip_ids']), 'trip')} · {session.model_label(res['model'])}")
     session.open_trip(res["trip_ids"][0])
 
@@ -86,14 +85,20 @@ with ui.card("No log at hand? Try a real trip", "Downloads one track recorded by
                     + f" · {fl['dist_km']:.1f} km · {fl['source']}")
         if fl.get("track_id"):
             st.caption(f"enviroCar track {fl['track_id']}" + (f", recorded {fl['begin'][:10]}" if fl.get("begin") else ""))
-        mine = chosen_car.get("disp_L")
-        if fl.get("disp_L") and mine and abs(fl["disp_L"] - mine) > 0.25:
-            st.caption(f"Recorded with a {fl['disp_L']:.1f} L engine; it will be analysed as your "
-                       f"{cars.car_title(chosen_car)} ({mine:.1f} L), so the prediction uses your engine size. "
-                       "Add a car with the same engine on the My car page for a like-for-like test.")
+        st.caption("It is analysed as a separate demo car with this vehicle's own engine size, labelled "
+                   "\"enviroCar demo, not your car\". Your cars and their calibration are not changed.")
         a1, a2 = st.columns([1, 1])
         if a1.button("Analyse this trip", type="primary", icon=":material/analytics:", key="analyse_fetched"):
-            analyse([(fl["filename"], fl["bytes"])])
+            with st.spinner("Predicting fuel use for the demo trip..."):
+                try:
+                    res = app_core.ingest_demo(u, fl, temp=temp if temp is not None else np.nan)
+                except Exception as e:                           # unreadable log etc.
+                    st.error(f"Could not use this trip: {e}")
+                    st.stop()
+            st.session_state["last_upload"] = res["trip_ids"]
+            st.session_state.pop("fetched_log", None)
+            st.toast(f"Demo trip saved under \"{res['demo_car']['nickname']}\" (not your car)")
+            session.open_trip(res["trip_ids"][0])
         if a2.button("Discard", key="discard_fetched"):
             st.session_state.pop("fetched_log", None)
             st.rerun()

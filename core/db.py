@@ -61,7 +61,9 @@ CAR_EXTRA_COLUMNS = {"nickname": "TEXT", "colour": "TEXT", "transmission": "TEXT
                      "body_type": "TEXT", "assembled": "TEXT", "tank_litres": "REAL", "odometer_km": "REAL",
                      "registration": "TEXT",
                      # picture: photo_source = 'user' | 'wikipedia' | 'none' (looked up, nothing found) | NULL
-                     "photo_path": "TEXT", "photo_source": "TEXT", "photo_credit": "TEXT"}
+                     "photo_path": "TEXT", "photo_source": "TEXT", "photo_credit": "TEXT",
+                     # 1 = demo car built from a fetched enviroCar track / bundled sample (not the user's car)
+                     "is_demo": "INTEGER"}
 CAR_FIELDS = ["make", "model", "year", "disp_L", "cylinders", *CAR_EXTRA_COLUMNS]
 
 
@@ -133,9 +135,10 @@ def get_car(car_id) -> dict | None:
     return dict(r) if r else None
 
 
-def get_cars(user_id) -> list:
+def get_cars(user_id, include_demo: bool = True) -> list:
+    q = "SELECT * FROM cars WHERE user_id=?" + ("" if include_demo else " AND COALESCE(is_demo, 0) = 0")
     with connect() as con:
-        return _rows(con.execute("SELECT * FROM cars WHERE user_id=? ORDER BY id", (user_id,)))
+        return _rows(con.execute(q + " ORDER BY id", (user_id,)))
 
 
 def update_car(car_id, user_id, **fields) -> dict | None:
