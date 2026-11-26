@@ -1,0 +1,77 @@
+"""Per-car calibration: status per model tier, fill-up form, fill-up history."""
+from datetime import date
+
+import pandas as pd
+import streamlit as st
+
+from core import app_core, cars, db
+from ui import components as ui
+from ui import session
+
+u = session.require_user()
+ui.page_header("Calibration", "Each car gets a correction factor k = real fuel / model estimate, from trips with "
+               "MAF or from fill-ups. k is the median of the 10 most recent calibration trips.")
+car = session.active_car(u)
+if not car:
+    ui.empty_state("Add your car first.", "Add your car", session.PAGES["car"])
+    st.stop()
+st.subheader(cars.car_label(car))
+
+status = app_core.calibration_status(car["car_key"])
+tiers = {"behaviour_only": "Speed only (phone logs)", "full_no_load": "Speed + RPM", "full": "Speed + RPM + load"}
+cols = st.columns(3)
+for c, (tier, label) in zip(cols, tiers.items()):
+    with c:
+        s = status.get(tier)
+        with ui.card(label):
+            if s:
+                ui.badge("calibrated", "good")
+                st.metric("k", f"{s['k']:.3f}", help="Predictions are multiplied by k.")
+                st.caption(f"{s['n_trips']} trips · last {s['last'][:10]}")
+            else:
+                ui.badge("uncalibrated", "warn")
+                st.caption("Upload a log with MAF, or log a fill-up below.")
+
+st.subheader("Log a fill-up")
+st.caption("Fill the tank to full, note the litres, and select the trips driven since the previous full tank. "
+           "k = litres ÷ predicted litres over those trips.")
+t = session.trips_df(u, car["id"])
+fills = db.get_fillups(car["id"])
+if t.empty:
+    st.info("Upload the trips you drove since your last fill-up first.")
+else:
+    covered = {i for f in fills for i in f["trip_ids"]}
+    open_trips = t[~t["id"].isin(covered)]
+    with st.form("fillup"):
+        c1, c2 = st.columns(2)
+        litres = c1.number_input("Litres filled", min_value=0.1, value=None, step=0.1)
+        when = c2.date_input("Fill-up date", value=date.today())
+        opts = open_trips["id"].tolist()
+        # trips with MAF already calibrated the car when they were uploaded: not pre-selected (no double counting)
+        default = open_trips.loc[open_trips["measured_l100"].isna(), "id"].tolist()
+        labels = {r["id"]: f"{r['started']:%d %b %Y %H:%M} · {r['dist_km']:.1f} km"
+                           + (" · MAF" if pd.notna(r["measured_l100"]) else "") for _, r in open_trips.iterrows()}
+        sel = st.multiselect("Trips since the last fill-up", opts, default=default, format_func=lambda i: labels[i],
+                             help="Trips marked MAF already calibrated your car when uploaded; include them only "
+                                  "if the fill-up covers them anyway.")
+        if st.form_submit_button("Save fill-up", type="primary"):
+            if not litres or not sel:
+                st.error("Enter the litres and select at least one trip.")
+            else:
+                chosen = [db.get_trip(i, u["id"]) for i in sel]
+                try:
+                    out = app_core.log_fillup(car, chosen, float(litres), str(when))
+                    st.success(out["message"])
+                    st.rerun()
+                except ValueError as e:
+                    st.error(str(e))
+
+st.subheader("Fill-up history")
+if fills:
+    st.dataframe(pd.DataFrame([{"date": f["date"], "litres": f["litres"], "km": f["km"], "trips": len(f["trip_ids"]),
+                                "L/100 km": f["litres"] / f["km"] * 100 if f["km"] else None} for f in fills]),
+                 hide_index=True, width="stretch",
+                 column_config={"km": st.column_config.NumberColumn(format="%.1f"),
+                                "L/100 km": st.column_config.NumberColumn(format="%.2f")})
+else:
+    st.caption("No fill-ups yet.")

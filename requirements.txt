@@ -8,3 +8,6 @@ pyarrow
 openpyxl
 joblib
 requests
+streamlit>=1.44
+plotly
+pydeck

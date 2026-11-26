@@ -22,7 +22,8 @@ import pandas as pd
 import motorlytics_features as mf
 from core.app_core import predict_logs
 
-APP_ONLY = ("route", "speed_trace", "start_dt", "eco_score", "measured", "calibrated")
+APP_ONLY = ("route", "speed_trace", "start_dt", "eco_score", "measured", "calibrated", "trip_key",
+            "preds_uncalibrated")   # extras for the app, not part of the CLI output
 
 ap = argparse.ArgumentParser()
 ap.add_argument("csv", nargs="+", help="one or more trip logs")

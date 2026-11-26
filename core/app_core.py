@@ -14,7 +14,9 @@ predicted) per tier over the car's 10 most recent calibration trips; a fill-up a
 k = litres / sum(predicted litres). A log is predicted with the k stored BEFORE it is added.
 """
 import json
+import os
 from functools import lru_cache
+from pathlib import Path
 
 import joblib
 import numpy as np
@@ -26,6 +28,8 @@ from core import scoring
 TIERS = ["behaviour_only", "full_no_load", "full"]
 MAX_ROUTE_POINTS = 400
 MAX_SPEED_POINTS = 600
+# calibration store used when no path is given (MOTORLYTICS_CALIB overrides, e.g. for tests)
+APP_CALIB = Path(os.environ.get("MOTORLYTICS_CALIB", mf.CALIB_PATH))
 
 
 @lru_cache(maxsize=1)
@@ -64,8 +68,19 @@ def _downsample(arr: np.ndarray, n: int) -> np.ndarray:
 
 def calibration_status(car_key, calibration_path=None) -> dict:
     """{tier: {'k', 'n_trips', 'n_entries', 'last'}} for the tiers this car is calibrated for."""
-    store = mf.load_calibration(calibration_path or mf.CALIB_PATH)
+    store = mf.load_calibration(calibration_path or APP_CALIB)
     return {t: c for t in TIERS if (c := mf.car_k(store, car_key, t))}
+
+
+def add_fillup_entry(store: dict, car_key, litres_filled: float, predicted_litres: dict, n_trips: int,
+                     km: float, when: str) -> str:
+    """Add one fill-up calibration entry: k per tier = litres filled / predicted litres over the trips."""
+    ratios = {tr: litres_filled / v for tr, v in predicted_litres.items() if v > 0}
+    mf.add_calibration(store, car_key, ratios, n_trips, "fillup", when,
+                       {"litres": litres_filled, "km": round(km, 2),
+                        "predicted_litres": {tr: round(v, 3) for tr, v in predicted_litres.items()}})
+    return (f"fill-up of {litres_filled} L over {n_trips} trips "
+            f"(k {', '.join(f'{tr}={v:.3f}' for tr, v in ratios.items())})")
 
 
 def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature_set=None,
@@ -81,7 +96,7 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
     """
     if fillup_litres is not None and not car_key:
         raise ValueError("a fill-up needs a car id (the calibration is stored per car)")
-    calibration_path = calibration_path or mf.CALIB_PATH
+    calibration_path = calibration_path or APP_CALIB
     meta = _meta()
 
     # ---------------- read logs -> trips ----------------
@@ -186,6 +201,8 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
         r["eco_score"] = float(t["eco_score"])
         r["measured"] = measured is not None
         r["calibrated"] = bool(cal)
+        r["trip_key"] = t["trip_key"]
+        r["preds_uncalibrated"] = {tr: round(float(preds[tr][i]), 4) for tr in preds}   # for later fill-ups
         if {"lat", "lon"} <= set(rows.columns):
             ll = rows[["lat", "lon"]].dropna()
             ll = ll[(ll["lat"].abs() > 1e-6) | (ll["lon"].abs() > 1e-6)]
@@ -203,14 +220,10 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
         added = []
         if fillup_litres is not None:
             litres = {tr: float(np.sum(preds[tr] * trips["dist_km"].to_numpy() / 100)) for tr in avail}
-            ratios = {tr: fillup_litres / v for tr, v in litres.items() if v > 0}
             when = str(pd.to_datetime(trips["start_dt"]).max()) if trips["start_dt"].notna().any() \
                 else pd.Timestamp.now().isoformat(timespec="seconds")
-            mf.add_calibration(store, car_key, ratios, len(trips), "fillup", when,
-                               {"litres": fillup_litres, "km": round(float(trips["dist_km"].sum()), 2),
-                                "predicted_litres": {tr: round(v, 3) for tr, v in litres.items()}})
-            added.append(f"fill-up of {fillup_litres} L over {len(trips)} trips "
-                         f"(k {', '.join(f'{tr}={v:.3f}' for tr, v in ratios.items())})")
+            added.append(add_fillup_entry(store, car_key, fillup_litres, litres, len(trips),
+                                          float(trips["dist_km"].sum()), when))
         if "l_per_100km" in trips and fillup_litres is None:   # a fill-up already covers these trips
             for i, t in trips.iterrows():
                 if pd.isna(t["l_per_100km"]):
@@ -226,3 +239,78 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
 
     return {"tier": fs, "why": why, "model": meta[f"best_{fs}"], "tips_model": meta["best_behaviour_only"],
             "calibration": cal_txt, "calibrated": bool(cal), "k": k, "trips": results, "store_update": store_update}
+
+
+# ------------------------------------------------------------------------------
+# App services: store uploaded logs as trips, log fill-ups (used by the Streamlit pages)
+# ------------------------------------------------------------------------------
+def _uploads_dir(user_id):
+    from core import db
+    d = db.DB_PATH.parent / "uploads" / f"user{user_id}"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def car_spec(car: dict) -> dict:
+    """DB car row -> the car dict predict_logs expects."""
+    return {"disp_L": car.get("disp_L") if car.get("disp_L") is not None else np.nan,
+            "cylinders": car.get("cylinders") if car.get("cylinders") is not None else np.nan,
+            "boost": 0, "weight": np.nan, "cls": "Car"}
+
+
+def ingest_logs(user: dict, car: dict, files, temp=np.nan, calibration_path=None) -> dict:
+    """Save uploaded logs, predict their trips (updating the car's calibration from MAF trips) and store
+    them in the trips table. files: [(filename, bytes)]. Returns predict_logs' result + 'trip_ids'."""
+    from io import BytesIO
+    from core import db
+    up = _uploads_dir(user["id"])
+    stamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
+    paths, dfs = [], []
+    for name, data in files:
+        safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in name)[-80:]
+        p = up / f"{stamp}_{safe}"
+        p.write_bytes(data)
+        paths.append(p)
+        dfs.append(pd.read_csv(BytesIO(data), low_memory=False))
+    res = predict_logs(dfs, car_spec(car), car_key=car["car_key"], petrol=user.get("petrol_pkr"), temp=temp,
+                       calibration_path=calibration_path)
+    ids = []
+    for r in res["trips"]:
+        file_idx = int(str(r["trip_key"]).split("_")[0].removeprefix("log") or 1) - 1 \
+            if str(r["trip_key"]).startswith("log") else 0
+        main = r.get("measured_l_per_100km_from_maf", r["pred_l_per_100km"])
+        ids.append(db.add_trip(
+            user_id=user["id"], car_id=car["id"],
+            started_at=r["start_dt"] or pd.Timestamp.now().isoformat(timespec="seconds"),
+            dist_km=r["dist_km"], dur_min=r["duration_min"], avg_speed=r["avg_speed"], road_type=r["road_type"],
+            measured_l100=r.get("measured_l_per_100km_from_maf"), pred_l100=r["pred_l_per_100km"],
+            tier=res["tier"], model=res["model"], calibrated=int(res["calibrated"]), eco_score=r["eco_score"],
+            style=r["style"], cost_pkr=r.get("trip_cost_pkr"),
+            tips_json={"tips": r["tips"], "eco_l100": r["eco_l_per_100km"], "possible_saving_pct":
+                       r["possible_saving_pct"], "idle_pct": r["idle_pct"], "k": r["k"],
+                       "calibration": res["calibration"], "main_l100": main},
+            route_json={"path": r["route"], "speed": r["speed_trace"], "trip_key": r["trip_key"],
+                        "preds": r["preds_uncalibrated"]},
+            raw_file=str(paths[min(file_idx, len(paths) - 1)])))
+    res["trip_ids"] = ids
+    return res
+
+
+def log_fillup(car: dict, trips: list, litres: float, date: str, calibration_path=None) -> dict:
+    """Fill-up calibration over stored trips: k per tier = litres / sum(predicted litres of those trips).
+    Uses each trip's stored uncalibrated predictions (only tiers that every selected trip has)."""
+    from core import db
+    if not trips:
+        raise ValueError("select the trips driven since the last fill-up")
+    preds = [((t.get("route") or {}).get("preds") or {}) for t in trips]
+    tiers = [tr for tr in TIERS if all(tr in p for p in preds)]
+    if not tiers:
+        raise ValueError("these trips have no stored predictions (upload them again)")
+    pred_litres = {tr: float(sum(p[tr] * t["dist_km"] / 100 for p, t in zip(preds, trips))) for tr in tiers}
+    km = float(sum(t["dist_km"] for t in trips))
+    path = calibration_path or APP_CALIB
+    store = mf.load_calibration(path)
+    msg = add_fillup_entry(store, car["car_key"], litres, pred_litres, len(trips), km, date)
+    mf.save_calibration(store, path)
+    fid = db.add_fillup(car["id"], litres, km, date, [t["id"] for t in trips])
+    return {"fillup_id": fid, "message": msg, "now": calibration_status(car["car_key"], path)}
