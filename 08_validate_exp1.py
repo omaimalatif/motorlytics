@@ -17,10 +17,14 @@ What this data allows (checked before writing the script):
   - No GPS -> no weather; temp_c stays missing. Timestamps are epoch ms (UTC); hour / weekday use
     America/Sao_Paulo time.
 
-Scores behaviour_only (main tier for non-VED logs), full_no_load and full with the saved best
-models, same trip filters as the VED build, and writes
+Scores behaviour_only (main tier for non-VED logs), full_no_load and full with the saved best course
+models (and the best reference models for comparison), same trip filters as the VED build, and writes
 Data/processed/results_trip/external_exp1.txt (+ per-vehicle CSV and predictions parquet).
 """
+import os
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")   # single-threaded BLAS: ~2x faster here for small matrices (MLP, LWR)
+
 import json
 
 import joblib
@@ -116,7 +120,10 @@ except FileNotFoundError:
 
 # ---------------- trips, scored under each fuel assumption ----------------
 meta = json.loads((mf.MODELS / "meta_trip.json").read_text())
-bundles = {fs: joblib.load(meta["models"][meta[f"best_{fs}"]]["path"]) for fs in TIERS if f"best_{fs}" in meta}
+# "<tier>" = best COURSE model of the tier (what the app uses); "ref:<tier>" = best reference model
+model_keys = {fs: meta[f"best_{fs}"] for fs in TIERS if f"best_{fs}" in meta}
+model_keys.update({f"ref:{fs}": meta[f"best_reference_{fs}"] for fs in TIERS if f"best_reference_{fs}" in meta})
+bundles = {k: joblib.load(meta["models"][v]["path"]) for k, v in model_keys.items()}
 mf.MAX_DT = MAX_DT_EXP1                               # read at call time by add_row_features
 base = d.drop(columns=["trip", "equiv_ratio"])
 results, per_vehicle, preds = [], None, []
@@ -149,12 +156,14 @@ for fuel, (afr, dens) in FUELS.items():
         p = b["model"].predict(mf.to_matrix(t, b["features"]))
         t[f"pred_{fs}"] = p
         missing = [c for c in b["features"] if c not in t or t[c].notna().mean() < 0.5]
-        res = {"fuel": fuel, "tier": fs, "n_vehicles": t["vehid"].nunique(), "n_trips": len(t),
+        res = {"fuel": fuel, "tier": fs.split(":")[-1],
+               "group": "reference" if fs.startswith("ref:") else "course",
+               "model": model_keys[fs].split("/")[1], "n_vehicles": t["vehid"].nunique(), "n_trips": len(t),
                "rmse": float(np.sqrt(mean_squared_error(y, p))), "mae": float(mean_absolute_error(y, p)),
                "r2": float(r2_score(y, p)) if len(t) > 1 else np.nan,
                "mape": float(np.mean(np.abs((y - p) / y)) * 100), "mean_bias": float(np.mean(p - y))}
         results.append(res)
-        say(f"  {fs:15s} n_vehicles={res['n_vehicles']} n_trips={res['n_trips']}  RMSE={res['rmse']:.3f} "
+        say(f"  {res['tier']:15s} {res['group']:9s} {res['model']:12s} n_vehicles={res['n_vehicles']} n_trips={res['n_trips']}  RMSE={res['rmse']:.3f} "
             f"MAE={res['mae']:.3f} R2={res['r2']:.3f} MAPE={res['mape']:.1f}% bias={res['mean_bias']:+.2f}  "
             f"missing features: {missing or 'none'}")
     t["err"] = t["pred_behaviour_only"] - t["l_per_100km"]

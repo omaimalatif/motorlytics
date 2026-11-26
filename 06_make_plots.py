@@ -147,16 +147,33 @@ cvp = mf.PROC / "results_trip" / "cv_folds.csv"
 if cvp.exists():
     cv = pd.read_csv(cvp)
     agg = cv.groupby(["model", "feature_set"])["rmse"].agg(["mean", "std"]).reset_index()
-    models = ["Ridge", "RandomForest", "LightGBM"]; sets = ["behaviour_only", "full"]
-    fig, ax = plt.subplots(figsize=(7, 4))
-    w = 0.36
+    course = [m for m in ["DecisionTree", "MLP", "kNN", "LWR"] if m in set(agg["model"])]
+    reference = [m for m in ["Ridge", "RandomForest", "LightGBM"] if m in set(agg["model"])]
+    models = course + reference
+    sets = [s for s in ["behaviour_only", "full_no_load", "full"] if s in set(agg["feature_set"])]
+    fig, ax = plt.subplots(figsize=(10, 4.5))
+    w = 0.8 / len(sets)
+    x = np.arange(len(models))
+    if reference:                                       # shade the reference block
+        ax.axvspan(len(course) - 0.5, len(models) - 0.5, color="#f1efe8", zorder=0)
+        ax.text(len(course) - 0.4, 0.98, "reference models (beyond the syllabus)", transform=ax.get_xaxis_transform(),
+                va="top", fontsize=9, color=INK2)
+        ax.text(-0.4, 0.98, "course models", transform=ax.get_xaxis_transform(), va="top", fontsize=9,
+                color=INK, fontweight="bold")
     for k, fs in enumerate(sets):
         r = agg[agg.feature_set == fs].set_index("model").reindex(models)
-        ax.bar(np.arange(3) + (k - 0.5) * w, r["mean"], w * 0.92, yerr=r["std"], capsize=3,
-               color=C[k], label=fs.replace("_", " "), error_kw={"ecolor": INK2, "lw": 1})
-    ax.set_xticks(range(3), models); ax.legend(frameon=False)
-    ax.set(title="10-fold grouped CV: RMSE by model", ylabel="RMSE (L/100 km), lower is better")
-    save(fig, "model_comparison", agg.round(3).to_string(index=False).replace("\n", "\n  "))
+        ax.bar(x + (k - (len(sets) - 1) / 2) * w, r["mean"], w * 0.92, yerr=r["std"], capsize=2,
+               color=C[k], label=fs.replace("_", " "), error_kw={"ecolor": INK2, "lw": 0.8}, zorder=2)
+    ax.set_xticks(x, models)
+    ax.set_ylim(0, agg["mean"].max() * 1.35)
+    ax.legend(frameon=False, loc="upper right", bbox_to_anchor=(1, 0.9))
+    ax.set(title="10-fold grouped CV: RMSE by model (course vs reference)", ylabel="RMSE (L/100 km), lower is better")
+    best_c = agg[agg.model.isin(course)].sort_values("mean").groupby("feature_set").head(1)
+    best_r = agg[agg.model.isin(reference)].sort_values("mean").groupby("feature_set").head(1)
+    save(fig, "model_comparison", "best course model per feature set: "
+         + ", ".join(f"{r.feature_set} {r.model} {r['mean']:.3f}" for _, r in best_c.iterrows())
+         + "; best reference: " + ", ".join(f"{r.feature_set} {r.model} {r['mean']:.3f}" for _, r in best_r.iterrows())
+         + "\n  " + agg.round(3).to_string(index=False).replace("\n", "\n  "))
 
 # 12 predicted vs actual + 13 residuals by speed band
 tp = mf.PROC / "results_trip" / "test_predictions.parquet"

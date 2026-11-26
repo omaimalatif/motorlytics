@@ -27,36 +27,48 @@ EPA match on make/model/year (+-1): 3 of 13 vehicles (toyota corolla 2009, nissa
 === pure petrol (AFR 14.7) ===
 trips: 257 after splitting, 66 usable (>= 1 km, >= 2 min, >= 80% MAF, 2-40 L/100 km) from 3 vehicles: {'chevrolet agile 2011': 20, 'nissan versa 2016': 20, 'toyota corolla 2009': 26}
 measured L/100 km: median 8.02; behaviour features: hard accel/km median 0.00, RPA median 0.086 (VED: 0.34, 0.148)
-  behaviour_only  n_vehicles=3 n_trips=66  RMSE=1.198 MAE=0.986 R2=0.632 MAPE=11.0% bias=-0.48  missing features: ['weight', 'temp_c', 'humidity', 'wind_kmh', 'boost']
-  full_no_load    n_vehicles=3 n_trips=66  RMSE=0.913 MAE=0.760 R2=0.786 MAPE=8.8% bias=+0.28  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
-  full            n_vehicles=3 n_trips=66  RMSE=1.825 MAE=1.624 R2=0.147 MAPE=19.2% bias=+1.61  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
+  behaviour_only  course    LWR          n_vehicles=3 n_trips=66  RMSE=1.400 MAE=1.086 R2=0.498 MAPE=12.3% bias=+0.22  missing features: ['weight', 'temp_c', 'humidity', 'wind_kmh', 'boost']
+  full_no_load    course    MLP          n_vehicles=3 n_trips=66  RMSE=1.480 MAE=1.221 R2=0.439 MAPE=14.8% bias=+0.68  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
+  full            course    MLP          n_vehicles=3 n_trips=66  RMSE=3.453 MAE=2.893 R2=-2.055 MAPE=34.3% bias=+2.80  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
+  behaviour_only  reference LightGBM     n_vehicles=3 n_trips=66  RMSE=1.198 MAE=0.986 R2=0.632 MAPE=11.0% bias=-0.48  missing features: ['weight', 'temp_c', 'humidity', 'wind_kmh', 'boost']
+  full_no_load    reference LightGBM     n_vehicles=3 n_trips=66  RMSE=0.913 MAE=0.760 R2=0.786 MAPE=8.8% bias=+0.28  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
+  full            reference LightGBM     n_vehicles=3 n_trips=66  RMSE=1.825 MAE=1.624 R2=0.147 MAPE=19.2% bias=+1.61  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
 
 per vehicle, behaviour_only (pure petrol (AFR 14.7)):
                       disp_L  trips  measured_median  predicted_median   mae  bias  bias_pct
 label                                                                                       
-chevrolet agile 2011     1.4     20             7.90              8.23  0.68 -0.18     -2.30
-nissan versa 2016        1.6     20             8.79              7.90  1.12 -0.04     -0.44
-toyota corolla 2009      1.8     26             7.73              6.77  1.12 -1.06    -13.65
+chevrolet agile 2011     1.4     20             7.90              8.82  0.90  0.44      5.56
+nissan versa 2016        1.6     20             8.79              8.75  1.20  0.45      5.07
+toyota corolla 2009      1.8     26             7.73              7.61  1.14 -0.13     -1.74
 
 === E27 petrol (AFR 13.1) ===
 trips: 257 after splitting, 66 usable (>= 1 km, >= 2 min, >= 80% MAF, 2-40 L/100 km) from 3 vehicles: {'chevrolet agile 2011': 20, 'nissan versa 2016': 20, 'toyota corolla 2009': 26}
 measured L/100 km: median 8.81; behaviour features: hard accel/km median 0.00, RPA median 0.086 (VED: 0.34, 0.148)
-  behaviour_only  n_vehicles=3 n_trips=66  RMSE=1.745 MAE=1.491 R2=0.353 MAPE=15.5% bias=-1.34  missing features: ['weight', 'temp_c', 'humidity', 'wind_kmh', 'boost']
-  full_no_load    n_vehicles=3 n_trips=66  RMSE=1.099 MAE=0.878 R2=0.744 MAPE=8.8% bias=-0.58  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
-  full            n_vehicles=3 n_trips=66  RMSE=1.155 MAE=0.927 R2=0.717 MAPE=9.9% bias=+0.75  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
+  behaviour_only  course    LWR          n_vehicles=3 n_trips=66  RMSE=1.570 MAE=1.218 R2=0.476 MAPE=12.3% bias=-0.65  missing features: ['weight', 'temp_c', 'humidity', 'wind_kmh', 'boost']
+  full_no_load    course    MLP          n_vehicles=3 n_trips=66  RMSE=1.434 MAE=1.143 R2=0.563 MAPE=11.8% bias=-0.18  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
+  full            course    MLP          n_vehicles=3 n_trips=66  RMSE=2.815 MAE=2.366 R2=-0.683 MAPE=25.8% bias=+1.94  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
+  behaviour_only  reference LightGBM     n_vehicles=3 n_trips=66  RMSE=1.745 MAE=1.491 R2=0.353 MAPE=15.5% bias=-1.34  missing features: ['weight', 'temp_c', 'humidity', 'wind_kmh', 'boost']
+  full_no_load    reference LightGBM     n_vehicles=3 n_trips=66  RMSE=1.099 MAE=0.878 R2=0.744 MAPE=8.8% bias=-0.58  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
+  full            reference LightGBM     n_vehicles=3 n_trips=66  RMSE=1.155 MAE=0.927 R2=0.717 MAPE=9.9% bias=+0.75  missing features: ['weight', 'temp_c', 'humidity', 'boost', 'wind_kmh']
 
 per vehicle, behaviour_only (E27 petrol (AFR 13.1)):
                       disp_L  trips  measured_median  predicted_median   mae  bias  bias_pct
 label                                                                                       
-chevrolet agile 2011     1.4     20             8.68              8.23  1.13 -1.08    -12.49
-nissan versa 2016        1.6     20             9.65              7.90  1.37 -0.93     -9.61
-toyota corolla 2009      1.8     26             8.49              6.77  1.87 -1.87    -21.97
+chevrolet agile 2011     1.4     20             8.68              8.82  0.76 -0.46     -5.33
+nissan versa 2016        1.6     20             9.65              8.75  1.30 -0.44     -4.59
+toyota corolla 2009      1.8     26             8.49              7.61  1.50 -0.94    -11.12
 
 === summary ===
-                  fuel           tier  n_vehicles  n_trips  rmse   mae    r2   mape  mean_bias
-pure petrol (AFR 14.7) behaviour_only           3       66 1.198 0.986 0.632 10.952     -0.482
-pure petrol (AFR 14.7)   full_no_load           3       66 0.913 0.760 0.786  8.834      0.285
-pure petrol (AFR 14.7)           full           3       66 1.825 1.624 0.147 19.203      1.612
- E27 petrol (AFR 13.1) behaviour_only           3       66 1.745 1.491 0.353 15.469     -1.344
- E27 petrol (AFR 13.1)   full_no_load           3       66 1.099 0.878 0.744  8.768     -0.577
- E27 petrol (AFR 13.1)           full           3       66 1.155 0.927 0.717  9.917      0.750
+                  fuel           tier     group    model  n_vehicles  n_trips  rmse   mae     r2   mape  mean_bias
+pure petrol (AFR 14.7) behaviour_only    course      LWR           3       66 1.400 1.086  0.498 12.288      0.215
+pure petrol (AFR 14.7)   full_no_load    course      MLP           3       66 1.480 1.221  0.439 14.821      0.680
+pure petrol (AFR 14.7)           full    course      MLP           3       66 3.453 2.893 -2.055 34.263      2.804
+pure petrol (AFR 14.7) behaviour_only reference LightGBM           3       66 1.198 0.986  0.632 10.952     -0.482
+pure petrol (AFR 14.7)   full_no_load reference LightGBM           3       66 0.913 0.760  0.786  8.834      0.285
+pure petrol (AFR 14.7)           full reference LightGBM           3       66 1.825 1.624  0.147 19.203      1.612
+ E27 petrol (AFR 13.1) behaviour_only    course      LWR           3       66 1.570 1.218  0.476 12.306     -0.646
+ E27 petrol (AFR 13.1)   full_no_load    course      MLP           3       66 1.434 1.143  0.563 11.794     -0.182
+ E27 petrol (AFR 13.1)           full    course      MLP           3       66 2.815 2.366 -0.683 25.760      1.942
+ E27 petrol (AFR 13.1) behaviour_only reference LightGBM           3       66 1.745 1.491  0.353 15.469     -1.344
+ E27 petrol (AFR 13.1)   full_no_load reference LightGBM           3       66 1.099 0.878  0.744  8.768     -0.577
+ E27 petrol (AFR 13.1)           full reference LightGBM           3       66 1.155 0.927  0.717  9.917      0.750

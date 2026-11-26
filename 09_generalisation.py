@@ -16,6 +16,10 @@ Generalisation experiments on the external data (run after 03_train.py --externa
 
 Output: Data/processed/results_trip/generalisation.txt, plots/generalisation_calibration_mape.png
 """
+import os
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")   # single-threaded BLAS: ~2x faster here for small matrices (MLP, LWR)
+
 import json
 
 import joblib
@@ -50,7 +54,13 @@ def scores(y, p):
 
 
 meta = json.loads((mf.MODELS / "meta_trip.json").read_text())
-bundles = {fs: joblib.load(meta["models"][meta[f"best_{fs}"]]["path"]) for fs in TIERS}
+# keys: "<tier>" = best COURSE model of that tier (what the app uses), "ref:<tier>" = best reference model
+KEYS = TIERS + [f"ref:{fs}" for fs in TIERS if f"best_reference_{fs}" in meta]
+TIER_OF = {k: k.split(":")[-1] for k in KEYS}
+GROUP_OF = {k: "reference" if k.startswith("ref:") else "course" for k in KEYS}
+MODEL_KEY = {k: meta[f"best_reference_{TIER_OF[k]}" if k.startswith("ref:") else f"best_{k}"] for k in KEYS}
+NAME = {k: MODEL_KEY[k].split("/")[1] for k in KEYS}
+bundles = {k: joblib.load(meta["models"][MODEL_KEY[k]]["path"]) for k in KEYS}
 
 
 def predict(df, fs):
@@ -64,15 +74,15 @@ n0_t, n0_v = len(ec), ec["vehid"].nunique()
 ec = ec[~ec["veh_label"].isin(EXCLUDE)]
 ec = ec[ec.groupby("vehid")[TARGET].transform("size") >= 3].reset_index(drop=True)
 ec["label"], ec["source"] = ec["veh_label"].str.strip(), "enviroCar"
-for fs in TIERS:
+for fs in KEYS:
     ec[f"pred_{fs}"] = predict(ec, fs)
 say("=== 1. Cleaned enviroCar test set ===")
 say(f"{n0_t} trips / {n0_v} vehicles -> {len(ec)} trips / {ec['vehid'].nunique()} vehicles "
     f"(dropped {EXCLUDE} and vehicles with < 3 trips)")
 rows = []
-for fs in TIERS:
+for fs in KEYS:
     s = scores(ec[TARGET], ec[f"pred_{fs}"])
-    rows.append({"tier": fs, "vehicles": ec["vehid"].nunique(), "trips": s["n"],
+    rows.append({"tier": TIER_OF[fs], "group": GROUP_OF[fs], "model": NAME[fs], "vehicles": ec["vehid"].nunique(), "trips": s["n"],
                  "rmse": s["rmse"], "mape": s["mape"], "bias": s["bias"]})
 say(pd.DataFrame(rows).round(3).to_string(index=False))
 
@@ -83,7 +93,7 @@ if exp1_path.exists():
     x1 = pd.read_parquet(exp1_path)
     for fuel, g in x1.groupby("fuel"):
         g = g.dropna(subset=[TARGET]).reset_index(drop=True)
-        for fs in TIERS:                      # re-predict with the current saved models
+        for fs in KEYS:                       # re-predict with the current saved models
             g[f"pred_{fs}"] = predict(g, fs)
         ext_sets[f"exp1, {fuel}"] = g
 else:
@@ -112,14 +122,15 @@ say("before / after are scored on the same remaining trips; vehicle error = medi
 cal_rows = []
 for name, df in ext_sets.items():
     for n_cal in (3, 1):
-        for fs in TIERS:
+        for fs in KEYS:
             t = calibrate(df, fs, n_cal)
             if t.empty:
                 continue
             sb, sa = scores(t[TARGET], t["p_before"]), scores(t[TARGET], t["p_after"])
             eb, ea = vehicle_err(t, "p_before"), vehicle_err(t, "p_after")
             cal_rows.append({
-                "data": name, "cal_trips": n_cal, "tier": fs, "vehicles": t["vehid"].nunique(),
+                "data": name, "cal_trips": n_cal, "tier": TIER_OF[fs], "group": GROUP_OF[fs], "model": NAME[fs],
+                "vehicles": t["vehid"].nunique(),
                 "test_trips": len(t),
                 "mape_before": sb["mape"], "mape_after": sa["mape"],
                 "rmse_before": sb["rmse"], "rmse_after": sa["rmse"],
@@ -154,13 +165,13 @@ say(f"test half vehicles: {sorted(ec_b['label'].unique())}")
 tests = {"enviroCar test half": ec_b}
 tests.update({k: v for k, v in ext_sets.items() if k.startswith("exp1")})
 ms_rows = []
-for fs in ["behaviour_only", "full_no_load"]:
+for fs in [k for k in KEYS if TIER_OF[k] in ("behaviour_only", "full_no_load")]:
     feats = bundles[fs]["features"]
     for train_name, train_df in [("VED only", ved_train), ("VED + enviroCar half", pd.concat([ved_train, ec_a]))]:
         m = clone(bundles[fs]["model"]).fit(mf.to_matrix(train_df, feats), train_df[TARGET].to_numpy())
         for test_name, td in tests.items():
             s = scores(td[TARGET], m.predict(mf.to_matrix(td, feats)))
-            ms_rows.append({"tier": fs, "training": train_name, "test": test_name,
+            ms_rows.append({"tier": TIER_OF[fs], "group": GROUP_OF[fs], "model": NAME[fs], "training": train_name, "test": test_name,
                             "vehicles": td["vehid"].nunique(), "trips": s["n"],
                             "rmse": s["rmse"], "mape": s["mape"], "bias": s["bias"]})
 ms = pd.DataFrame(ms_rows)
@@ -171,7 +182,7 @@ say("note: one 50/50 split with few vehicles; differences of a few MAPE points a
 (REP / "generalisation.txt").write_text("\n".join(lines), encoding="utf-8")
 
 # ---------------- plot: MAPE before / after calibration (3 calibration trips) ----------------
-c3 = cal[cal["cal_trips"] == 3]
+c3 = cal[(cal["cal_trips"] == 3) & (cal["group"] == "course")]   # plot: the app's course models
 if not c3.empty:
     datas = list(dict.fromkeys(c3["data"]))
     fig, axs = plt.subplots(1, len(datas), figsize=(4.2 * len(datas), 4), sharey=True, squeeze=False)
@@ -183,7 +194,7 @@ if not c3.empty:
         for i, (b, a_) in enumerate(zip(c["mape_before"], c["mape_after"])):
             ax.text(i - 0.18, b, f"{b:.0f}", ha="center", va="bottom", fontsize=8)
             ax.text(i + 0.18, a_, f"{a_:.0f}", ha="center", va="bottom", fontsize=8)
-        ax.set_xticks(x, [t.replace("_", "\n") for t in TIERS])
+        ax.set_xticks(x, [t.replace("_", " ") + "\n(" + str(c.loc[t, "model"]) + ")" for t in TIERS])
         ax.set_title(f"{name}\n{int(c['vehicles'].max())} vehicles", fontsize=10)
         ax.spines[["top", "right"]].set_visible(False)
         ax.grid(axis="y", color="#e4e3df")
