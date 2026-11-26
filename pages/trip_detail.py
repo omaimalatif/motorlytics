@@ -39,6 +39,10 @@ ui.badges([("measured (MAF)" if measured else "predicted", "good" if measured el
            (("calibrated", "good") if trip["calibrated"] else ("adjusted to PakWheels average", "info")
             if info.get("reference_adjusted") else ("uncalibrated", "warn")),
            (f"model: {trip['model']}", "neutral")])
+if info.get("quick_estimate"):
+    inp = info.get("inputs") or {}
+    st.info(f"Quick estimate, not a recorded trip: typical {inp.get('style', '')} driving on a {trip['road_type']} road "
+            f"over {trip['dist_km']:.0f} km. There is no route, speed trace or tips.", icon=":material/calculate:")
 
 k1, k2, k3, k4 = st.columns(4)
 with k1:

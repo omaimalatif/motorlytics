@@ -5,7 +5,7 @@ import streamlit as st
 from core import app_core, cars, db
 
 PAGES = {
-    "overview": "pages/overview.py", "upload": "pages/upload_trip.py", "detail": "pages/trip_detail.py",
+    "overview": "pages/overview.py", "upload": "pages/upload_trip.py", "quick": "pages/quick_estimate.py", "detail": "pages/trip_detail.py",
     "history": "pages/trip_history.py", "analytics": "pages/analytics.py", "car": "pages/my_car.py",
     "calibration": "pages/calibration.py", "model": "pages/about_model.py", "account": "pages/account.py",
 }

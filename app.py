@@ -61,6 +61,7 @@ pages = {
     "Motorlytics": [
         st.Page(P["overview"], title="Overview", icon=":material/dashboard:", default=True),
         st.Page(P["upload"], title="Upload trip", icon=":material/upload_file:"),
+        st.Page(P["quick"], title="Quick estimate", icon=":material/calculate:"),
         st.Page(P["detail"], title="Trip detail", icon=":material/route:"),
         st.Page(P["history"], title="Trip history", icon=":material/history:"),
         st.Page(P["analytics"], title="Analytics", icon=":material/insights:"),
