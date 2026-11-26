@@ -108,8 +108,10 @@ def fetch_unseen_track(max_downloads: int = MAX_DOWNLOADS, timeout: int = 20, ba
                 d = _track_df(_get(s, f"{base}/tracks/{t['id']}", timeout))
                 if d.empty or d["maf"].notna().mean() < 0.8:
                     continue
-                dt = pd.to_datetime(d["time"], errors="coerce", utc=True).diff().dt.total_seconds()
-                km = float((d["speed"] / 3.6 * dt.where(dt.between(0, 5), 0)).sum() / 1000)
+                ts = pd.to_datetime(d["time"], errors="coerce", utc=True, format="mixed")
+                chk = mf.clean_speed(d.assign(trip_key="track", t=(ts - ts.min()).dt.total_seconds()))  # no 255 glitches
+                dt = chk["t"].diff()
+                km = float((chk["speed"] / 3.6 * dt.where(dt.between(0, 5), 0)).sum() / 1000)
                 if km < 1:
                     continue
                 sp = t["sensor"]["properties"]

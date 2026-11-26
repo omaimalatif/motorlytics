@@ -1,8 +1,8 @@
 file,source,car,disp_L,cylinders,road_type,dist_km,measured_l100
-gps_trip1.csv,enviroCar,Opel Corsa 2011,1.2,4,mixed,7.60,5.44
-gps_trip2.csv,enviroCar,Opel Corsa 2011,1.2,4,mixed,2.20,4.40
+gps_trip1.csv,enviroCar,Opel Corsa 2011,1.2,4,mixed,6.53,6.31
+gps_trip2.csv,enviroCar,Opel Corsa 2011,1.2,4,city,1.14,8.49
 gps_trip3.csv,enviroCar,Opel Corsa 2011,1.2,4,city,2.83,10.09
-gps_trip4.csv,enviroCar,Opel Corsa 2011,1.2,4,mixed,3.11,3.97
+gps_trip4.csv,enviroCar,Opel Corsa 2011,1.2,4,city,1.69,7.29
 ved_city_vehicle575.csv,VED (held-out test vehicle),VED vehicle 575,2.4,4,city,4.91,13.44
 ved_mixed_vehicle530.csv,VED (held-out test vehicle),VED vehicle 530,2.5,4,mixed,10.32,9.05
 ved_highway_vehicle157.csv,VED (held-out test vehicle),VED vehicle 157,3.5,6,highway,12.68,7.97

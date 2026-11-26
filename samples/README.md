@@ -8,10 +8,10 @@ prediction matches the car that recorded the trip.
 
 | File | Source | Car (engine) | Road type | Distance | Avg speed | Measured fuel (from MAF) |
 |---|---|---|---|---|---|---|
-| `gps_trip1.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | mixed | 7.60 km | 35.9 km/h | 5.44 L/100 km |
-| `gps_trip2.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | mixed | 2.20 km | 38.7 km/h | 4.40 L/100 km |
+| `gps_trip1.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | mixed | 6.53 km | 31.5 km/h | 6.31 L/100 km |
+| `gps_trip2.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 1.14 km | 21.6 km/h | 8.49 L/100 km |
 | `gps_trip3.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 2.83 km | 15.9 km/h | 10.09 L/100 km |
-| `gps_trip4.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | mixed | 3.11 km | 43.9 km/h | 3.97 L/100 km |
+| `gps_trip4.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 1.69 km | 26.0 km/h | 7.29 L/100 km |
 | `ved_city_vehicle575.csv` | VED, held-out test vehicle | VED vehicle 575 (2.4 L, 4 cyl) | city | 4.91 km | 12.6 km/h | 13.44 L/100 km |
 | `ved_mixed_vehicle530.csv` | VED, held-out test vehicle | VED vehicle 530 (2.5 L, 4 cyl) | mixed | 10.32 km | 45.1 km/h | 9.05 L/100 km |
 | `ved_highway_vehicle157.csv` | VED, held-out test vehicle | VED vehicle 157 (3.5 L, 6 cyl) | highway | 12.68 km | 72.3 km/h | 7.97 L/100 km |
@@ -25,6 +25,8 @@ prediction matches the car that recorded the trip.
 - **`gps_trip1-4`**: four consecutive tracks of one Opel Corsa 2011 from the enviroCar open data (September 2016,
   Germany), the same files used in the app tests. Upload trips 1-3 together, then trip 4, to see the per-car
   calibration take effect.
+  `gps_trip1`, `2` and `4` end with speed readings of 255 km/h (the OBD "no data" value). The app treats speeds
+  of 250 km/h or more as missing (see "How a log is read"), so the figures above are without those readings.
 - **`ved_*`**: real trips from the Vehicle Energy Dataset (VED, Ann Arbor, 2017-18). The three vehicles are in the
   **held-out test set** of `03_train.py` (`GroupShuffleSplit`, 20 % of vehicles, seed 42), so the models never
   saw them during training. VED trip keys: `575_1942`, `530_773`, `157_3318`. Engine sizes are from
@@ -72,6 +74,9 @@ car is calibrated).
 - Trips are split where the log pauses for more than 5 minutes; a file can hold several trips.
 - Trips shorter than 1 km or 1 minute are ignored.
 - Gaps longer than 5 seconds are left out of the distance and fuel totals.
+- Speed glitches are removed first: speeds of 250 km/h or more (255 is the OBD "no data" value) and single
+  readings that jump and come straight back (more than 4 m/s² into and out of one reading). They are filled by
+  interpolating over time, or dropped at the start or end of a trip.
 - Times ending in `Z` are UTC and are shown as given (the samples are not converted to local time).
 - Logs with only time and speed work: the app then shows a predicted figure and no route.
 

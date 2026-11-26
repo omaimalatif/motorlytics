@@ -137,7 +137,55 @@ def _accel_over_1s(df: pd.DataFrame, g) -> np.ndarray:
         return np.where(ok, (vs - vs[j]) / dtj, np.nan)
 
 
+MAX_VALID_SPEED = 250.0    # km/h; 255 is the OBD "no data" byte
+SPIKE_ACCEL = 4.0          # m/s^2; a single reading needing more than this into AND out of it is a glitch
+
+
+def clean_speed(df: pd.DataFrame) -> pd.DataFrame:
+    """Remove speed glitches before any feature is computed (used by add_row_features, so by training, the
+    app, 05_predict_trip.py and the enviroCar scripts):
+      - speed >= MAX_VALID_SPEED (e.g. 255 = OBD 'no data'),
+      - single-sample spikes: |acceleration| > SPIKE_ACCEL m/s^2 both into and out of one reading, in
+        opposite directions (up then straight down, or the reverse), within a trip.
+    Bad readings are set missing and filled by linear interpolation over time inside the trip; a bad reading at
+    the start or end of a trip (nothing to interpolate from) is dropped. Needs trip_key, t (s) and speed.
+    The number of readings fixed / dropped is stored in df.attrs["speed_cleaning"]."""
+    d = df.sort_values(["trip_key", "t"]).reset_index(drop=True)
+    if "speed" not in d or d.empty:
+        d.attrs["speed_cleaning"] = {"fixed": 0, "dropped": 0}
+        return d
+    v = pd.to_numeric(d["speed"], errors="coerce").to_numpy(float).copy()
+    t = pd.to_numeric(d["t"], errors="coerce").to_numpy(float)
+    g = pd.factorize(d["trip_key"])[0]
+    bad = v >= MAX_VALID_SPEED
+    v[bad] = np.nan
+    same_prev = np.r_[False, g[1:] == g[:-1]]
+    same_next = np.r_[g[:-1] == g[1:], False]
+    dtp, dtn = np.r_[np.nan, np.diff(t)], np.r_[np.diff(t), np.nan]
+    with np.errstate(invalid="ignore", divide="ignore"):
+        a_in = np.where(same_prev & (dtp > 0), (v - np.r_[np.nan, v[:-1]]) / 3.6 / dtp, np.nan)
+        a_out = np.where(same_next & (dtn > 0), (np.r_[v[1:], np.nan] - v) / 3.6 / dtn, np.nan)
+    spike = (np.abs(a_in) > SPIKE_ACCEL) & (np.abs(a_out) > SPIKE_ACCEL) & (np.sign(a_in) != np.sign(a_out))
+    bad |= spike
+    v[spike] = np.nan
+    d["speed"] = v
+    drop = np.zeros(len(d), bool)
+    if bad.any():
+        for key in np.unique(g[bad]):                      # interpolate only trips that had a glitch
+            idx = np.where(g == key)[0]
+            s = pd.Series(v[idx], index=t[idx])
+            filled = s.interpolate(method="index", limit_area="inside").to_numpy()
+            d.loc[idx, "speed"] = filled
+            drop[idx] = bad[idx] & np.isnan(filled)        # glitch at the trip's start / end
+    d.attrs["speed_cleaning"] = {"fixed": int((bad & ~drop).sum()), "dropped": int(drop.sum())}
+    attrs = d.attrs
+    d = d[~drop].reset_index(drop=True)
+    d.attrs = attrs
+    return d
+
+
 def add_row_features(df: pd.DataFrame) -> pd.DataFrame:
+    df = clean_speed(df)                                  # speed glitches out before any feature is computed
     df = df.sort_values(["trip_key", "t"]).reset_index(drop=True)
     g = df.groupby("trip_key", sort=False)
     df["dt"] = g["t"].diff()
