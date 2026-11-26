@@ -139,6 +139,7 @@ def _accel_over_1s(df: pd.DataFrame, g) -> np.ndarray:
 
 MAX_VALID_SPEED = 250.0    # km/h; 255 is the OBD "no data" byte
 SPIKE_ACCEL = 4.0          # m/s^2; a single reading needing more than this into AND out of it is a glitch
+SPIKE_MIN_JUMP = 10.0      # km/h; and the jump must be at least this big (whole-km/h rounding at 10 Hz is not a glitch)
 
 
 def clean_speed(df: pd.DataFrame) -> pd.DataFrame:
@@ -146,7 +147,11 @@ def clean_speed(df: pd.DataFrame) -> pd.DataFrame:
     app, 05_predict_trip.py and the enviroCar scripts):
       - speed >= MAX_VALID_SPEED (e.g. 255 = OBD 'no data'),
       - single-sample spikes: |acceleration| > SPIKE_ACCEL m/s^2 both into and out of one reading, in
-        opposite directions (up then straight down, or the reverse), within a trip.
+        opposite directions (up then straight down, or the reverse), within a trip;
+      - one-sided spikes: |acceleration| > SPIKE_ACCEL into (or out of) a reading whose other neighbour is a
+        removed glitch or the trip's start / end (e.g. the 223 in 0 -> 223 -> 255 -> 255).
+    Each jump must also be at least SPIKE_MIN_JUMP km/h, so whole-km/h rounding steps between readings 0.1 s apart
+    (2 km/h in 0.1 s is 5.6 m/s^2) are not treated as glitches.
     Bad readings are set missing and filled by linear interpolation over time inside the trip; a bad reading at
     the start or end of a trip (nothing to interpolate from) is dropped. Needs trip_key, t (s) and speed.
     The number of readings fixed / dropped is stored in df.attrs["speed_cleaning"]."""
@@ -162,10 +167,18 @@ def clean_speed(df: pd.DataFrame) -> pd.DataFrame:
     same_prev = np.r_[False, g[1:] == g[:-1]]
     same_next = np.r_[g[:-1] == g[1:], False]
     dtp, dtn = np.r_[np.nan, np.diff(t)], np.r_[np.diff(t), np.nan]
+    jump_in = v - np.r_[np.nan, v[:-1]]
+    jump_out = np.r_[v[1:], np.nan] - v
     with np.errstate(invalid="ignore", divide="ignore"):
-        a_in = np.where(same_prev & (dtp > 0), (v - np.r_[np.nan, v[:-1]]) / 3.6 / dtp, np.nan)
-        a_out = np.where(same_next & (dtn > 0), (np.r_[v[1:], np.nan] - v) / 3.6 / dtn, np.nan)
-    spike = (np.abs(a_in) > SPIKE_ACCEL) & (np.abs(a_out) > SPIKE_ACCEL) & (np.sign(a_in) != np.sign(a_out))
+        a_in = np.where(same_prev & (dtp > 0), jump_in / 3.6 / dtp, np.nan)
+        a_out = np.where(same_next & (dtn > 0), jump_out / 3.6 / dtn, np.nan)
+    big_in = (np.abs(a_in) > SPIKE_ACCEL) & (np.abs(jump_in) >= SPIKE_MIN_JUMP)
+    big_out = (np.abs(a_out) > SPIKE_ACCEL) & (np.abs(jump_out) >= SPIKE_MIN_JUMP)
+    spike = big_in & big_out & (np.sign(a_in) != np.sign(a_out))
+    # one-sided: an impossible jump into / out of a reading whose other neighbour is missing (removed glitch or
+    # the trip's start / end), e.g. 0 -> 223 -> 255 -> 255: the 223 is part of the glitch burst
+    spike |= big_in & np.isnan(a_out)
+    spike |= big_out & np.isnan(a_in)
     bad |= spike
     v[spike] = np.nan
     d["speed"] = v

@@ -9,7 +9,7 @@ prediction matches the car that recorded the trip.
 | File | Source | Car (engine) | Road type | Distance | Avg speed | Measured fuel (from MAF) |
 |---|---|---|---|---|---|---|
 | `gps_trip1.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | mixed | 6.53 km | 31.5 km/h | 6.31 L/100 km |
-| `gps_trip2.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 1.14 km | 21.6 km/h | 8.49 L/100 km |
+| `gps_trip2.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 0.83 km | 16.2 km/h | **rejected: shorter than 1 km** |
 | `gps_trip3.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 2.83 km | 15.9 km/h | 10.09 L/100 km |
 | `gps_trip4.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 1.69 km | 26.0 km/h | 7.29 L/100 km |
 | `ved_city_vehicle575.csv` | VED, held-out test vehicle | VED vehicle 575 (2.4 L, 4 cyl) | city | 4.91 km | 12.6 km/h | 13.44 L/100 km |
@@ -23,10 +23,12 @@ prediction matches the car that recorded the trip.
 **Where they come from**
 
 - **`gps_trip1-4`**: four consecutive tracks of one Opel Corsa 2011 from the enviroCar open data (September 2016,
-  Germany), the same files used in the app tests. Upload trips 1-3 together, then trip 4, to see the per-car
+  Germany), the same files used in the app tests. Upload trips 1 and 3 together, then trip 4, to see the per-car
   calibration take effect.
-  `gps_trip1`, `2` and `4` end with speed readings of 255 km/h (the OBD "no data" value). The app treats speeds
-  of 250 km/h or more as missing (see "How a log is read"), so the figures above are without those readings.
+  `gps_trip1`, `2` and `4` end with speed readings of 255 km/h (the OBD "no data" value). The app removes these
+  glitches (see "How a log is read"), so the figures above are without them. Without its glitch readings
+  `gps_trip2` is only 0.83 km long, so the app rejects it with "no trip of at least 1 km": it shows the 1 km rule.
+  (Before the cleaning it looked like a 2.2 km trip at 4.4 L/100 km, because the fake readings added distance.)
 - **`ved_*`**: real trips from the Vehicle Energy Dataset (VED, Ann Arbor, 2017-18). The three vehicles are in the
   **held-out test set** of `03_train.py` (`GroupShuffleSplit`, 20 % of vehicles, seed 42), so the models never
   saw them during training. VED trip keys: `575_1942`, `530_773`, `157_3318`. Engine sizes are from
@@ -41,7 +43,7 @@ prediction matches the car that recorded the trip.
   `57ecf98ee4b0f05fc22efcda` (Mazda), `57dacd31e4b0f05fc1f3fc86` (Corsa D), `57ede8cce4b01fb1bfbc59bc` (BMW).
 
 `index.csv` lists the same information in machine-readable form (file, source, car, engine size, cylinders,
-road type, distance, measured fuel); the tests and the app's "Fetch a real trip" fallback read it.
+road type, distance, measured fuel, whether it uploads); the tests and the app's "Fetch a real trip" fallback read it.
 
 The city / mixed / highway labels use the app's road types by average speed: city below 30 km/h, mixed 30-60,
 highway above 60. Each VED and enviroCar trip is a typical trip for its group, chosen near the median fuel use.
@@ -74,9 +76,10 @@ car is calibrated).
 - Trips are split where the log pauses for more than 5 minutes; a file can hold several trips.
 - Trips shorter than 1 km or 1 minute are ignored.
 - Gaps longer than 5 seconds are left out of the distance and fuel totals.
-- Speed glitches are removed first: speeds of 250 km/h or more (255 is the OBD "no data" value) and single
-  readings that jump and come straight back (more than 4 m/s² into and out of one reading). They are filled by
-  interpolating over time, or dropped at the start or end of a trip.
+- Speed glitches are removed first: speeds of 250 km/h or more (255 is the OBD "no data" value), single readings
+  that jump and come straight back (more than 4 m/s² into and out of one reading), and readings that need more
+  than 4 m/s² to reach while their other neighbour is a removed glitch or the trip's start / end (e.g. the 223 in
+  0 -> 223 -> 255 -> 255). They are filled by interpolating over time, or dropped at the start or end of a trip.
 - Times ending in `Z` are UTC and are shown as given (the samples are not converted to local time).
 - Logs with only time and speed work: the app then shows a predicted figure and no route.
 

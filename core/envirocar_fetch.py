@@ -138,6 +138,8 @@ def fetch_unseen_track(max_downloads: int = MAX_DOWNLOADS, timeout: int = 20, ba
 def fallback_sample(exclude=(), seed=None) -> dict:
     """A bundled real trip from samples/ (enviroCar ones first), in the same shape as fetch_unseen_track()."""
     idx = pd.read_csv(SAMPLES / "index.csv")
+    if "uploads" in idx:                                     # skip samples the app rejects (e.g. < 1 km)
+        idx = idx[idx["uploads"].fillna("yes") != "no"]
     idx = idx[~idx["file"].isin(set(exclude)) & ~idx["file"].str.startswith("ved_raw")]
     if idx.empty:
         idx = pd.read_csv(SAMPLES / "index.csv")

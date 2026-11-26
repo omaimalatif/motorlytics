@@ -4,7 +4,7 @@
     .venv\\Scripts\\python.exe tests\\demo_account.py --db other.db   -> another database file
 
 Sign in afterwards with demo@motorlytics.test / demo12345. Refuses to run if that account already exists.
-Adds: Demo Corsa (manual entry; samples/gps_trip1-4 with MAF, a speed-only VED trip, one fill-up),
+Adds: Demo Corsa (manual entry; samples/gps_trip1, 3 and 4 with MAF, a speed-only VED trip, one fill-up),
 Family Cultus (from the catalogue, no trips) and a SYNTHETIC test Alto (the made-up Lahore trips in
 tests/fixtures, PakWheels-adjusted). The petrol price 280 PKR/L is only a demo value.
 """
@@ -53,9 +53,9 @@ def show(res):
 corsa = db.add_car(user["id"], "Opel", "Corsa", 2011, 1.2, 4.0, nickname="Demo Corsa", colour="Red",
                    transmission="Manual", fuel_type="petrol", body_type="Hatchback", assembled="Imported",
                    tank_litres=45.0, odometer_km=98000.0, registration="LEA-19-1234")
-print("Demo Corsa: 3 MAF trips, then a 4th (calibrated)")
+print("Demo Corsa: 2 MAF trips, then a 3rd (calibrated)")
 show(app_core.ingest_logs(user, corsa, [(f"gps_trip{i}.csv", (SAMPLES / f"gps_trip{i}.csv").read_bytes())
-                                        for i in (1, 2, 3)], temp=18.0))
+                                        for i in (1, 3)], temp=18.0))
 show(app_core.ingest_logs(user, corsa, [("gps_trip4.csv", (SAMPLES / "gps_trip4.csv").read_bytes())], temp=18.0))
 speed_only = pd.read_csv(SAMPLES / "ved_mixed_vehicle530.csv")[["time", "speed"]]
 buf = StringIO()
