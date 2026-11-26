@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 100" width="440" height="200">
+  <title>Sedan (drawing)</title>
+  <path d="M8 70 L8 56 Q10 49 24 47 L62 43 L86 24 Q92 19 102 19 L136 19 Q146 19 153 26 L170 43 L196 45 Q210 47 212 58 L212 70 Z" fill="#8a8f98"/>
+  <path d="M68 44 L90 27 Q95 23 103 23 L116 23 L116 44 Z" fill="#cfd6de"/>
+  <path d="M122 23 L136 23 Q143 23 148 28 L163 44 L122 44 Z" fill="#cfd6de"/>
+  <rect x="8" y="66" width="204" height="6" rx="3" fill="#6f747c"/>
+  <circle cx="54" cy="72" r="15" fill="#3a3d42"/><circle cx="54" cy="72" r="6" fill="#b9bec5"/>
+  <circle cx="170" cy="72" r="15" fill="#3a3d42"/><circle cx="170" cy="72" r="6" fill="#b9bec5"/>
+</svg>

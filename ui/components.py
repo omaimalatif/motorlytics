@@ -56,6 +56,23 @@ def empty_state(text: str, button: str = None, page: str = None) -> None:
         st.switch_page(page)
 
 
+def car_photo(car: dict, width="stretch", caption: bool = True) -> None:
+    """The car's picture: the user's photo, else a credited example photo, else a body-type drawing."""
+    from pathlib import Path
+
+    from core import car_photos
+    pic = car_photos.car_picture(car)
+    if pic["kind"] == "drawing":
+        st.image(Path(pic["path"]).read_text(encoding="utf-8"), width=width)   # SVG markup
+    else:
+        st.image(pic["path"], width=width)
+    if caption:
+        text = pic["caption"]
+        if pic.get("credit_url"):
+            text += f" ([source]({pic['credit_url']}))"
+        st.caption(text)
+
+
 def route_map(path, height: int = 320, key: str = None) -> None:
     """GPS route as a line with start (green) and end (red) points. path: [[lat, lon], ...]."""
     if not path or len(path) < 2:

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 100" width="440" height="200">
+  <title>SUV (drawing)</title>
+  <path d="M12 72 L12 46 Q14 38 26 36 L46 34 L66 12 Q70 8 80 8 L172 8 Q182 8 187 16 L198 34 Q208 37 208 48 L208 72 Z" fill="#8a8f98"/>
+  <path d="M56 35 L72 15 Q75 12 82 12 L118 12 L118 35 Z" fill="#cfd6de"/>
+  <path d="M124 12 L170 12 Q177 12 181 18 L192 35 L124 35 Z" fill="#cfd6de"/>
+  <rect x="12" y="68" width="196" height="7" rx="3" fill="#6f747c"/>
+  <circle cx="58" cy="74" r="17" fill="#3a3d42"/><circle cx="58" cy="74" r="7" fill="#b9bec5"/>
+  <circle cx="166" cy="74" r="17" fill="#3a3d42"/><circle cx="166" cy="74" r="7" fill="#b9bec5"/>
+</svg>

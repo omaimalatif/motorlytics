@@ -59,7 +59,9 @@ def connect(path=None) -> sqlite3.Connection:
 # columns added after the first release: added to existing databases by init_db (ALTER TABLE ADD COLUMN)
 CAR_EXTRA_COLUMNS = {"nickname": "TEXT", "colour": "TEXT", "transmission": "TEXT", "fuel_type": "TEXT",
                      "body_type": "TEXT", "assembled": "TEXT", "tank_litres": "REAL", "odometer_km": "REAL",
-                     "registration": "TEXT"}
+                     "registration": "TEXT",
+                     # picture: photo_source = 'user' | 'wikipedia' | 'none' (looked up, nothing found) | NULL
+                     "photo_path": "TEXT", "photo_source": "TEXT", "photo_credit": "TEXT"}
 CAR_FIELDS = ["make", "model", "year", "disp_L", "cylinders", *CAR_EXTRA_COLUMNS]
 
 

@@ -2,7 +2,7 @@
 import pandas as pd
 import streamlit as st
 
-from core import cars, db
+from core import car_photos, cars, db
 from ui import components as ui
 from ui import session
 
@@ -60,6 +60,23 @@ if my_cars:
 
     # ---------------- profile card ----------------
     with ui.card():
+        pic_col, info_col = st.columns([1, 2])
+    with pic_col:
+        ui.car_photo(car)
+        with st.popover("Change photo", icon=":material/photo_camera:"):
+            st.caption("Upload a photo of your own car (JPG, PNG or WEBP, up to 8 MB). It is stored only in "
+                       "this app and replaces the example photo.")
+            up = st.file_uploader("Car photo", type=["jpg", "jpeg", "png", "webp"], key=f"photo_up_{car['id']}")
+            if st.button("Use this photo", type="primary", disabled=up is None, key=f"photo_save_{car['id']}"):
+                try:
+                    car_photos.save_user_photo(car, up.getvalue())
+                    st.rerun()
+                except ValueError as e:
+                    st.error(str(e))
+            if car.get("photo_source") == "user" and st.button("Remove my photo", key=f"photo_rm_{car['id']}"):
+                car_photos.remove_user_photo(car)
+                st.rerun()
+    with info_col:
         st.subheader(cars.car_title(car))
         if car.get("nickname"):
             st.caption(" ".join(str(car[k]) for k in ("make", "model", "year") if car.get(k)))
@@ -70,9 +87,9 @@ if my_cars:
                    ("Colour", car.get("colour") or "–"), ("Fuel tank", session.fmt(car.get("tank_litres"), "L", 0)),
                    ("Odometer", session.fmt(car.get("odometer_km"), "km", 0)),
                    ("Registration", cars.mask_registration(car.get("registration")) or "–")]
-        cols = st.columns(5)
+        cols = st.columns(3)
         for i, (label, value) in enumerate(details):
-            with cols[i % 5]:
+            with cols[i % 3]:
                 st.caption(label)
                 st.markdown(f"**{value}**")
         text, ok = session.calibration_text(car)
@@ -188,5 +205,7 @@ with ui.card():
         new = db.add_car(u["id"], make.strip(), model.strip(), int(year) if year else None, float(disp),
                          float(cyl) if cyl else cars.estimate_cylinders(disp), **extra)
         st.session_state["car_id"] = new["id"]
+        with st.spinner("Looking for an example photo of this model..."):
+            car_photos.attach_example_photo(new)          # Wikipedia; falls back to a drawing if none / offline
         st.success(f"Added {cars.car_title(new)}")
         st.rerun()

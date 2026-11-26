@@ -9,6 +9,7 @@ Env vars for testing: MOTORLYTICS_DB (SQLite file), MOTORLYTICS_CALIB (calibrati
 import streamlit as st
 
 from core import auth, cars, db
+from ui import components as ui
 from ui import session
 
 st.set_page_config(page_title="Motorlytics", page_icon=":material/local_gas_station:", layout="wide")
@@ -93,6 +94,8 @@ with st.sidebar:
                 st.rerun()
         else:
             st.markdown(f"**{cars.car_title(car)}**")
+        if car:
+            ui.car_photo(car, width=200, caption=False)
         text, ok = session.calibration_text(car)
         st.badge("calibrated" if ok else "uncalibrated", color="green" if ok else "orange")
         st.caption(text)
