@@ -2,7 +2,7 @@
 import numpy as np
 import streamlit as st
 
-from core import app_core, cars, weather
+from core import app_core, cars, envirocar_fetch, weather
 from ui import components as ui
 from ui import session
 
@@ -42,19 +42,58 @@ if fuel != "petrol":
                + " A measured figure from MAF and your car's calibration still apply.",
                icon=":material/warning:")
 
-if st.button("Analyse trip", type="primary", disabled=not files, icon=":material/analytics:"):
-    chosen = chosen_car
+
+
+def analyse(file_list):
+    """Predict and save the trips in [(name, bytes)], then open the first one."""
     with st.spinner("Reading the log and predicting fuel use..."):
         try:
-            res = app_core.ingest_logs(u, chosen, [(f.name, f.getvalue()) for f in files],
-                                       temp=temp if temp is not None else np.nan)
+            res = app_core.ingest_logs(u, chosen_car, file_list, temp=temp if temp is not None else np.nan)
         except ValueError as e:
             st.error(f"Could not use this log: {e}")
             st.stop()
         except Exception as e:                                   # unreadable CSV etc.
             st.error(f"Could not read the file(s): {e}")
             st.stop()
-    st.session_state["car_id"] = chosen["id"]
+    st.session_state["car_id"] = chosen_car["id"]
     st.session_state["last_upload"] = res["trip_ids"]
+    st.session_state.pop("fetched_log", None)
     st.toast(f"Saved {len(res['trip_ids'])} trip(s) · model {res['model']} · {res['calibration']}")
     session.open_trip(res["trip_ids"][0])
+
+
+if st.button("Analyse trip", type="primary", disabled=not files, icon=":material/analytics:"):
+    analyse([(f.name, f.getvalue()) for f in files])
+
+# ---------------- no log at hand: fetch a real trip from enviroCar ----------------
+st.divider()
+with ui.card("No log at hand? Try a real trip", "Downloads one track recorded by another driver from enviroCar "
+             "(open data) that this app has not used before, with real MAF so the measured fuel is shown too."):
+    if st.button("Fetch a real trip", icon=":material/cloud_download:"):
+        with st.spinner("Looking for an unseen enviroCar track with a real MAF sensor..."):
+            try:
+                st.session_state["fetched_log"] = envirocar_fetch.fetch_unseen_track()
+            except envirocar_fetch.FetchError as e:
+                used = st.session_state.get("fallback_used", [])
+                fb = envirocar_fetch.fallback_sample(exclude=used)
+                st.session_state["fallback_used"] = used + [fb["filename"]]
+                st.session_state["fetched_log"] = fb
+                st.warning(f"Could not fetch a new track: {e}. Using a bundled real trip from samples/ instead.",
+                           icon=":material/wifi_off:")
+    fl = st.session_state.get("fetched_log")
+    if fl:
+        st.markdown(f"**{fl['car']}**" + (f" ({fl['disp_L']:.1f} L)" if fl.get("disp_L") else "")
+                    + f" · {fl['dist_km']:.1f} km · {fl['source']}")
+        if fl.get("track_id"):
+            st.caption(f"enviroCar track {fl['track_id']}" + (f", recorded {fl['begin'][:10]}" if fl.get("begin") else ""))
+        mine = chosen_car.get("disp_L")
+        if fl.get("disp_L") and mine and abs(fl["disp_L"] - mine) > 0.25:
+            st.caption(f"Recorded with a {fl['disp_L']:.1f} L engine; it will be analysed as your "
+                       f"{cars.car_title(chosen_car)} ({mine:.1f} L), so the prediction uses your engine size. "
+                       "Add a car with the same engine on the My car page for a like-for-like test.")
+        a1, a2 = st.columns([1, 1])
+        if a1.button("Analyse this trip", type="primary", icon=":material/analytics:", key="analyse_fetched"):
+            analyse([(fl["filename"], fl["bytes"])])
+        if a2.button("Discard", key="discard_fetched"):
+            st.session_state.pop("fetched_log", None)
+            st.rerun()
