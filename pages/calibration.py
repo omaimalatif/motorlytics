@@ -56,7 +56,7 @@ else:
         opts = open_trips["id"].tolist()
         # trips with MAF already calibrated the car when they were uploaded: not pre-selected (no double counting)
         default = open_trips.loc[open_trips["measured_l100"].isna(), "id"].tolist()
-        labels = {r["id"]: f"{r['started']:%d %b %Y %H:%M} · {r['dist_km']:.1f} km"
+        labels = {r["id"]: f"{session.fmt_dt(r['started'], '%d %b %Y %H:%M')} · {r['dist_km']:.1f} km"
                            + (" · MAF" if pd.notna(r["measured_l100"]) else "") for _, r in open_trips.iterrows()}
         sel = st.multiselect("Trips since the last fill-up", opts, default=default, format_func=lambda i: labels[i],
                              help="Trips marked MAF already calibrated your car when uploaded; include them only "

@@ -146,7 +146,7 @@ if my_cars:
             with ui.card(title, "Trips of at least 3 km"):
                 tr = prof.get(key)
                 if tr:
-                    when = pd.to_datetime(tr["started_at"], errors="coerce")
+                    when = pd.to_datetime(tr["started_at"], errors="coerce", format="mixed")
                     st.markdown(f"**{tr['l100']:.1f} L/100 km** · {tr['dist_km']:.1f} km · eco-score "
                                 f"{tr['eco_score']:.0f}")
                     st.caption(f"{when:%d %b %Y, %H:%M}" if pd.notna(when) else "")
