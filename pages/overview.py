@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from core import cars, weather
+from core import cars, texts, weather
 from ui import components as ui
 from ui import session
 
@@ -98,7 +98,7 @@ with r3:
                     best = (tip, r["id"])
         if best:
             st.markdown(best[0]["tip"])
-            st.caption(f"Up to {best[0]['saving_l_per_100km']} L/100 km on that trip")
+            st.caption(texts.tip_comparison(best[0]) + f" Possible saving {texts.saving_text(best[0]['saving_l_per_100km'])}.")
             if st.button("See the trip", key="tip_trip"):
                 session.open_trip(best[1])
         else:

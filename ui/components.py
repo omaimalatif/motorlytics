@@ -44,10 +44,11 @@ def badges(items) -> None:
 
 
 def tip_card(tip: dict) -> None:
+    """One eco-driving tip: the advice, a plain comparison with eco drivers and the rounded saving."""
+    from core import texts
     with st.container(border=True):
         st.markdown(tip["tip"])
-        st.caption(f"Possible saving about {tip['saving_l_per_100km']} L/100 km "
-                   f"(your {tip['feature'].replace('_', ' ')}: {tip['your_value']}, eco drivers: {tip['eco_value']})")
+        st.caption(texts.tip_comparison(tip) + f" Possible saving {texts.saving_text(tip['saving_l_per_100km'])}.")
 
 
 def empty_state(text: str, button: str = None, page: str = None) -> None:
