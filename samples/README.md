@@ -15,6 +15,7 @@ prediction matches the car that recorded the trip.
 | `ved_city_vehicle575.csv` | VED, held-out test vehicle | VED vehicle 575 (2.4 L, 4 cyl) | city | 4.91 km | 12.6 km/h | 13.44 L/100 km |
 | `ved_mixed_vehicle530.csv` | VED, held-out test vehicle | VED vehicle 530 (2.5 L, 4 cyl) | mixed | 10.32 km | 45.1 km/h | 9.05 L/100 km |
 | `ved_highway_vehicle157.csv` | VED, held-out test vehicle | VED vehicle 157 (3.5 L, 6 cyl) | highway | 12.68 km | 72.3 km/h | 7.97 L/100 km |
+| `ved_raw_vehicle157_highway.csv` | VED, held-out test vehicle, **original VED columns** | VED vehicle 157 (3.5 L, 6 cyl) | highway | 12.68 km | 72.3 km/h | 7.97 L/100 km |
 | `envirocar_city_mazda_cx5_2013.csv` | enviroCar validation set | Mazda CX-5 2013 (2.0 L, 4 cyl) | city | 4.24 km | 22.3 km/h | 8.81 L/100 km |
 | `envirocar_mixed_opel_corsa_d_2013.csv` | enviroCar validation set | Opel Corsa D 2013 (1.4 L, 4 cyl) | mixed | 11.81 km | 43.6 km/h | 6.61 L/100 km |
 | `envirocar_highway_bmw_1_2013.csv` | enviroCar validation set | BMW 1 Series 2013 (1.5 L, 4 cyl) | highway | 31.53 km | 73.4 km/h | 6.19 L/100 km |
@@ -28,9 +29,17 @@ prediction matches the car that recorded the trip.
   **held-out test set** of `03_train.py` (`GroupShuffleSplit`, 20 % of vehicles, seed 42), so the models never
   saw them during training. VED trip keys: `575_1942`, `530_773`, `157_3318`. Engine sizes are from
   `VED_Static_Data_ICE&HEV.xlsx`.
+- **`ved_raw_vehicle157_highway.csv`**: the same trip as `ved_highway_vehicle157.csv` (`157_3318`), but exactly as
+  it appears in the VED files, with all original columns (`DayNum`, `VehId`, `Trip`, `Timestamp(ms)`,
+  `Latitude[deg]`, `Longitude[deg]`, `Vehicle Speed[km/h]`, `MAF[g/sec]`, `Engine RPM[RPM]`, `Absolute Load[%]`,
+  `OAT[DegC]`, ...). In this format the app recognises a VED log and uses the **full** model tier (speed + RPM +
+  engine load) instead of the speed-only model, so the two files show the difference between the tiers.
 - **`envirocar_*`**: real tracks from the enviroCar external-validation set (`01b_fetch_envirocar.py`, real MAF
   only, cleaned as in `09_generalisation.py`), from cars other than the Corsa above. enviroCar track ids:
   `57ecf98ee4b0f05fc22efcda` (Mazda), `57dacd31e4b0f05fc1f3fc86` (Corsa D), `57ede8cce4b01fb1bfbc59bc` (BMW).
+
+`index.csv` lists the same information in machine-readable form (file, source, car, engine size, cylinders,
+road type, distance, measured fuel); the tests and the app's "Fetch a real trip" fallback read it.
 
 The city / mixed / highway labels use the app's road types by average speed: city below 30 km/h, mixed 30-60,
 highway above 60. Each VED and enviroCar trip is a typical trip for its group, chosen near the median fuel use.
@@ -54,8 +63,9 @@ first matching column is used. Other columns are ignored.
 | Fuel rate | optional: measured fuel only if there is no MAF | L/h | `fuel rate ...`, `consumption` |
 
 Raw VED files (`VehId`, `Trip`, `DayNum`, `Timestamp(ms)`, ...) are also accepted as they are; the app then
-picks the engine-sensor models automatically. The `ved_*` samples here are converted to the plain format
-above, so the app treats them like a phone log (speed-only model unless the car is calibrated).
+picks the engine-sensor models automatically (see `ved_raw_vehicle157_highway.csv`). The other `ved_*` samples
+are converted to the plain format above, so the app treats them like a phone log (speed-only model unless the
+car is calibrated).
 
 **How a log is read**
 
