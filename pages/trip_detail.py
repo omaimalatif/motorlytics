@@ -10,21 +10,20 @@ from ui import session
 u = session.require_user()
 P = session.PAGES
 
+# opened from Trip history, Overview or after an upload (hidden from the sidebar); needs a selected trip
 tid = st.session_state.get("trip_id") or st.query_params.get("trip")
-trips = db.get_trips(u["id"])
-if not trips:
+trip = db.get_trip(int(tid), u["id"]) if tid and str(tid).isdigit() else None
+if not trip:
     ui.page_header("Trip detail")
-    ui.empty_state("No trips yet.", "Upload a trip", P["upload"])
+    ui.empty_state("No trip selected. Open a trip from Trip history, or upload one.", "Go to Trip history",
+                   P["history"])
     st.stop()
-trip = db.get_trip(int(tid), u["id"]) if tid else None
-trip = trip or trips[0]
 st.session_state["trip_id"] = trip["id"]
 
-started = pd.to_datetime(trip["started_at"], errors="coerce")
+started = pd.to_datetime(trip["started_at"], errors="coerce", format="mixed")
 car = db.get_car(trip["car_id"]) if trip["car_id"] else None
 info = trip["tips"] or {}
 measured = trip["measured_l100"] is not None
-main = trip["measured_l100"] if measured else trip["pred_l100"]
 
 last_upload = st.session_state.get("last_upload") or []
 if len(last_upload) > 1 and trip["id"] in last_upload:               # several trips in the last upload
@@ -34,7 +33,7 @@ if len(last_upload) > 1 and trip["id"] in last_upload:               # several t
         session.open_trip(pick)
 
 ui.page_header(f"Trip on {started:%d %b %Y, %H:%M}" if pd.notna(started) else f"Trip {trip['id']}",
-               f"{cars.car_label(car)} · {trip['road_type'] or '?'} road · {trip['style'] or '?'} style")
+               f"{session.display_car(car)} · {trip['road_type'] or '?'} road · {trip['style'] or '?'} style")
 ui.badges([("measured (MAF)" if measured else "predicted", "good" if measured else "info"),
            (("calibrated", "good") if trip["calibrated"] else ("adjusted to PakWheels average", "info")
             if info.get("reference_adjusted") else ("uncalibrated", "warn")),
@@ -44,18 +43,52 @@ if info.get("quick_estimate"):
     st.info(f"Quick estimate, not a recorded trip: typical {inp.get('style', '')} driving on a {trip['road_type']} road "
             f"over {trip['dist_km']:.0f} km. There is no route, speed trace or tips.", icon=":material/calculate:")
 
-k1, k2, k3, k4 = st.columns(4)
-with k1:
-    ui.metric_tile("Fuel use", session.fmt(main, "L/100 km"),
-                   help=(f"Measured from MAF; the model predicted {trip['pred_l100']:.1f}" if measured
-                         else "Model estimate (no MAF in the log)."))
-with k2:
-    ui.metric_tile("Distance", session.fmt(trip["dist_km"], "km", 2))
-with k3:
-    ui.metric_tile("Duration", session.fmt(trip["dur_min"], "min", 1), help=f"Average {trip['avg_speed']:.1f} km/h")
-with k4:
-    ui.metric_tile("Cost", session.fmt(trip["cost_pkr"], "PKR", 0) if trip["cost_pkr"] is not None else "set price",
-                   help="From your petrol price (Account page).")
+# ---- measured vs the model's prediction ----
+k = info.get("k") or 1.0
+pred = trip["pred_l100"]
+raw = pred / k if k else pred
+if trip["calibrated"]:
+    pred_label, pred_help = "Model predicted (after calibration)", (
+        f"The model alone said {raw:.1f} L/100 km; your car's correction factor k = {k:.2f} gives {pred:.1f}.")
+elif info.get("reference_adjusted"):
+    pred_label, pred_help = "Model predicted (PakWheels-adjusted)", (
+        f"The model alone said {raw:.1f} L/100 km; adjusted to the PakWheels average for this model: {pred:.1f}.")
+else:
+    pred_label, pred_help = "Model predicted", "The model's estimate from how the trip was driven."
+cost_text = session.fmt(trip["cost_pkr"], "PKR", 0) if trip["cost_pkr"] is not None else "set price"
+cost_help = "From the measured fuel and your petrol price (Account page)." if measured else     "From the predicted fuel and your petrol price (Account page)."
+if measured:
+    err = (pred - trip["measured_l100"]) / trip["measured_l100"] * 100
+    k1, k2, k3, k4 = st.columns(4)
+    with k1:
+        ui.metric_tile("Measured", session.fmt(trip["measured_l100"], "L/100 km"),
+                       help="Real fuel use, worked out from the MAF (air flow) sensor in your log.")
+    with k2:
+        ui.metric_tile(pred_label, session.fmt(pred, "L/100 km"), help=pred_help)
+    with k3:
+        ui.metric_tile("Model error", f"{err:+.0f}%", help="(predicted - measured) / measured. Positive: the "
+                       "model expected more fuel than the car used.")
+    with k4:
+        ui.metric_tile("Cost", cost_text, help=cost_help)
+else:
+    k1, k2, k3, k4 = st.columns(4)
+    with k1:
+        ui.metric_tile(pred_label, session.fmt(pred, "L/100 km"), help=pred_help + " This log has no MAF, so "
+                       "the real fuel use cannot be measured.")
+    with k2:
+        ui.metric_tile("Distance", session.fmt(trip["dist_km"], "km", 2))
+    with k3:
+        ui.metric_tile("Duration", session.fmt(trip["dur_min"], "min", 1))
+    with k4:
+        ui.metric_tile("Cost", cost_text, help=cost_help)
+if measured:
+    d1, d2, d3 = st.columns(3)
+    with d1:
+        ui.metric_tile("Distance", session.fmt(trip["dist_km"], "km", 2))
+    with d2:
+        ui.metric_tile("Duration", session.fmt(trip["dur_min"], "min", 1))
+    with d3:
+        ui.metric_tile("Average speed", session.fmt(trip["avg_speed"], "km/h", 0))
 
 m1, m2 = st.columns([2, 1])
 with m1:
