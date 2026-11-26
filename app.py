@@ -87,12 +87,12 @@ with st.sidebar:
         if len(my_cars) > 1:
             ids = [c["id"] for c in my_cars]
             pick = st.selectbox("Car", ids, index=ids.index(car["id"]),
-                                format_func=lambda i: cars.car_label(next(c for c in my_cars if c["id"] == i)))
+                                format_func=lambda i: cars.car_title(next(c for c in my_cars if c["id"] == i)))
             if pick != car["id"]:
                 st.session_state["car_id"] = pick
                 st.rerun()
         else:
-            st.caption(cars.car_label(car))
+            st.markdown(f"**{cars.car_title(car)}**")
         text, ok = session.calibration_text(car)
         st.badge("calibrated" if ok else "uncalibrated", color="green" if ok else "orange")
         st.caption(text)

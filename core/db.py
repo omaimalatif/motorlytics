@@ -56,9 +56,21 @@ def connect(path=None) -> sqlite3.Connection:
     return con
 
 
+# columns added after the first release: added to existing databases by init_db (ALTER TABLE ADD COLUMN)
+CAR_EXTRA_COLUMNS = {"nickname": "TEXT", "colour": "TEXT", "transmission": "TEXT", "fuel_type": "TEXT",
+                     "body_type": "TEXT", "assembled": "TEXT", "tank_litres": "REAL", "odometer_km": "REAL",
+                     "registration": "TEXT"}
+CAR_FIELDS = ["make", "model", "year", "disp_L", "cylinders", *CAR_EXTRA_COLUMNS]
+
+
 def init_db(path=None) -> None:
+    """Create missing tables and add missing columns (safe to run on every start)."""
     with connect(path) as con:
         con.executescript(SCHEMA)
+        have = {r["name"] for r in con.execute("PRAGMA table_info(cars)")}
+        for col, typ in CAR_EXTRA_COLUMNS.items():
+            if col not in have:
+                con.execute(f"ALTER TABLE cars ADD COLUMN {col} {typ}")
 
 
 def _rows(cur) -> list:
@@ -99,10 +111,14 @@ def update_user(user_id, **fields) -> None:
 
 
 # ---------------- cars ----------------
-def add_car(user_id, make, model, year, disp_L, cylinders) -> dict:
+def add_car(user_id, make, model, year, disp_L, cylinders, **extra) -> dict:
+    """extra: any of CAR_EXTRA_COLUMNS (nickname, colour, transmission, fuel_type, body_type, assembled,
+    tank_litres, odometer_km, registration)."""
+    fields = {"make": make, "model": model, "year": year, "disp_L": disp_L, "cylinders": cylinders,
+              **{k: v for k, v in extra.items() if k in CAR_EXTRA_COLUMNS}}
     with connect() as con:
-        cur = con.execute("INSERT INTO cars(user_id,make,model,year,disp_L,cylinders) VALUES (?,?,?,?,?,?)",
-                          (user_id, make, model, year, disp_L, cylinders))
+        cur = con.execute(f"INSERT INTO cars(user_id,{','.join(fields)}) VALUES (?{',?' * len(fields)})",
+                          (user_id, *fields.values()))
         car_id = cur.lastrowid
         car_key = f"user{user_id}_car{car_id}"          # key in the calibration store
         con.execute("UPDATE cars SET car_key=? WHERE id=?", (car_key, car_id))
@@ -118,6 +134,16 @@ def get_car(car_id) -> dict | None:
 def get_cars(user_id) -> list:
     with connect() as con:
         return _rows(con.execute("SELECT * FROM cars WHERE user_id=? ORDER BY id", (user_id,)))
+
+
+def update_car(car_id, user_id, **fields) -> dict | None:
+    """Change any of CAR_FIELDS for the user's own car; car_key never changes (calibration stays)."""
+    upd = {k: v for k, v in fields.items() if k in CAR_FIELDS}
+    if upd:
+        with connect() as con:
+            con.execute(f"UPDATE cars SET {', '.join(f'{k}=?' for k in upd)} WHERE id=? AND user_id=?",
+                        (*upd.values(), car_id, user_id))
+    return get_car(car_id)
 
 
 def delete_car(car_id, user_id) -> None:

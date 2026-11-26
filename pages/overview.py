@@ -29,7 +29,10 @@ if not car:
 c1, c2 = st.columns([2, 1])
 with c1:
     with ui.card():
-        st.subheader(cars.car_label(car))
+        st.subheader(cars.car_title(car))
+        st.caption(" · ".join(x for x in [session.fmt(car.get("disp_L"), "L", 1) if car.get("disp_L") else None,
+                                          car.get("transmission"), car.get("fuel_type")] if x)
+                   or "Add transmission and fuel type on the My car page.")
         month = t[(t["started"].dt.year == datetime.now().year) & (t["started"].dt.month == datetime.now().month)] \
             if len(t) else t
         s1, s2, s3 = st.columns(3)

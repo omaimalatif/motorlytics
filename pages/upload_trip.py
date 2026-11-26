@@ -26,15 +26,24 @@ with right:
     with ui.card("Trip settings"):
         ids = [c["id"] for c in my_cars]
         cid = st.selectbox("Car", ids, index=ids.index(car["id"]),
-                           format_func=lambda i: cars.car_label(next(c for c in my_cars if c["id"] == i)))
+                           format_func=lambda i: cars.car_title(next(c for c in my_cars if c["id"] == i)))
         w = weather.current(u.get("city")) if u.get("city") else None
         temp = st.number_input("Air temperature (°C)", value=float(w["temp_c"]) if w else None, step=0.5,
                                help="Filled from Open-Meteo for your city if set; change it for an older trip.")
         if not u.get("petrol_pkr"):
             st.warning("Set your petrol price on the Account page to see trip costs.")
 
+chosen_car = next(c for c in my_cars if c["id"] == cid)
+fuel = chosen_car.get("fuel_type") or "petrol"
+if fuel != "petrol":
+    st.warning(f"**{cars.car_title(chosen_car)} is set as a {fuel} car.** The model was trained on petrol "
+               "(ICE) cars, so its predictions will be less reliable for this car."
+               + (" For a CNG car, upload trips driven on petrol where possible." if fuel == "CNG" else "")
+               + " A measured figure from MAF and your car's calibration still apply.",
+               icon=":material/warning:")
+
 if st.button("Analyse trip", type="primary", disabled=not files, icon=":material/analytics:"):
-    chosen = next(c for c in my_cars if c["id"] == cid)
+    chosen = chosen_car
     with st.spinner("Reading the log and predicting fuel use..."):
         try:
             res = app_core.ingest_logs(u, chosen, [(f.name, f.getvalue()) for f in files],
