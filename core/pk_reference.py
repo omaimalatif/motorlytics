@@ -109,3 +109,18 @@ def k_for_speed(p: dict, avg_speed: float) -> float:
     """City factor below 30 km/h average speed, highway factor above 60, linear blend in between."""
     w = float(np.clip((avg_speed - 30) / 30, 0, 1)) if avg_speed == avg_speed else 0.0
     return (1 - w) * p["k_city"] + w * p["k_highway"]
+
+
+def adjust(p: dict, raw_l100: float, avg_speed: float) -> tuple:
+    """PakWheels-adjusted prediction for one trip: (L/100 km, effective factor).
+    The factor is blended by average speed (k_for_speed). For mixed trips (30-60 km/h average, the app's
+    'mixed' road type) the adjusted km/L is also kept between the car's PakWheels city and highway figures:
+    a mixed trip should not come out more economical than the highway figure or worse than the city one
+    (the model's own mixed prediction can be off in either direction)."""
+    k = k_for_speed(p, avg_speed)
+    pred = raw_l100 * k
+    if 30 <= avg_speed < 60 and pred > 0:
+        lo, hi = sorted((p["city_kmpl"], p["highway_kmpl"]))
+        pred = 100 / float(np.clip(100 / pred, lo, hi))
+        k = pred / raw_l100 if raw_l100 > 0 else k
+    return pred, k

@@ -180,8 +180,11 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
         r = mf.recommend(tip_bundle, t, eco_profiles, petrol, eco_p75=style.get("eco_p75"))
         tip_pred, tip_eco = r["pred_l_per_100km"], r["eco_l_per_100km"]   # both from the behaviour model
         raw_pred = float(preds[fs][i])
-        k_i = pk_reference.k_for_speed(prior, float(t["avg_speed"])) if use_prior else k
-        pred = raw_pred * k_i
+        if use_prior:                                     # PakWheels factor (mixed trips clamped city..highway)
+            pred, k_i = pk_reference.adjust(prior, raw_pred, float(t["avg_speed"]))
+        else:
+            k_i = k
+            pred = raw_pred * k_i
         eco = pred * (tip_eco / tip_pred) if tip_pred > 0 else pred       # eco scaled to the shown prediction
         r.update({"trip": t["trip_key"], "dist_km": round(t["dist_km"], 2),
                   "duration_min": round(t["dur_min"], 1), "avg_speed": round(t["avg_speed"], 1),
