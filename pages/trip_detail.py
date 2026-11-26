@@ -100,8 +100,8 @@ with m2:
         st.metric("Eco-score", session.fmt(score, digits=0) + " / 100", help="0-100 between the aggressive and "
                   "eco driving-style centres (k-Means).")
         st.progress(int(score or 0) / 100)
-        ui.badge(scoring.score_label(score), {"eco": "good", "moderate": "info", "aggressive": "bad"}.get(
-            scoring.score_label(score), "neutral"))
+        style_name = trip["style"] or scoring.score_label(score)       # same name as in the header
+        ui.badge(f"{style_name} style", {"eco": "good", "normal": "info", "aggressive": "bad"}.get(style_name, "neutral"))
         st.caption(f"Idle {session.fmt(info.get('idle_pct'), '%', 0)} of the time.")
         if info.get("eco_l100") is not None:
             st.caption(f"Driven like an eco driver: about {info['eco_l100']:.1f} L/100 km "

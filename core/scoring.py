@@ -47,4 +47,4 @@ def eco_score(trip: dict | pd.Series, bundle: dict = None) -> float:
 def score_label(score) -> str:
     if score is None or pd.isna(score):
         return "n/a"
-    return "eco" if score >= 70 else "moderate" if score >= 40 else "aggressive"
+    return "eco" if score >= 70 else "normal" if score >= 40 else "aggressive"   # same names as the k-Means styles
