@@ -18,7 +18,7 @@ hour = datetime.now().hour
 greet = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
 cal_label, cal_kind, cal_text = session.calibration_state(car)
 calibrated = cal_label == "calibrated"
-status = [f"{len(t)} trips" if len(t) else "no trips yet", cars.car_label(car) if car else "no car added",
+status = [session.plural(len(t), "trip") if len(t) else "no trips yet", cars.car_label(car) if car else "no car added",
           cal_label]
 ui.page_header(f"{greet}, {u['name'].split()[0]}", " · ".join(status))
 

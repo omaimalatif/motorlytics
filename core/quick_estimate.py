@@ -102,7 +102,7 @@ def estimate(car: dict, dist_km: float, road_type: str, style: str, temp_c=None,
     row, raw, pred, k = rows[style]
     litres = pred * dist_km / 100
     if own:
-        source, text = "calibration", f"your car's calibration (k = {own['k']:.2f} from {own['n_trips']} trips)"
+        source, text = "calibration", f"your car's calibration (k = {own['k']:.2f} from {own['n_trips']} trip{'' if own['n_trips'] == 1 else 's'})"
     elif prior:
         source, text = "pakwheels", (f"PakWheels average for {prior['make']} {prior['model']} "
                                      f"({prior['city_kmpl']:.0f} km/L city, {prior['highway_kmpl']:.0f} highway) "

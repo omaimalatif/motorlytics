@@ -11,6 +11,53 @@ PAGES = {
 }
 
 
+# names shown to users for the three model types (same as the Calibration page); never show internal names
+MODEL_TYPES = {"behaviour_only": "Speed only", "full_no_load": "Speed + RPM", "full": "Speed + RPM + load"}
+_MODEL_NAMES = {"behaviour_only": "Speed-only model", "full_no_load": "Speed + RPM model",
+                "full": "Speed + RPM + load model"}
+
+
+def plural(n, word: str, plural_word: str = None) -> str:
+    """'1 trip', '3 trips'."""
+    n_int = int(n) if float(n).is_integer() else n
+    return f"{n_int} {word if n_int == 1 else (plural_word or word + 's')}"
+
+
+def model_label(model_key: str) -> str:
+    """'behaviour_only/LWR' -> 'Speed-only model (LWR)'."""
+    tier, _, algo = (model_key or "").partition("/")
+    name = _MODEL_NAMES.get(tier, "Model")
+    return f"{name} ({algo})" if algo else name
+
+
+def friendly(text: str) -> str:
+    """Replace internal model-type names in report text with the names users see."""
+    for k, v in MODEL_TYPES.items():
+        text = text.replace(k, v)
+    return text
+
+
+def trip_calibration_line(trip: dict) -> str:
+    """One plain sentence on how the trip's prediction was corrected (no internal names or car keys)."""
+    info = trip.get("tips") or {}
+    measured = trip.get("measured_l100") is not None
+    if info.get("quick_estimate"):
+        return ""
+    if info.get("demo"):
+        return "enviroCar demo trip, not your car: it does not change your car's calibration."
+    if trip.get("calibrated"):
+        k = info.get("k")
+        return ("Calibrated for your car: the model's estimate was multiplied by your car's correction factor"
+                + (f" k = {k:.2f}." if k else "."))
+    if info.get("reference_adjusted"):
+        return ("Not calibrated yet: the estimate is adjusted to the PakWheels average for this model. "
+                + ("This trip's MAF data will calibrate your car for the next trip." if measured
+                   else "Upload a trip with MAF or log a fill-up to calibrate your car."))
+    if measured:
+        return "Not calibrated yet: this trip's MAF data will calibrate your car for the next trip."
+    return "Not calibrated yet: upload a trip with MAF or log a fill-up to calibrate your car."
+
+
 def user() -> dict | None:
     uid = st.session_state.get("user_id")
     return db.get_user(uid) if uid else None
@@ -46,7 +93,7 @@ def calibration_state(car: dict) -> tuple:
     if status:
         tier = "behaviour_only" if "behaviour_only" in status else next(iter(status))
         c = status[tier]
-        return "calibrated", "good", f"Calibrated: k = {c['k']:.2f} from {c['n_trips']} trips"
+        return "calibrated", "good", f"Calibrated: k = {c['k']:.2f} from {plural(c['n_trips'], 'trip')}"
     ref = pk_reference.match(car)
     if ref:
         return ("PakWheels-adjusted", "info",

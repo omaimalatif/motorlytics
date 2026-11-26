@@ -58,7 +58,7 @@ def analyse(file_list):
     st.session_state["car_id"] = chosen_car["id"]
     st.session_state["last_upload"] = res["trip_ids"]
     st.session_state.pop("fetched_log", None)
-    st.toast(f"Saved {len(res['trip_ids'])} trip(s) · model {res['model']} · {res['calibration']}")
+    st.toast(f"Saved {session.plural(len(res['trip_ids']), 'trip')} · {session.model_label(res['model'])}")
     session.open_trip(res["trip_ids"][0])
 
 

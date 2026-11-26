@@ -38,7 +38,7 @@ ui.page_header(f"Trip on {started:%d %b %Y, %H:%M}" if pd.notna(started) else f"
 ui.badges([("measured (MAF)" if measured else "predicted", "good" if measured else "info"),
            (("calibrated", "good") if trip["calibrated"] else ("adjusted to PakWheels average", "info")
             if info.get("reference_adjusted") else ("uncalibrated", "warn")),
-           (f"model: {trip['model']}", "neutral")])
+           (session.model_label(trip["model"]), "neutral")])
 if info.get("quick_estimate"):
     inp = info.get("inputs") or {}
     st.info(f"Quick estimate, not a recorded trip: typical {inp.get('style', '')} driving on a {trip['road_type']} road "
@@ -94,7 +94,7 @@ if tips:
 else:
     st.success("No tips: this trip already looks efficient for its road type.")
 
-st.caption(info.get("calibration", ""))
+st.caption(session.trip_calibration_line(trip))
 with st.expander("Delete this trip"):
     if st.button("Delete trip", type="secondary", icon=":material/delete:"):
         db.delete_trip(trip["id"], u["id"])

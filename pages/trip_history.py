@@ -33,7 +33,7 @@ if isinstance(dates, tuple) and len(dates) == 2:
 
 show = v[["id", "started", "car", "dist_km", "dur_min", "avg_speed", "road_type", "l100", "source", "eco_score",
           "style", "cost_pkr", "calibrated"]].reset_index(drop=True)
-st.caption(f"{len(v)} of {len(t)} trips · {v['dist_km'].sum():.0f} km · {v['litres'].sum():.1f} L")
+st.caption(f"{len(v)} of {session.plural(len(t), 'trip')} · {v['dist_km'].sum():.0f} km · {v['litres'].sum():.1f} L")
 ev = st.dataframe(
     show, hide_index=True, width="stretch", on_select="rerun", selection_mode="single-row",
     column_config={

@@ -18,7 +18,7 @@ if not car:
 st.subheader(cars.car_label(car))
 
 status = app_core.calibration_status(car["car_key"])
-tiers = {"behaviour_only": "Speed only (phone logs)", "full_no_load": "Speed + RPM", "full": "Speed + RPM + load"}
+tiers = session.MODEL_TYPES
 cols = st.columns(3)
 for c, (tier, label) in zip(cols, tiers.items()):
     with c:
@@ -27,7 +27,7 @@ for c, (tier, label) in zip(cols, tiers.items()):
             if s:
                 ui.badge("calibrated", "good")
                 st.metric("k", f"{s['k']:.3f}", help="Predictions are multiplied by k.")
-                st.caption(f"{s['n_trips']} trips · last {s['last'][:10]}")
+                st.caption(f"{session.plural(s['n_trips'], 'trip')} · last {s['last'][:10]}")
             else:
                 ui.badge("uncalibrated", "warn")
                 st.caption("Upload a log with MAF, or log a fill-up below.")
@@ -68,7 +68,10 @@ else:
                 chosen = [db.get_trip(i, u["id"]) for i in sel]
                 try:
                     out = app_core.log_fillup(car, chosen, float(litres), str(when))
-                    st.success(out["message"])
+                    now = out["now"].get("behaviour_only")
+                    st.success(f"Fill-up saved for {session.plural(len(chosen), 'trip')}."
+                               + (f" Speed-only predictions now use k = {now['k']:.2f} "
+                                  f"(from {session.plural(now['n_trips'], 'trip')})." if now else ""))
                     st.rerun()
                 except ValueError as e:
                     st.error(str(e))

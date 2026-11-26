@@ -79,7 +79,7 @@ def add_fillup_entry(store: dict, car_key, litres_filled: float, predicted_litre
     mf.add_calibration(store, car_key, ratios, n_trips, "fillup", when,
                        {"litres": litres_filled, "km": round(km, 2),
                         "predicted_litres": {tr: round(v, 3) for tr, v in predicted_litres.items()}})
-    return (f"fill-up of {litres_filled} L over {n_trips} trips "
+    return (f"fill-up of {litres_filled} L over {n_trips} trip{'' if n_trips == 1 else 's'} "
             f"(k {', '.join(f'{tr}={v:.3f}' for tr, v in ratios.items())})")
 
 

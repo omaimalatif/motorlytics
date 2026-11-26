@@ -16,8 +16,7 @@ REP = mf.PROC / "results_trip"
 meta_p = mf.MODELS / "meta_trip.json"
 meta = json.loads(meta_p.read_text()) if meta_p.exists() else {}
 
-tiers = {"behaviour_only": "Speed only (phone / any OBD log)", "full_no_load": "Speed + RPM",
-         "full": "Speed + RPM + engine load"}
+tiers = session.MODEL_TYPES
 cols = st.columns(3)
 for c, (fs, label) in zip(cols, tiers.items()):
     with c:
@@ -37,7 +36,9 @@ tab1, tab2, tab3, tab4 = st.tabs(["Test results", "Model choice", "Generalisatio
 with tab1:
     p = REP / "test_metrics.csv"
     if p.exists():
-        d = pd.read_csv(p)
+        d = pd.read_csv(p).replace({"feature_set": {**session.MODEL_TYPES, "baseline": "Baseline"}})
+        d = d.rename(columns={"feature_set": "Data", "group": "Group", "model": "Model", "rmse": "RMSE", "mae": "MAE",
+                              "r2": "R²", "mape": "MAPE %", "fit_s": "Fit (s)", "infer_ms_per_1k": "ms per 1,000 trips"})
         st.dataframe(d, hide_index=True, width="stretch")
         st.caption("Held-out VED vehicles (never seen in training). Baselines: mean, and median per engine size.")
     else:
@@ -45,7 +46,9 @@ with tab1:
 with tab2:
     p = REP / "model_selection_table.csv"
     if p.exists():
-        st.dataframe(pd.read_csv(p).round(2), hide_index=True, width="stretch")
+        d = pd.read_csv(p).round(2).replace({"tier": session.MODEL_TYPES})
+        d.columns = [session.friendly(c).replace("_", " ") for c in d.columns]
+        st.dataframe(d, hide_index=True, width="stretch")
         st.caption("MAPE %: VED test, enviroCar (21 European cars) before / after 3-trip calibration, exp1 (3 cars).")
     else:
         st.info("Run 09_generalisation.py to create this table.")
@@ -54,7 +57,7 @@ with tab3:
         p = REP / name
         if p.exists():
             with st.expander(name):
-                st.code(p.read_text(encoding="utf-8"), language=None)
+                st.code(session.friendly(p.read_text(encoding="utf-8")), language=None)
 with tab4:
     figs = [Path("plots") / f for f in ["11_model_comparison.png", "generalisation_calibration_mape.png",
                                         "14_driving_styles.png", "18_epa_gap_by_road_and_style.png"]]

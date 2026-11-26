@@ -64,7 +64,7 @@ if est:
                        "the typical speed for this road type and style.")
     ui.badge({"calibration": "calibrated", "pakwheels": "PakWheels-adjusted", "none": "uncorrected"}[est["factor_source"]],
              {"calibration": "good", "pakwheels": "info", "none": "warn"}[est["factor_source"]])
-    st.caption(f"Correction: {est['factor_text']}. Typical driving from {est['profile_trips']} training trips of this "
+    st.caption(f"Correction: {est['factor_text']}. Typical driving from {session.plural(est['profile_trips'], 'training trip')} of this "
                "road type and style" + (" (few trips: less reliable)" if est["profile_trips"] < 50 else "") + ".")
 
     left, right = st.columns(2)
