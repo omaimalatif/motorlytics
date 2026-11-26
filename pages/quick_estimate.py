@@ -64,6 +64,15 @@ if est:
                        "the typical speed for this road type and style.")
     ui.badge({"calibration": "calibrated", "pakwheels": "PakWheels-adjusted", "none": "uncorrected"}[est["factor_source"]],
              {"calibration": "good", "pakwheels": "info", "none": "warn"}[est["factor_source"]])
+    raw_kmpl = 100 / est["raw_l100"]
+    factor = est["kmpl"] / raw_kmpl                      # in km/L terms (= 1 / k on L/100 km)
+    if est["factor_source"] == "pakwheels":
+        calc = f"Model: {raw_kmpl:.1f} km/L × PakWheels factor {factor:.2f} = {est['kmpl']:.1f} km/L"
+    elif est["factor_source"] == "calibration":
+        calc = f"Model: {raw_kmpl:.1f} km/L × your calibration factor {factor:.2f} = {est['kmpl']:.1f} km/L"
+    else:
+        calc = f"Model: {raw_kmpl:.1f} km/L (no correction applied)"
+    st.markdown(f"**{calc}**")
     st.caption(f"Correction: {est['factor_text']}. Typical driving from {session.plural(est['profile_trips'], 'training trip')} of this "
                "road type and style" + (" (few trips: less reliable)" if est["profile_trips"] < 50 else "") + ".")
 
