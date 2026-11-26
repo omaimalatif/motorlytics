@@ -18,5 +18,6 @@ Data/processed/results_trip/*
 plots/*
 !plots/generalisation_calibration_mape.png
 
-# app database and uploaded logs (on Windows this is the same folder as Data/)
-data/
+# app database and uploaded logs (on Windows data/ is the same folder as Data/, so name the files)
+data/motorlytics.db
+data/uploads/
