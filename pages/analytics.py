@@ -48,8 +48,9 @@ with a1:
         fig.update_traces(marker=dict(size=10))
         lo, hi = d["day"].min(), d["day"].max()
         pad = pd.Timedelta(days=3) if (hi - lo) < pd.Timedelta(days=7) else pd.Timedelta(days=1)
-        fig.update_xaxes(type="date", tickformat="%d %b %Y", range=[lo - pad, hi + pad],
-                         dtick=86_400_000 if (hi - lo) < pd.Timedelta(days=14) else None)
+        span_days = max(1, ((hi + pad) - (lo - pad)).days)
+        step = max(1, -(-span_days // 10))                 # whole days, about 10 ticks: never sub-day ticks
+        fig.update_xaxes(type="date", tickformat="%d %b %Y", range=[lo - pad, hi + pad], dtick=step * 86_400_000)
         fig.update_yaxes(rangemode="tozero")
         st.plotly_chart(tidy(fig), width="stretch")
 with a2:

@@ -115,16 +115,21 @@ with g1:
         if by_day.sum() == 0:                                       # no trips in the last 2 weeks
             by_day = t.groupby("date")["litres"].sum().sort_index().tail(14)
             note = "No trips in the last 14 days: showing your last 14 driving days."
-        d = pd.DataFrame({"day": [str(x) for x in by_day.index], "litres": by_day.values,
+        d = pd.DataFrame({"day": [pd.Timestamp(x).strftime("%d %b %Y") for x in by_day.index],
+                          "litres": by_day.values,
                           "today": ["today" if x == today else "other" for x in by_day.index]})
-        fig = px.bar(d, x="day", y="litres", color="today", color_discrete_map={"today": "#e4572e", "other": "#4c78a8"})
-        fig.update_layout(showlegend=False, height=280, margin=dict(l=0, r=0, t=10, b=0), xaxis_title=None)
+        fig = px.bar(d, x="day", y="litres", color="today", color_discrete_map={"today": "#e4572e", "other": "#4c78a8"},
+                     hover_data={"today": False})
+        # day labels on a category axis: plotly never turns it into a time axis with sub-day ticks
+        fig.update_xaxes(type="category", categoryorder="array", categoryarray=list(d["day"]), title=None)
+        fig.update_layout(showlegend=False, height=280, margin=dict(l=0, r=0, t=10, b=0))
         st.plotly_chart(fig, width="stretch")
         if note:
             st.caption(note)
 with g2:
     with ui.card("Driving by hour of day (km)"):
-        by_hour = t.groupby("hour")["dist_km"].sum().reindex(range(24), fill_value=0)
-        fig = px.area(x=by_hour.index, y=by_hour.values, labels={"x": "hour", "y": "km"})
+        by_hour = t.groupby("hour")["dist_km"].sum().reindex(range(24), fill_value=0)   # 24 bars, zero-filled
+        fig = px.bar(x=list(range(24)), y=by_hour.values, labels={"x": "hour of day", "y": "km"})
+        fig.update_xaxes(type="linear", tickmode="array", tickvals=list(range(0, 24, 2)), range=[-0.5, 23.5])
         fig.update_layout(height=280, margin=dict(l=0, r=0, t=10, b=0))
         st.plotly_chart(fig, width="stretch")
