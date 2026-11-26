@@ -267,6 +267,13 @@ VEHICLE = ["disp_L", "cylinders", "boost", "weight"]          # cls_* dummies no
 # ------------------------------------------------------------------------------
 # 4. Vehicle specs (VED static file; also used for the app's car picker)
 # ------------------------------------------------------------------------------
+def estimate_cylinders(disp_L):
+    """Typical petrol layouts: < 1.15 L -> 3, <= 2.6 L -> 4, <= 4.0 L -> 6, else 8 (an estimate)."""
+    if disp_L is None or pd.isna(disp_L):
+        return np.nan
+    return 3.0 if disp_L < 1.15 else 4.0 if disp_L <= 2.6 else 6.0 if disp_L <= 4.0 else 8.0
+
+
 def parse_static(static: pd.DataFrame) -> pd.DataFrame:
     s = static.copy()
     s.columns = [c.strip() for c in s.columns]

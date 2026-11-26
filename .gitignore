@@ -17,3 +17,6 @@ Data/processed/results_trip/*
 # figures stay local, except the calibration result
 plots/*
 !plots/generalisation_calibration_mape.png
+
+# app database and uploaded logs (on Windows this is the same folder as Data/)
+data/
