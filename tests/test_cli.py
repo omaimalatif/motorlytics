@@ -17,7 +17,7 @@ def run(*args):
 
 
 code, out = run(SAMPLES / "gps_trip1.csv", "--disp", 1.2, "--cyl", 4, "--petrol", 280)
-c.ok(code == 0 and "model tier: behaviour_only" in out and "measured 5.44" in out, "phone-style log, speed-only tier")
+c.ok(code == 0 and "model tier: behaviour_only" in out and "measured 6.31" in out, "phone-style log, speed-only tier")
 code, out = run(SAMPLES / "ved_raw_vehicle157_highway.csv", "--disp", 3.5, "--cyl", 6)
 c.ok(code == 0 and "model tier: full" in out, "raw VED log uses the full tier")
 code, out = run(SAMPLES / "gps_trip1.csv", SAMPLES / "gps_trip2.csv", "--disp", 1.2, "--cyl", 4, "--car-id", "cli_car")

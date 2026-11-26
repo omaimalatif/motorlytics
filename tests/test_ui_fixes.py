@@ -27,7 +27,7 @@ speed_only.to_csv(buf, index=False)
 from core import app_core  # noqa: E402
 
 b = app_core.ingest_logs(user, car, [("speed_only.csv", buf.getvalue().encode())])["trip_ids"][0]
-c_trip = upload(user, car, [SAMPLES / "gps_trip2.csv"])["trip_ids"][0]
+c_trip = upload(user, car, [SAMPLES / "gps_trip3.csv"])["trip_ids"][0]
 
 at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=180)
 at.session_state["user_id"] = user["id"]

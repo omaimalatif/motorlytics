@@ -22,6 +22,13 @@ for f in files:
         continue
     meta = INDEX.loc[f.name]
     car = db.add_car(user["id"], "Sample", f.stem, None, float(meta["disp_L"]), float(meta["cylinders"]))
+    if meta.get("uploads", "yes") == "no":                               # e.g. shorter than 1 km once cleaned
+        try:
+            upload(user, car, [f])
+            c.ok(False, f"{f.name} is rejected with a clear message")
+        except ValueError as e:
+            c.ok("1 km" in str(e), f"{f.name} is rejected with a clear message", str(e))
+        continue
     try:                                                                  # fresh car: no calibration carry-over
         res = upload(user, car, [f])
     except Exception as e:                                                # noqa: BLE001

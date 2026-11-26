@@ -49,12 +49,12 @@ c.ok(any("CNG car" in w.value for w in at.warning), "CNG warning on upload page"
 db.update_car(cid, user["id"], fuel_type="petrol")
 
 # profile numbers = direct computation
-upload(db.get_user(user["id"]), db.get_car(cid), [SAMPLES / f"gps_trip{i}.csv" for i in (1, 2, 3, 4)], temp=20.0)
+upload(db.get_user(user["id"]), db.get_car(cid), [SAMPLES / f"gps_trip{i}.csv" for i in (1, 3, 4)], temp=20.0)
 prof = cars.car_profile(cid)
 t = pd.DataFrame(db.get_trips(user["id"], cid))
 t["l100"] = t["measured_l100"].fillna(t["pred_l100"])
 lit = float((t["l100"] * t["dist_km"] / 100).sum())
-c.ok(prof["trips"] == 4 and abs(prof["km"] - t["dist_km"].sum()) < 1e-6, "profile trips and km")
+c.ok(prof["trips"] == 3 and abs(prof["km"] - t["dist_km"].sum()) < 1e-6, "profile trips and km")
 c.ok(abs(prof["litres"] - lit) < 1e-6 and abs(prof["avg_l100"] - lit / t["dist_km"].sum() * 100) < 1e-6,
      "profile litres and average")
 c.ok(abs(prof["range_km"] - 35 / prof["avg_l100"] * 100) < 1e-6, "full-tank range")
