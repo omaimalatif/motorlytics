@@ -19,7 +19,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import adjusted_rand_score, silhouette_score
+from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
 
 import motorlytics_features as mf
@@ -80,6 +81,40 @@ groups = [g["l_per_100km"].to_numpy() for _, g in t.groupby("style")]
 h, p = stats.kruskal(*groups)
 print(f"\nKruskal-Wallis on L/100km across styles: H={h:.1f}, p={p:.2e}")
 
+# ---------------- EM clustering (Gaussian mixture) next to k-Means ----------------
+# Same standardised behaviour features. k-Means stays the app's style model; EM is the comparison.
+em_lines = ["EM (GaussianMixture, full covariance) vs k-Means on the same standardised features",
+            f"features: {STYLE}; {len(Z):,} trips", "", "k   silhouette k-Means   silhouette EM   EM BIC"]
+for k in range(2, 7):
+    lk = KMeans(k, n_init=10, random_state=42).fit_predict(Z[sub])
+    g = GaussianMixture(k, covariance_type="full", n_init=3, random_state=42).fit(Z[sub])
+    le = g.predict(Z[sub])
+    s_em = silhouette_score(Z[sub], le) if len(set(le)) > 1 else np.nan
+    em_lines.append(f"{k}   {silhouette_score(Z[sub], lk):.3f}               {s_em:.3f}           {g.bic(Z[sub]):,.0f}")
+gm = GaussianMixture(a.k, covariance_type="full", n_init=5, random_state=42).fit(Z)
+lab_em = gm.predict(Z)
+em_order = np.argsort(gm.means_.mean(axis=1))          # same ranking rule as k-Means
+em_map = {int(c): names[r] for r, c in enumerate(em_order)}
+t["style_em"] = [em_map[int(c)] for c in lab_em]
+ari = adjusted_rand_score(t["style"], t["style_em"])
+size = pd.DataFrame({"k-Means trips": t["style"].value_counts(), "EM trips": t["style_em"].value_counts(),
+                     "k-Means median L/100km": t.groupby("style")["l_per_100km"].median(),
+                     "EM median L/100km": t.groupby("style_em")["l_per_100km"].median()}).reindex(order_s)
+size["k-Means share"] = size["k-Means trips"] / len(t)
+size["EM share"] = size["EM trips"] / len(t)
+h_em, p_em = stats.kruskal(*[g_["l_per_100km"].to_numpy() for _, g_ in t.groupby("style_em")])
+em_lines += ["", f"k={a.k}: silhouette k-Means {silhouette_score(Z[sub], lab[sub]):.3f}, "
+             f"EM {silhouette_score(Z[sub], lab_em[sub]):.3f}",
+             f"adjusted Rand index (k-Means vs EM labels): {ari:.3f}",
+             f"Kruskal-Wallis on L/100km across EM clusters: H={h_em:.1f}, p={p_em:.2e}", "",
+             "cluster sizes and fuel:", size.round(3).to_string(), "",
+             "k-Means (rows) vs EM (columns), trips:",
+             pd.crosstab(t["style"], t["style_em"]).reindex(index=order_s, columns=order_s).to_string(), "",
+             "EM median profile:",
+             t.groupby("style_em")[STYLE + ["l_per_100km", "avg_speed"]].median().reindex(order_s).round(3).to_string()]
+print("\n" + "\n".join(em_lines))
+(mf.PROC / "style_em_comparison.txt").write_text("\n".join(em_lines), encoding="utf-8")
+
 eco_name = names[0]
 eco = t[t["style"] == eco_name]
 # median = what-if target for tips; 75th percentile = threshold for flagging a feature
@@ -102,6 +137,6 @@ mf.MODELS.mkdir(exist_ok=True)
 joblib.dump({"scaler": scaler, "kmeans": km, "features": STYLE, "label_map": label_map,
              "clip_lo": X.quantile(0.01).to_dict(), "clip_hi": X.quantile(0.99).to_dict(),
              "eco_profile": eco_profile, "eco_p75": eco_p75, "profile": prof}, mf.MODELS / "driving_style.joblib")
-t[["trip_key", "vehid", "style", "road_type"]].to_parquet(mf.PROC / "trip_styles.parquet", index=False)
+t[["trip_key", "vehid", "style", "style_em", "road_type"]].to_parquet(mf.PROC / "trip_styles.parquet", index=False)
 prof.to_csv(mf.PROC / "style_profiles.csv")
 print(f"\nsaved {mf.MODELS / 'driving_style.joblib'}")
