@@ -73,23 +73,43 @@ def car_photo(car: dict, width="stretch", caption: bool = True) -> None:
         st.caption(text)
 
 
+def fit_view(lats, lons, width_px: int = 700, height_px: int = 320, padding: float = 1.25,
+             max_zoom: float = 16.0) -> dict:
+    """Centre and zoom (Web Mercator) so the bounding box fits the map with some padding."""
+    lat0, lat1, lon0, lon1 = min(lats), max(lats), min(lons), max(lons)
+
+    def merc_y(lat):
+        lat = max(min(lat, 85.0), -85.0)
+        return math.log(math.tan(math.pi / 4 + math.radians(lat) / 2))
+
+    lon_span = max((lon1 - lon0) * padding, 1e-5)
+    y_span = max((merc_y(lat1) - merc_y(lat0)) * padding, 1e-7)
+    zoom_x = math.log2(width_px * 360.0 / (256.0 * lon_span))
+    zoom_y = math.log2(height_px * 2 * math.pi / (256.0 * y_span))
+    return {"latitude": (lat0 + lat1) / 2, "longitude": (lon0 + lon1) / 2,
+            "zoom": float(max(1.0, min(max_zoom, zoom_x, zoom_y)))}
+
+
+def route_deck(path, height: int = 320, width_px: int = 700) -> pdk.Deck:
+    """pydeck map of a GPS route: blue line (4 px) with start (green) and end (red) dots, free CARTO light
+    basemap, view fitted to the route. path: [[lat, lon], ...]."""
+    line = [[float(lon), float(lat)] for lat, lon in path]
+    ends = [{"position": line[0], "color": [30, 160, 90]}, {"position": line[-1], "color": [220, 60, 50]}]
+    view = fit_view([p[1] for p in line], [p[0] for p in line], width_px=width_px, height_px=height)
+    return pdk.Deck(
+        layers=[pdk.Layer("PathLayer", data=[{"path": line}], get_path="path", get_color=[40, 110, 220],
+                          get_width=4, width_units="pixels", width_min_pixels=3, width_max_pixels=6,
+                          cap_rounded=True, joint_rounded=True),
+                pdk.Layer("ScatterplotLayer", data=ends, get_position="position", get_fill_color="color",
+                          get_radius=6, radius_units="pixels", radius_min_pixels=4, radius_max_pixels=8,
+                          stroked=True, get_line_color=[255, 255, 255], line_width_min_pixels=1)],
+        initial_view_state=pdk.ViewState(**view, pitch=0, bearing=0),
+        map_provider="carto", map_style=pdk.map_styles.CARTO_LIGHT)
+
+
 def route_map(path, height: int = 320, key: str = None) -> None:
-    """GPS route as a line with start (green) and end (red) points. path: [[lat, lon], ...]."""
+    """GPS route on a map (see route_deck)."""
     if not path or len(path) < 2:
         st.info("This log has no GPS route.")
         return
-    df = pd.DataFrame(path, columns=["lat", "lon"])
-    line = [[lon, lat] for lat, lon in path]
-    ends = pd.DataFrame({"lon": [line[0][0], line[-1][0]], "lat": [line[0][1], line[-1][1]],
-                         "color": [[30, 160, 90], [220, 60, 50]]})
-    span = max(df["lat"].max() - df["lat"].min(), df["lon"].max() - df["lon"].min(), 1e-3)
-    zoom = float(max(3, min(16, 9 - math.log2(span))))      # ~city level for a few km of route
-    deck = pdk.Deck(
-        layers=[pdk.Layer("PathLayer", data=[{"path": line}], get_path="path", get_width=4, width_units="pixels",
-                          get_color=[40, 110, 220]),
-                pdk.Layer("ScatterplotLayer", data=ends, get_position="[lon, lat]", get_fill_color="color",
-                          get_radius=7, radius_units="pixels")],
-        initial_view_state=pdk.ViewState(latitude=float(df["lat"].mean()), longitude=float(df["lon"].mean()),
-                                         zoom=zoom),
-        map_style=None)
-    st.pydeck_chart(deck, height=height, key=key)
+    st.pydeck_chart(route_deck(path, height=height), height=height, key=key)
