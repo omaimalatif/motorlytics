@@ -5,20 +5,20 @@
     "behaviour_only/DecisionTree": {
       "path": "models\\trip_behaviour_only_DecisionTree.joblib",
       "group": "course",
-      "cv_rmse": 1.7779496323309882,
+      "cv_rmse": 1.7634177534970423,
       "params": {
         "decisiontreeregressor__min_samples_leaf": 50,
         "decisiontreeregressor__max_depth": 10
       },
-      "rmse": 1.9654114120394228,
-      "mae": 1.4914081006676683,
-      "r2": 0.5469706147762944,
-      "mape": 14.769060855862845
+      "rmse": 1.9646015296047776,
+      "mae": 1.489386691993585,
+      "r2": 0.5474112699940046,
+      "mape": 14.741686393900382
     },
     "behaviour_only/MLP": {
       "path": "models\\trip_behaviour_only_MLP.joblib",
       "group": "course",
-      "cv_rmse": 1.5541447029863629,
+      "cv_rmse": 1.5808792696679987,
       "params": {
         "mlpregressor__alpha": 8.532678095658718e-05,
         "mlpregressor__hidden_layer_sizes": [
@@ -28,64 +28,64 @@
         ],
         "mlpregressor__learning_rate_init": 0.005254210669345885
       },
-      "rmse": 1.7876534619497475,
-      "mae": 1.4026500540373774,
-      "r2": 0.6252116397069201,
-      "mape": 14.316425864241644
+      "rmse": 1.7365715524219032,
+      "mae": 1.3483963779813337,
+      "r2": 0.646377293017449,
+      "mape": 13.533620012144828
     },
     "behaviour_only/kNN": {
       "path": "models\\trip_behaviour_only_kNN.joblib",
       "group": "course",
-      "cv_rmse": 1.8636474299205088,
+      "cv_rmse": 1.8640540888572865,
       "params": {
         "kneighborsregressor__n_neighbors": 13,
         "kneighborsregressor__p": 2
       },
-      "rmse": 1.930828002911964,
-      "mae": 1.4419684593203326,
-      "r2": 0.5627733718490361,
-      "mape": 13.971501575998893
+      "rmse": 1.9316350663070152,
+      "mae": 1.4432622121215364,
+      "r2": 0.5624729167767699,
+      "mape": 13.986480582900688
     },
     "behaviour_only/LWR": {
       "path": "models\\trip_behaviour_only_LWR.joblib",
       "group": "course",
-      "cv_rmse": 1.5521717718502515,
+      "cv_rmse": 1.5520445309928674,
       "params": {
         "bandwidth": 2.0
       },
-      "rmse": 1.7201552566561864,
-      "mae": 1.3352279005946468,
-      "r2": 0.6529798285907887,
-      "mape": 13.63527743482877
+      "rmse": 1.71965871509628,
+      "mae": 1.334798024424515,
+      "r2": 0.6532317636560251,
+      "mape": 13.63039311862337
     },
     "behaviour_only/Ridge": {
       "path": "models\\trip_behaviour_only_Ridge.joblib",
       "group": "reference",
-      "cv_rmse": 1.6643657535156524,
+      "cv_rmse": 1.6644195506291246,
       "params": {},
-      "rmse": 1.8459024912936934,
-      "mae": 1.388853936535655,
-      "r2": 0.6003894568217267,
-      "mape": 14.067508205497742
+      "rmse": 1.8451206899226107,
+      "mae": 1.3880277141314485,
+      "r2": 0.6007873107879663,
+      "mape": 14.05952443858734
     },
     "behaviour_only/RandomForest": {
       "path": "models\\trip_behaviour_only_RandomForest.joblib",
       "group": "reference",
-      "cv_rmse": 1.5651816564225305,
+      "cv_rmse": 1.5675427169468144,
       "params": {
         "randomforestregressor__n_estimators": 300,
         "randomforestregressor__min_samples_leaf": 1,
         "randomforestregressor__max_features": 0.5
       },
-      "rmse": 1.773986509367246,
-      "mae": 1.3783821413011912,
-      "r2": 0.6309203910969998,
-      "mape": 13.784661822159954
+      "rmse": 1.7722321185166459,
+      "mae": 1.376703839785176,
+      "r2": 0.6317048618284671,
+      "mape": 13.75780919920965
     },
     "behaviour_only/LightGBM": {
       "path": "models\\trip_behaviour_only_LightGBM.joblib",
       "group": "reference",
-      "cv_rmse": 1.4955028448839323,
+      "cv_rmse": 1.4952647765265972,
       "params": {
         "colsample_bytree": 0.7200762468698007,
         "learning_rate": 0.01324458134009936,
@@ -93,28 +93,28 @@
         "n_estimators": 975,
         "num_leaves": 63
       },
-      "rmse": 1.6612483275818528,
-      "mae": 1.291052328897649,
-      "r2": 0.6763403653549386,
-      "mape": 12.913392606455206
+      "rmse": 1.6675047547818975,
+      "mae": 1.298706232307905,
+      "r2": 0.6739464436555407,
+      "mape": 12.978201949103884
     },
     "full/DecisionTree": {
       "path": "models\\trip_full_DecisionTree.joblib",
       "group": "course",
-      "cv_rmse": 1.6896004476976816,
+      "cv_rmse": 1.654503127301067,
       "params": {
         "decisiontreeregressor__min_samples_leaf": 5,
         "decisiontreeregressor__max_depth": 20
       },
-      "rmse": 1.7974749958762455,
-      "mae": 1.3306795656191377,
-      "r2": 0.621082082672744,
-      "mape": 12.676180215772428
+      "rmse": 1.7765966453506614,
+      "mae": 1.3107657715359657,
+      "r2": 0.6298886061207861,
+      "mape": 12.539262474821353
     },
     "full/MLP": {
       "path": "models\\trip_full_MLP.joblib",
       "group": "course",
-      "cv_rmse": 1.1033165154805524,
+      "cv_rmse": 1.1083180680797866,
       "params": {
         "mlpregressor__alpha": 4.207053950287933e-05,
         "mlpregressor__hidden_layer_sizes": [
@@ -122,64 +122,64 @@
         ],
         "mlpregressor__learning_rate_init": 0.0019790947569382467
       },
-      "rmse": 1.255925745306736,
-      "mae": 0.9456397012933909,
-      "r2": 0.8150103833549963,
-      "mape": 9.049351877830446
+      "rmse": 1.269065584230149,
+      "mae": 0.9528808625701046,
+      "r2": 0.8111474240833649,
+      "mape": 9.090785881986353
     },
     "full/kNN": {
       "path": "models\\trip_full_kNN.joblib",
       "group": "course",
-      "cv_rmse": 1.8452708834421394,
+      "cv_rmse": 1.844556231560702,
       "params": {
         "kneighborsregressor__n_neighbors": 13,
         "kneighborsregressor__p": 2
       },
-      "rmse": 1.8577079552746771,
-      "mae": 1.3668420575227689,
-      "r2": 0.5952616956794615,
-      "mape": 13.006423328486427
+      "rmse": 1.8562979333386458,
+      "mae": 1.3666996808602971,
+      "r2": 0.5959360156746005,
+      "mape": 13.004988094768644
     },
     "full/LWR": {
       "path": "models\\trip_full_LWR.joblib",
       "group": "course",
-      "cv_rmse": 1.1298928959188093,
+      "cv_rmse": 1.1298595539907184,
       "params": {
         "bandwidth": 2.0
       },
-      "rmse": 1.2350423568767805,
-      "mae": 0.9010440090399172,
-      "r2": 0.8211112082308544,
-      "mape": 8.704740106666238
+      "rmse": 1.2355316322207721,
+      "mae": 0.9012798001386851,
+      "r2": 0.8209960901356234,
+      "mape": 8.705428261359769
     },
     "full/Ridge": {
       "path": "models\\trip_full_Ridge.joblib",
       "group": "reference",
-      "cv_rmse": 1.3012408962377893,
+      "cv_rmse": 1.301300983807061,
       "params": {},
-      "rmse": 1.3703384051790477,
-      "mae": 0.9534840058825717,
-      "r2": 0.7797707067907744,
-      "mape": 9.271677480679335
+      "rmse": 1.3700838870130514,
+      "mae": 0.9532510849267596,
+      "r2": 0.7798852746333856,
+      "mape": 9.269233334319003
     },
     "full/RandomForest": {
       "path": "models\\trip_full_RandomForest.joblib",
       "group": "reference",
-      "cv_rmse": 1.318911581483188,
+      "cv_rmse": 1.3205968652482944,
       "params": {
         "randomforestregressor__n_estimators": 300,
         "randomforestregressor__min_samples_leaf": 1,
         "randomforestregressor__max_features": 0.5
       },
-      "rmse": 1.5204029847123188,
-      "mae": 1.102137071693052,
-      "r2": 0.7288954209202209,
-      "mape": 10.538164687662874
+      "rmse": 1.5216172691239587,
+      "mae": 1.102701896124252,
+      "r2": 0.728502623926677,
+      "mape": 10.532002670719885
     },
     "full/LightGBM": {
       "path": "models\\trip_full_LightGBM.joblib",
       "group": "reference",
-      "cv_rmse": 1.1293774904321576,
+      "cv_rmse": 1.1320166547893609,
       "params": {
         "colsample_bytree": 0.5866823267538861,
         "learning_rate": 0.02460710982480541,
@@ -187,28 +187,28 @@
         "n_estimators": 587,
         "num_leaves": 31
       },
-      "rmse": 1.2435350288361666,
-      "mae": 0.877785980045445,
-      "r2": 0.818642519934037,
-      "mape": 8.312623039390543
+      "rmse": 1.2404743143276953,
+      "mae": 0.8777689243494964,
+      "r2": 0.8195610331658058,
+      "mape": 8.319067295921984
     },
     "full_no_load/DecisionTree": {
       "path": "models\\trip_full_no_load_DecisionTree.joblib",
       "group": "course",
-      "cv_rmse": 1.7400042469201504,
+      "cv_rmse": 1.7103794605246043,
       "params": {
         "decisiontreeregressor__min_samples_leaf": 50,
         "decisiontreeregressor__max_depth": 12
       },
-      "rmse": 1.8491645345857528,
-      "mae": 1.3765069995322985,
-      "r2": 0.598975840772741,
-      "mape": 13.219620580101852
+      "rmse": 1.8507651146832547,
+      "mae": 1.3770277466904117,
+      "r2": 0.5983411048734728,
+      "mape": 13.220896793286924
     },
     "full_no_load/MLP": {
       "path": "models\\trip_full_no_load_MLP.joblib",
       "group": "course",
-      "cv_rmse": 1.3392386034299948,
+      "cv_rmse": 1.3440795443424947,
       "params": {
         "mlpregressor__alpha": 3.613894271216525e-05,
         "mlpregressor__hidden_layer_sizes": [
@@ -217,64 +217,64 @@
         ],
         "mlpregressor__learning_rate_init": 0.009243897959491428
       },
-      "rmse": 1.5114115669724488,
-      "mae": 1.1749096591995218,
-      "r2": 0.7320924768544773,
-      "mape": 11.456476813276748
+      "rmse": 1.5234576995991902,
+      "mae": 1.1731211564961883,
+      "r2": 0.7278454623166829,
+      "mape": 11.378989616905073
     },
     "full_no_load/kNN": {
       "path": "models\\trip_full_no_load_kNN.joblib",
       "group": "course",
-      "cv_rmse": 1.8623418435806531,
+      "cv_rmse": 1.8621844491541921,
       "params": {
         "kneighborsregressor__n_neighbors": 13,
         "kneighborsregressor__p": 2
       },
-      "rmse": 1.887408556786454,
-      "mae": 1.3971800684443483,
-      "r2": 0.582216517830217,
-      "mape": 13.324575781507363
+      "rmse": 1.8878808493226737,
+      "mae": 1.3979028905705007,
+      "r2": 0.582069620191533,
+      "mape": 13.332132166112288
     },
     "full_no_load/LWR": {
       "path": "models\\trip_full_no_load_LWR.joblib",
       "group": "course",
-      "cv_rmse": 1.3571123650929797,
+      "cv_rmse": 1.3570393433137635,
       "params": {
         "bandwidth": 2.0
       },
-      "rmse": 1.4714637848971894,
-      "mae": 1.117044623495239,
-      "r2": 0.7460673284162758,
-      "mape": 10.958044888566597
+      "rmse": 1.471379216981307,
+      "mae": 1.1167874632509802,
+      "r2": 0.7461343073273325,
+      "mape": 10.954908539998332
     },
     "full_no_load/Ridge": {
       "path": "models\\trip_full_no_load_Ridge.joblib",
       "group": "reference",
-      "cv_rmse": 1.504061574275433,
+      "cv_rmse": 1.504084605303828,
       "params": {},
-      "rmse": 1.5677049149270101,
-      "mae": 1.1616534268695455,
-      "r2": 0.7117641037604228,
-      "mape": 11.463137611477574
+      "rmse": 1.5674332550545051,
+      "mae": 1.1613909417406418,
+      "r2": 0.7119068760651277,
+      "mape": 11.46078508492529
     },
     "full_no_load/RandomForest": {
       "path": "models\\trip_full_no_load_RandomForest.joblib",
       "group": "reference",
-      "cv_rmse": 1.4356422681600018,
+      "cv_rmse": 1.4358784094132049,
       "params": {
         "randomforestregressor__n_estimators": 300,
         "randomforestregressor__min_samples_leaf": 1,
         "randomforestregressor__max_features": 0.5
       },
-      "rmse": 1.6276405206973232,
-      "mae": 1.2154153262955747,
-      "r2": 0.6893034630885666,
-      "mape": 11.742769762850278
+      "rmse": 1.6201354648859962,
+      "mae": 1.2107740906351565,
+      "r2": 0.6922079222585928,
+      "mape": 11.700443671686745
     },
     "full_no_load/LightGBM": {
       "path": "models\\trip_full_no_load_LightGBM.joblib",
       "group": "reference",
-      "cv_rmse": 1.3307873739294986,
+      "cv_rmse": 1.331915051963219,
       "params": {
         "colsample_bytree": 0.7200762468698007,
         "learning_rate": 0.01324458134009936,
@@ -282,10 +282,10 @@
         "n_estimators": 975,
         "num_leaves": 63
       },
-      "rmse": 1.4420072537505906,
-      "mae": 1.0676456170606954,
-      "r2": 0.7561322810091511,
-      "mape": 10.195442173331092
+      "rmse": 1.4447410308943869,
+      "mae": 1.0692391221218596,
+      "r2": 0.7552431847209146,
+      "mape": 10.213915449145091
     }
   },
   "tuned_params": {
@@ -391,7 +391,7 @@
   },
   "best_behaviour_only": "behaviour_only/LWR",
   "best_reference_behaviour_only": "behaviour_only/LightGBM",
-  "best_full": "full/LWR",
+  "best_full": "full/MLP",
   "best_reference_full": "full/LightGBM",
   "best_full_no_load": "full_no_load/LWR",
   "best_reference_full_no_load": "full_no_load/LightGBM",
@@ -403,7 +403,7 @@
     "tiers": {
       "behaviour_only": {
         "chosen": "behaviour_only/LWR",
-        "best_course_ved_test_mape": 13.635,
+        "best_course_ved_test_mape": 13.534,
         "eligible": [
           "DecisionTree",
           "MLP",
@@ -414,7 +414,7 @@
       },
       "full_no_load": {
         "chosen": "full_no_load/LWR",
-        "best_course_ved_test_mape": 10.958,
+        "best_course_ved_test_mape": 10.955,
         "eligible": [
           "MLP",
           "LWR"
@@ -422,7 +422,7 @@
         "cv_choice": "full_no_load/MLP"
       },
       "full": {
-        "chosen": "full/LWR",
+        "chosen": "full/MLP",
         "best_course_ved_test_mape": 8.705,
         "eligible": [
           "MLP",
