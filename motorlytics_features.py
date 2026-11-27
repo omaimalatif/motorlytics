@@ -10,9 +10,11 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-DATA = Path("Data")
+# anchored to this file and spelled exactly as on disk ("Data", capital D): Linux paths are case-sensitive
+ROOT = Path(__file__).resolve().parent
+DATA = ROOT / "Data"
 PROC = DATA / "processed"
-MODELS = Path("models")
+MODELS = ROOT / "models"
 
 AFR = 14.7          # stoichiometric air-fuel ratio, gasoline
 G_PER_L = 737.0     # gasoline density, g/L

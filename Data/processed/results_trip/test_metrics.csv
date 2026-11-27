@@ -1,0 +1,24 @@
+feature_set,group,model,rmse,mae,r2,mape,fit_s,infer_ms_per_1k
+behaviour_only,course,DecisionTree,1.965,1.489,0.547,14.742,0.176,1.532
+behaviour_only,course,MLP,1.737,1.348,0.646,13.534,2.746,2.683
+behaviour_only,course,kNN,1.932,1.443,0.562,13.986,0.043,84.919
+behaviour_only,course,LWR,1.72,1.335,0.653,13.63,0.022,1336.607
+behaviour_only,reference,Ridge,1.845,1.388,0.601,14.06,0.05,1.335
+behaviour_only,reference,RandomForest,1.772,1.377,0.632,13.758,5.481,57.377
+behaviour_only,reference,LightGBM,1.668,1.299,0.674,12.978,4.594,43.159
+full,course,DecisionTree,1.777,1.311,0.63,12.539,0.436,2.062
+full,course,MLP,1.269,0.953,0.811,9.091,4.082,2.662
+full,course,kNN,1.856,1.367,0.596,13.005,0.056,85.029
+full,course,LWR,1.236,0.901,0.821,8.705,0.029,1835.879
+full,reference,Ridge,1.37,0.953,0.78,9.269,0.063,1.506
+full,reference,RandomForest,1.522,1.103,0.729,10.532,6.149,63.887
+full,reference,LightGBM,1.24,0.878,0.82,8.319,2.6,24.403
+full_no_load,course,DecisionTree,1.851,1.377,0.598,13.221,0.291,1.726
+full_no_load,course,MLP,1.523,1.173,0.728,11.379,2.979,2.277
+full_no_load,course,kNN,1.888,1.398,0.582,13.332,0.059,58.966
+full_no_load,course,LWR,1.471,1.117,0.746,10.955,0.024,1841.051
+full_no_load,reference,Ridge,1.567,1.161,0.712,11.461,0.061,1.656
+full_no_load,reference,RandomForest,1.62,1.211,0.692,11.7,6.528,57.952
+full_no_load,reference,LightGBM,1.445,1.069,0.755,10.214,5.341,30.796
+baseline,baseline,Dummy(mean),2.949,2.24,-0.02,21.33,0.005,
+baseline,baseline,median per disp_L,2.802,2.084,0.079,19.76,0.013,

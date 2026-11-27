@@ -1,9 +1,9 @@
 """Car pictures (no Streamlit code).
 
 Which picture a car shows, in order:
-  1. the user's own photo (uploaded on the My car page), stored under data/uploads/user<id>/cars/
+  1. the user's own photo (uploaded on the My car page), stored under Data/uploads/user<id>/cars/
   2. an example photo of the model from Wikipedia / Wikimedia Commons, downloaded once per model into
-     data/uploads/model_photos/ and always shown with its credit (author, licence, link): these photos are
+     Data/uploads/model_photos/ and always shown with its credit (author, licence, link): these photos are
      free to reuse under Creative Commons / public-domain terms that require attribution. It may show a
      different generation or year than the user's car, so it is labelled "Example photo".
   3. a simple body-type drawing (assets/cars/*.svg, drawn for this project) if there is no photo or no internet.

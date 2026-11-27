@@ -1,4 +1,4 @@
-"""SQLite storage for the app (data/motorlytics.db, gitignored).
+"""SQLite storage for the app (Data/motorlytics.db, gitignored).
 
 Set MOTORLYTICS_DB to use another file (e.g. for tests).
 Tables: users, cars, trips, fillups.
@@ -10,7 +10,8 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DB_PATH = Path(os.environ.get("MOTORLYTICS_DB", ROOT / "data" / "motorlytics.db"))
+# "Data" exactly as the folder is named (Linux is case-sensitive; on Windows data/ and Data/ are the same folder)
+DB_PATH = Path(os.environ.get("MOTORLYTICS_DB", ROOT / "Data" / "motorlytics.db"))
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -118,6 +119,11 @@ def get_user_by_email(email) -> dict | None:
     with connect() as con:
         r = con.execute("SELECT * FROM users WHERE email=?", (email.strip().lower(),)).fetchone()
     return dict(r) if r else None
+
+
+def user_count() -> int:
+    with connect() as con:
+        return con.execute("SELECT COUNT(*) FROM users").fetchone()[0]
 
 
 def update_user(user_id, **fields) -> None:

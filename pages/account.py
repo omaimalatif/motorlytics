@@ -8,6 +8,7 @@ from ui import theme
 
 u = session.require_user()
 ui.page_header("Account", "Your profile and the settings used for costs and weather.")
+st.info("Online demo: data may reset when the app restarts.", icon=":material/cloud:")
 
 initials = "".join(w[0] for w in u["name"].split()[:2]).upper() or "?"
 left, right = st.columns([1, 2], gap="medium")

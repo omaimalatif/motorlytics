@@ -4,8 +4,11 @@
 
 Look and feel: ui/theme.py (colours, CSS, chart template) and .streamlit/config.toml. Logic lives in core/ (no Streamlit code there) and
 motorlytics_features.py; reusable widgets in ui/components.py.
-Env vars for testing: MOTORLYTICS_DB (SQLite file), MOTORLYTICS_CALIB (calibration store).
+Env vars for testing: MOTORLYTICS_DB (SQLite file), MOTORLYTICS_CALIB (calibration store), MOTORLYTICS_NO_DEMO=1
+(no demo account on the first start; core/demo.py creates it when the database has no users).
 """
+import os
+
 import streamlit as st
 
 from core import cars, db
@@ -14,6 +17,20 @@ from ui import session
 from ui import theme
 
 st.set_page_config(page_title="Motorlytics", page_icon=theme.LOGO, layout="wide")
+
+
+@st.cache_resource(show_spinner="Setting up the demo account (first start only)...")
+def first_start() -> bool:
+    """Once per server process: database + calibration store, and the demo account if there are no users (online the
+    disk starts empty and resets on restart). MOTORLYTICS_NO_DEMO=1 turns the demo off (tests)."""
+    if os.environ.get("MOTORLYTICS_NO_DEMO") == "1":
+        db.init_db()
+        return False
+    from core import demo
+    return demo.ensure_first_start()
+
+
+first_start()
 db.init_db()
 theme.setup()
 st.logo(image=theme.LOGO, size="large", icon_image=theme.LOGO)   # original file, on the black sidebar

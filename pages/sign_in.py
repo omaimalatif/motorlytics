@@ -64,6 +64,8 @@ with right:
                         st.session_state["goto"] = "overview"
                         st.rerun()                       # app.py now shows the signed-in pages, Overview first
                     st.error("Email or password is not correct.", icon=":material/error:")
+            st.caption(":material/info: Just looking? Sign in with the demo account: **demo@motorlytics.test** / "
+                       "**demo12345**")
         with tab_up:
             with st.form("register", border=False):
                 name = st.text_input("Name")

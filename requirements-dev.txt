@@ -1,0 +1,5 @@
+# Everything for the training pipeline and analysis scripts (01_ ... 09_, notebooks), on top of the app's runtime.
+-r requirements.txt
+lightgbm==4.7.0
+matplotlib==3.11.2
+openpyxl==3.1.5

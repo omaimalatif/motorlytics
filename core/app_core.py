@@ -16,7 +16,7 @@ k = litres / sum(predicted litres). A log is predicted with the k stored BEFORE 
 import json
 import os
 from functools import lru_cache
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import joblib
 import numpy as np
@@ -38,9 +38,15 @@ def _meta() -> dict:
     return json.loads((mf.MODELS / "meta_trip.json").read_text())
 
 
+def model_path(key: str) -> Path:
+    """File of a model listed in meta_trip.json. The stored path was written on Windows ('models\\x.joblib'),
+    which Linux would read as one file name, so only the file name is used, inside models/."""
+    return mf.MODELS / PureWindowsPath(_meta()["models"][key]["path"]).name
+
+
 @lru_cache(maxsize=8)
 def _bundle(key: str) -> dict:
-    return joblib.load(_meta()["models"][key]["path"])
+    return joblib.load(model_path(key))
 
 
 @lru_cache(maxsize=1)

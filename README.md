@@ -3,7 +3,7 @@
 Put every file in your project root (`D:\Ml project\`), next to the `Data\` folder.
 
 ```
-pip install -r requirements.txt
+pip install -r requirements-dev.txt     # training pipeline (the app alone needs only requirements.txt)
 ```
 
 ## Run order

@@ -1,13 +1,14 @@
-pandas>=2.1
-numpy
-scikit-learn>=1.4
-lightgbm
-scipy
-matplotlib
-pyarrow
-openpyxl
-joblib
-requests
-streamlit>=1.44
-plotly
-pydeck
+# Runtime packages for the Streamlit app (Streamlit Community Cloud installs this file).
+# Pinned to the project's .venv. scikit-learn must stay 1.9.1: the models in models/ were saved with it.
+# Training and analysis extras (LightGBM, matplotlib, ...) are in requirements-dev.txt.
+streamlit==1.67.0
+pandas==3.1.1
+numpy==2.5.4
+scikit-learn==1.9.1
+scipy==1.18.1
+joblib==1.6.0
+plotly==7.2.0
+pydeck==0.9.3
+pyarrow==26.0.1
+requests==2.34.2
+pillow==13.0.0

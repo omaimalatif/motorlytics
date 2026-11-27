@@ -17,6 +17,7 @@ def setup(name: str) -> Path:
     tmp = Path(tempfile.mkdtemp(prefix=f"motorlytics_{name}_"))
     os.environ["MOTORLYTICS_DB"] = str(tmp / "test.db")
     os.environ["MOTORLYTICS_CALIB"] = str(tmp / "calibration.json")
+    os.environ["MOTORLYTICS_NO_DEMO"] = "1"             # no demo account in test databases (test_deploy checks it)
     os.chdir(ROOT)
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))

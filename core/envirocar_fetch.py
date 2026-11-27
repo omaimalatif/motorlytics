@@ -4,7 +4,7 @@ enviroCar (https://envirocar.org) publishes OBD-II tracks as open data (ODbL). f
   - lists a random page of older tracks (2014-2019, where tracks have a real MAF sensor rather than a
     calculated one), keeps petrol cars only,
   - skips track ids already used: the validation download (Data/envirocar_rows.csv) and every track this
-    function fetched before (data/uploads/fetched_tracks.json),
+    function fetched before (Data/uploads/fetched_tracks.json),
   - downloads candidates until one has real MAF on >= 80 % of rows and covers >= 1 km,
   - returns it as a CSV in the app's upload format (time, lat, lon, speed, rpm, maf, load) plus the car it
     was recorded with.

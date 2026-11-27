@@ -1,11 +1,18 @@
 .venv/
 Data.zip
-models/*.joblib
-models/calibration.json
 __pycache__/
 *.parquet
 
-# data stays local, except selected result files for teammates
+# models stay local, except the ones the app loads at runtime (the app model per input type in
+# models/meta_trip.json "best_*", plus the k-Means driving-style model). tests/test_deploy.py checks this list.
+models/*.joblib
+!models/trip_behaviour_only_LWR.joblib
+!models/trip_full_no_load_LWR.joblib
+!models/trip_full_MLP.joblib
+!models/driving_style.joblib
+models/calibration.json
+
+# data stays local, except selected result files for teammates and the About the model page
 Data/*
 !Data/processed/
 Data/processed/*
@@ -13,11 +20,13 @@ Data/processed/*
 Data/processed/results_trip/*
 !Data/processed/results_trip/generalisation.txt
 !Data/processed/results_trip/external_exp1.txt
+!Data/processed/results_trip/test_metrics.csv
+!Data/processed/results_trip/model_selection_table.csv
 
 # figures stay local, except the calibration result
 plots/*
 !plots/generalisation_calibration_mape.png
 
-# app database and uploaded logs (on Windows data/ is the same folder as Data/, so name the files)
-data/motorlytics.db
-data/uploads/
+# app database, calibration store and uploads (Data/ is ignored anyway; named here so it is never committed)
+Data/motorlytics.db
+Data/uploads/

@@ -1,0 +1,16 @@
+tier,model,group,ved_test_mape,envirocar_mape,envirocar_mape_cal3,"exp1, E27 petrol (AFR 13.1) mape","exp1, pure petrol (AFR 14.7) mape",within_2pts_of_best_course_ved,app_choice
+behaviour_only,DecisionTree,course,14.742,23.4368,14.3509,9.3923,10.2229,True,False
+behaviour_only,MLP,course,13.534,20.4974,10.7572,17.5819,12.8102,True,False
+behaviour_only,kNN,course,13.986,23.1365,11.9774,11.1787,9.9609,True,False
+behaviour_only,LWR,course,13.63,23.4377,10.2729,11.3423,9.2078,True,True
+behaviour_only,LightGBM,reference,12.978,18.4418,12.3374,15.8344,10.9331,False,False
+full_no_load,DecisionTree,course,13.221,32.2827,16.3796,15.9041,22.0253,False,False
+full_no_load,MLP,course,11.379,23.6031,11.1785,14.0454,9.5335,True,False
+full_no_load,kNN,course,13.332,26.266,13.2263,10.9946,11.5954,False,False
+full_no_load,LWR,course,10.955,28.8203,11.1718,10.9342,12.1881,True,True
+full_no_load,LightGBM,reference,10.214,23.8547,11.2682,8.9189,9.1168,False,False
+full,DecisionTree,course,12.539,27.3379,14.5418,21.3466,29.0216,False,False
+full,MLP,course,9.091,19.7417,11.8081,16.0741,25.5064,True,True
+full,kNN,course,13.005,25.7246,13.4222,10.7411,11.1354,False,False
+full,LWR,course,8.705,21.1276,12.5259,17.3874,27.9301,True,False
+full,LightGBM,reference,8.319,18.1894,9.5528,8.6821,16.2269,False,False
