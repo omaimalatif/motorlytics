@@ -74,8 +74,8 @@ def car_photo(car: dict, width="stretch", caption: bool = True) -> None:
         st.caption(text)
 
 
-def fit_view(lats, lons, width_px: int = 700, height_px: int = 320, padding: float = 1.25,
-             max_zoom: float = 16.0) -> dict:
+def fit_view(lats, lons, width_px: int = 560, height_px: int = 320, padding: float = 1.35,
+             max_zoom: float = 15.0) -> dict:
     """Centre and zoom (Web Mercator) so the bounding box fits the map with some padding."""
     lat0, lat1, lon0, lon1 = min(lats), max(lats), min(lons), max(lons)
 
@@ -91,7 +91,7 @@ def fit_view(lats, lons, width_px: int = 700, height_px: int = 320, padding: flo
             "zoom": float(max(1.0, min(max_zoom, zoom_x, zoom_y)))}
 
 
-def route_deck(path, height: int = 320, width_px: int = 700) -> pdk.Deck:
+def route_deck(path, height: int = 320, width_px: int = 560) -> pdk.Deck:
     """pydeck map of a GPS route: blue line (4 px) with start (green) and end (red) dots, free CARTO light
     basemap, view fitted to the route. path: [[lat, lon], ...]."""
     line = [[float(lon), float(lat)] for lat, lon in path]
@@ -108,9 +108,10 @@ def route_deck(path, height: int = 320, width_px: int = 700) -> pdk.Deck:
         map_provider="carto", map_style=pdk.map_styles.CARTO_LIGHT)
 
 
-def route_map(path, height: int = 320, key: str = None) -> None:
-    """GPS route on a map (see route_deck)."""
+def route_map(path, height: int = 320, key: str = None, width_px: int = 560) -> None:
+    """GPS route on a map (see route_deck). width_px: a conservative guess of the map's width on that page, so
+    the fitted zoom keeps the whole route visible (a wider map just shows more margin)."""
     if not path or len(path) < 2:
         st.info("This log has no GPS route.")
         return
-    st.pydeck_chart(route_deck(path, height=height), height=height, key=key)
+    st.pydeck_chart(route_deck(path, height=height, width_px=width_px), height=height, key=key)
