@@ -68,7 +68,20 @@ for page in ["overview", "analytics", "trip_history", "calibration"]:
     c.page(at, page)
     specs = check_specs(at, page)
     if page == "analytics":
-        style = specs[3]
+        by_id = {sp["layout"].get("meta"): sp for sp in specs}
+        c.ok(list(by_id) == ["fuel_over_time", "style_road", "measured_vs_predicted", "cost_by_month", "eco_distribution"],
+             "analytics: the five charts in order", ", ".join(map(str, by_id)))
+        ft = by_id["fuel_over_time"]
+        avg = [tr for tr in ft["data"] if tr.get("name") == "7-trip average"]
+        c.ok(avg and avg[0]["mode"] == "lines" and all(tr["mode"] == "markers" and tr["marker"]["size"] >= 8
+                                                       for tr in ft["data"] if tr is not avg[0]),
+             "fuel over time: trips as dots plus a 7-trip rolling average line")
+        cost = by_id["cost_by_month"]["data"][0]
+        c.ok(cost["type"] == "bar" and cost.get("text") and cost.get("textposition") == "outside", "cost bars show values on top")
+        eco = by_id["eco_distribution"]["data"]
+        c.ok({tr["name"] for tr in eco} == {"eco", "normal", "aggressive"} and all(tr["xbins"]["size"] == 10 for tr in eco),
+             "eco-score histogram: bins of 10, one colour per style band, named")
+        style = by_id["style_road"]
         bars = [tr for tr in style["data"] if tr["type"] == "bar"]
         xs = {x for tr in bars for x in values(tr["x"])}
         ys = [y for tr in bars for y in values(tr["y"])]

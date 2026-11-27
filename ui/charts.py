@@ -10,10 +10,9 @@ BANDS = [(0, 40, "aggressive"), (40, 70, "normal"), (70, 100, "eco")]
 
 
 def eco_gauge(score, style: str = None) -> go.Figure:
-    """Radial 0-100 gauge, bar coloured by the score's style band; the style name is written under the number."""
+    """Radial 0-100 gauge, bar coloured by the score's style band (the page shows the style name as a pill)."""
     from core import scoring
     band = scoring.score_label(score)
-    name = style or band
     color = theme.STYLE_COLORS.get(band, theme.MUTED)
     fig = go.Figure(go.Indicator(
         mode="gauge+number", value=float(score) if score is not None and score == score else 0,
@@ -23,10 +22,7 @@ def eco_gauge(score, style: str = None) -> go.Figure:
                              tickcolor="rgba(0,0,0,0)"),
                    bar=dict(color=color, thickness=0.32), bgcolor=theme.RAISED, borderwidth=0,
                    steps=[dict(range=[a, b], color=theme._hex_rgba(theme.STYLE_COLORS[n], .16)) for a, b, n in BANDS]),
-        domain=dict(x=[0, 1], y=[0.12, 1])))
-    fig.add_annotation(x=0.5, y=0.02, xref="paper", yref="paper", showarrow=False,
-                       text=f"<b>{name}</b> style" if name and name != "n/a" else "no score",
-                       font=dict(color=color, size=14))
+        domain=dict(x=[0, 1], y=[0, 1])))
     fig.update_layout(margin=dict(l=24, r=24, t=16, b=8))
     return fig
 

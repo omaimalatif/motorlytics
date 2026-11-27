@@ -59,8 +59,8 @@ if my_cars:
     prof = cars.car_profile(car["id"])
 
     # ---------------- profile card ----------------
-    with ui.card():
-        pic_col, info_col = st.columns([1, 2])
+    with ui.card(kind="hero"):
+        pic_col, info_col = st.columns([1, 2], gap="large")
     with pic_col:
         ui.car_photo(car)
         with st.popover("Change photo", icon=":material/photo_camera:"):
@@ -87,7 +87,7 @@ if my_cars:
                    ("Colour", car.get("colour") or "–"), ("Fuel tank", session.fmt(car.get("tank_litres"), "L", 0)),
                    ("Odometer", session.fmt(car.get("odometer_km"), "km", 0)),
                    ("Registration", cars.mask_registration(car.get("registration")) or "–")]
-        cols = st.columns(3)
+        cols = st.columns(3, gap="small")
         for i, (label, value) in enumerate(details):
             with cols[i % 3]:
                 st.caption(label)
@@ -100,7 +100,8 @@ if my_cars:
                        "reliable for this car.")
 
     # ---------------- statistics ----------------
-    s = st.columns(6)
+    st.markdown("**Statistics**")
+    s = st.columns(3) + st.columns(3)
     with s[0]:
         ui.metric_tile("Trips", f"{prof['trips']}")
     with s[1]:
@@ -110,7 +111,7 @@ if my_cars:
     with s[3]:
         ui.metric_tile("Spent (PKR)", session.fmt(prof["pkr"], digits=0), help="Trips with a petrol price set.")
     with s[4]:
-        ui.metric_tile("Average (L/100 km)", session.fmt(prof["avg_l100"], digits=1),
+        ui.metric_tile("Average (L/100 km)", session.fmt(prof["avg_l100"], digits=1), accent=True,
                        help=f"Distance-weighted, measured where available. Mean measured "
                             f"{session.fmt(prof['avg_measured_l100'], digits=1)}, mean predicted "
                             f"{session.fmt(prof['avg_predicted_l100'], digits=1)} L/100 km.")
@@ -121,7 +122,7 @@ if my_cars:
 
     # ---------------- Pakistani reference (PakWheels) ----------------
     ref = pk_reference.match(car)
-    with ui.card("Pakistani reference (PakWheels)"):
+    with ui.card(":material/location_on: Pakistani reference (PakWheels)"):
         if ref:
             r1, r2, r3 = st.columns(3)
             r1.metric("PakWheels city (km/L)", f"{ref['city_kmpl']:.0f}", help=f"{100 / ref['city_kmpl']:.1f} L/100 km")
@@ -149,10 +150,10 @@ if my_cars:
 
     n_long = prof.get("long_trips", 0)
     if n_long >= 2:                                        # best and least efficient are different trips
-        b1, b2 = st.columns(2)
+        b1, b2 = st.columns(2, gap="medium")
         for col, key, title in [(b1, "best_trip", "Best trip"), (b2, "worst_trip", "Least efficient trip")]:
             with col:
-                with ui.card(title, "Trips of at least 3 km"):
+                with ui.card(title, "Trips of at least 3 km", kind="click"):
                     trip_summary(prof[key], key)
     elif n_long == 1:                                      # one trip: do not show it as both best and worst
         with ui.card("Your trip", "Your only trip of at least 3 km so far"):
@@ -185,16 +186,17 @@ if my_cars:
                     st.rerun()
 
     # ---------------- delete ----------------
-    with st.popover("Delete this car", icon=":material/delete:"):
+    with st.expander("Delete this car", icon=":material/delete:"):
         st.caption("The car is removed; its trips stay in your history without a car. This cannot be undone.")
         sure = st.checkbox(f"Yes, delete {cars.car_title(car)}", key=f"sure_{car['id']}")
-        if st.button("Delete car", type="primary", disabled=not sure, key=f"del_{car['id']}"):
+        if st.button("Delete car", disabled=not sure, key=f"mldanger-del-{car['id']}", icon=":material/delete:"):
             db.delete_car(car["id"], u["id"])
             st.session_state.pop("car_id", None)
             st.rerun()
 
 # ---------------- add a car ----------------
 st.subheader("Add a car" if my_cars else "Add your car")
+st.caption("Pick it from the Pakistani used-car catalogue, or enter the details yourself.")
 manual = st.toggle("Enter details manually", value=not cars.makes(),
                    help="Use this if your car is not in the catalogue (Pakistani used-car listings).")
 with ui.card():

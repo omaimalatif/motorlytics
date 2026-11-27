@@ -50,7 +50,7 @@ pages = {
     ],
 }
 nav = st.navigation(pages)
-if st.session_state.pop("goto", None) or nav.url_path == "sign_in":   # just signed in: open Overview
+if st.session_state.pop("goto", None):                     # just signed in: open Overview
     st.switch_page(P["overview"])
 
 with st.sidebar:

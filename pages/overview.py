@@ -1,8 +1,8 @@
-"""Overview: greeting, car summary, quick actions, last trip, recent trips, top tip, fuel and driving charts."""
+"""Overview: greeting, car hero card, monthly KPIs with sparklines, recent trips, last route, top tip, charts."""
 from datetime import datetime, timedelta
 
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 from core import cars, texts, weather
@@ -18,47 +18,40 @@ P = session.PAGES
 hour = datetime.now().hour
 greet = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
 cal_label, cal_kind, cal_text = session.calibration_state(car)
-calibrated = cal_label == "calibrated"
 status = [session.plural(len(t), "trip") if len(t) else "no trips yet", cars.car_label(car) if car else "no car added",
           cal_label]
-ui.page_header(f"{greet}, {u['name'].split()[0]}", " · ".join(status))
+act = ui.page_header(f"{greet}, {u['name'].split()[0]}", " · ".join(status), actions=True)
+with act:
+    with st.container(horizontal=True, horizontal_alignment="right", gap="small"):
+        if st.button("Upload trip", type="primary", icon=":material/upload_file:", key="hdr_upload"):
+            st.switch_page(P["upload"])
 
 if not car:
     ui.empty_state("Add your car to start: engine size is needed for the predictions.", "Add your car", P["car"])
     st.stop()
 
-# ---------------- row 1: hero car card [2/3] + quick actions and calibration [1/3] ----------------
-c1, c2 = st.columns([2, 1])
+# ---------------- hero: car card [2/3] + quick actions [1/3] ----------------
+c1, c2 = st.columns([2, 1], gap="medium")
 with c1:
-    with ui.card():
-        h_pic, h_txt = st.columns([1, 3])
+    with ui.card(kind="hero"):
+        h_pic, h_txt = st.columns([1, 2], vertical_alignment="center", gap="medium")
         with h_pic:
             ui.car_photo(car, caption=False)
         with h_txt:
             st.subheader(cars.car_title(car))
-            st.caption(" · ".join(x for x in [cars.fmt_disp(car.get("disp_L")) if car.get("disp_L") else None,
-                                              car.get("transmission"), car.get("fuel_type")] if x)
-                       or "Add transmission and fuel type on the My car page.")
-        month = t[(t["started"].dt.year == datetime.now().year) & (t["started"].dt.month == datetime.now().month)] \
-            if len(t) else t
-        s1, s2, s3 = st.columns(3)
-        with s1:
-            ui.metric_tile("Average (L/100 km)", session.fmt(t["l100"].mean() if len(t) else None, digits=1),
-                           help="Measured where the log has MAF, otherwise the model's estimate.")
-        with s2:
-            cost = month["cost_pkr"].sum(min_count=1) if len(month) else None
-            ui.metric_tile("PKR this month", session.fmt(cost, digits=0) if u.get("petrol_pkr") else "set price",
-                           help="Needs your petrol price (Account page).")
-        with s3:
-            ui.metric_tile("Average eco-score", session.fmt(t["eco_score"].mean() if len(t) else None, digits=0),
-                           help="0-100, higher is calmer driving.")
+            specs = [cars.fmt_disp(car.get("disp_L")) if car.get("disp_L") else None,
+                     f"{car['cylinders']} cylinders" if car.get("cylinders") else None,
+                     car.get("transmission"), car.get("fuel_type")]
+            st.caption(" · ".join(x for x in specs if x) or "Add transmission and fuel type on the My car page.")
+            ui.badge(cal_label, cal_kind)
+            st.caption(cal_text)
 with c2:
     with ui.card("Quick actions"):
         a1, a2 = st.columns(2)
-        if a1.button("Upload trip", icon=":material/upload_file:", width="stretch"):
-            st.switch_page(P["upload"])
-        if a2.button("Log fill-up", icon=":material/local_gas_station:", width="stretch"):
+        if a1.button("Log fill-up", icon=":material/local_gas_station:", width="stretch"):
             st.switch_page(P["calibration"])
+        if a2.button("Estimate", icon=":material/calculate:", width="stretch"):
+            st.switch_page(P["quick"])
         if a1.button("Calibrate", icon=":material/tune:", width="stretch"):
             st.switch_page(P["calibration"])
         with a2.popover("Weather", icon=":material/thermostat:", width="stretch"):
@@ -67,70 +60,145 @@ with c2:
                 st.metric(f"{w['city']}, {w['country']}", f"{w['temp_c']:.1f} °C", help="Open-Meteo, updated every 30 min")
             else:
                 st.caption("Set your city on the Account page to see the temperature.")
-    with ui.card("Calibration"):
-        ui.badge(cal_label, cal_kind)
-        st.caption(cal_text)
 
 if t.empty:
     ui.empty_state("No trips yet. Upload an OBD-II log (Torque, Car Scanner, enviroCar or VED CSV).",
                    "Upload a trip", P["upload"])
     st.stop()
 
-# ---------------- row 2: last route [1/2] + recent trips [1/4] + top tip [1/4] ----------------
+# ---------------- KPI row: this month vs last month, sparkline per day ----------------
+now = pd.Timestamp(datetime.now())
+dated = t.dropna(subset=["started"])
+this_p = now.to_period("M")
+if len(dated) and not (dated["started"].dt.to_period("M") == this_p).any():
+    this_p = dated["started"].max().to_period("M")          # no trips this month: the latest month with trips
+in_month = "this month" if this_p == now.to_period("M") else f"in {this_p.strftime('%b %Y')}"
+prev_p = this_p - 1
+m_now = dated[dated["started"].dt.to_period("M") == this_p]
+m_prev = dated[dated["started"].dt.to_period("M") == prev_p]
+
+
+def month_vals(m):
+    km = m["dist_km"].sum()
+    return {"pkr": m["cost_pkr"].sum(min_count=1) if len(m) else None, "km": km if len(m) else None,
+            "l100": m["litres"].sum() / km * 100 if km else None, "eco": m["eco_score"].mean() if len(m) else None}
+
+
+cur, prev = month_vals(m_now), month_vals(m_prev)
+
+
+def change(key, digits=0, pct=True):
+    a, b = cur[key], prev[key]
+    if a is None or b is None or pd.isna(a) or pd.isna(b) or not b:
+        return None
+    return f"{(a - b) / b * 100:+.0f}%" if pct else f"{a - b:+.{digits}f}"
+
+
+def vs_text(delta):
+    return f"vs {prev_p.strftime('%b %Y')}" if delta else None
+
+
+def spark(col, agg="sum"):
+    d = m_now.groupby(m_now["started"].dt.date)[col].agg(agg).sort_index()
+    return d.round(2).tolist() if len(d) >= 2 else None
+
+
+l100_daily = m_now.groupby(m_now["started"].dt.date).apply(
+    lambda g: g["litres"].sum() / g["dist_km"].sum() * 100 if g["dist_km"].sum() else None,
+    include_groups=False).dropna().round(2).tolist() if len(m_now) else []
+k1, k2, k3, k4 = st.columns(4)
+with k1:
+    ui.metric_tile(f"PKR {in_month}", session.fmt(cur["pkr"], digits=0) if u.get("petrol_pkr") else "set price",
+                   delta=change("pkr") if u.get("petrol_pkr") else None, delta_color="inverse",
+                   delta_description=vs_text(change("pkr") if u.get("petrol_pkr") else None),
+                   chart_data=spark("cost_pkr"), accent=True, help="Needs your petrol price (Account page).")
+with k2:
+    ui.metric_tile(f"Distance {in_month} (km)", session.fmt(cur["km"], digits=0), delta=change("km"),
+                   delta_color="off", delta_description=vs_text(change("km")), chart_data=spark("dist_km"))
+with k3:
+    ui.metric_tile(f"Average {in_month} (L/100 km)", session.fmt(cur["l100"], digits=1), delta=change("l100"),
+                   delta_color="inverse", delta_description=vs_text(change("l100")),
+                   chart_data=l100_daily if len(l100_daily) >= 2 else None,
+                   help="Distance-weighted; measured where the log has MAF, otherwise the model's estimate.")
+with k4:
+    ui.metric_tile(f"Eco-score {in_month}", session.fmt(cur["eco"], digits=0), delta=change("eco", pct=False),
+                   delta_description=vs_text(change("eco", pct=False)), chart_data=spark("eco_score", "mean"), help="0-100, higher is calmer driving.")
+
+# ---------------- recent trips [1/3] + last route [2/3] ----------------
 last = t.iloc[0]
-r1, r2, r3 = st.columns([2, 1, 1])
+r1, r2 = st.columns([1, 2], gap="medium")
 with r1:
-    with ui.card("Last trip", f"{session.fmt_dt(last['started'])} · {last['dist_km']:.1f} km · {last['l100']:.1f} L/100 km"):
-        ui.route_map((last["route"] or {}).get("path"), height=300, key="overview_map", width_px=420)
-with r2:
-    with ui.card("Recent trips"):
-        for _, r in t.head(5).iterrows():
-            label = f"{session.fmt_dt(r['started'], '%d %b')} · {r['dist_km']:.1f} km · {r['l100']:.1f} L/100"
-            if st.button(label, key=f"recent_{r['id']}", width="stretch"):
-                session.open_trip(r["id"])
-        if st.button("All trips", icon=":material/history:", width="stretch"):
+    with st.container(horizontal=True, vertical_alignment="center"):
+        st.markdown("**Recent trips**")
+        if st.button("All trips", icon=":material/history:", type="tertiary", key="all_trips"):
             st.switch_page(P["history"])
-with r3:
-    with ui.card("Top eco tip"):
-        best = None
-        for _, r in t.head(10).iterrows():                         # biggest saving among recent trips
-            for tip in (r["tips"] or {}).get("tips", []):
-                if best is None or tip["saving_l_per_100km"] > best[0]["saving_l_per_100km"]:
-                    best = (tip, r["id"])
+    for _, r in t.head(4).iterrows():
+        with ui.card(kind="click"):
+            top, btn = st.columns([2, 1], vertical_alignment="center")
+            with top:
+                st.markdown(f"**{session.fmt_dt(r['started'], '%d %b %Y, %H:%M')}**")
+                st.caption(f"{r['dist_km']:.1f} km · {r['l100']:.1f} L/100 km · {r['road_type'] or '?'} road")
+                if r["style"]:
+                    ui.style_badge(r["style"])
+            with btn:
+                if st.button("Open", key=f"recent_{r['id']}", width="stretch"):
+                    session.open_trip(r["id"])
+with r2:
+    with ui.card("Last trip", f"{session.fmt_dt(last['started'])} · {last['dist_km']:.1f} km · {last['l100']:.1f} L/100 km"):
+        ui.route_map((last["route"] or {}).get("path"), height=330, key="overview_map", width_px=560)
+
+# ---------------- top tip ----------------
+best = None
+for _, r in t.head(10).iterrows():                         # biggest saving among recent trips
+    for tip in (r["tips"] or {}).get("tips", []):
+        if best is None or tip["saving_l_per_100km"] > best[0]["saving_l_per_100km"]:
+            best = (tip, r["id"])
+with ui.card(kind="hero"):
+    tip_txt, tip_btn = st.columns([4, 1], vertical_alignment="center")
+    with tip_txt:
+        st.markdown("**:material/lightbulb: Top eco tip**")
         if best:
             st.markdown(best[0]["tip"])
-            st.caption(texts.tip_comparison(best[0]) + f" Possible saving {texts.saving_text(best[0]['saving_l_per_100km'])}.")
-            if st.button("See the trip", key="tip_trip"):
-                session.open_trip(best[1])
+            st.caption(texts.tip_comparison(best[0]))
+            st.markdown(f"Possible saving **{texts.saving_text(best[0]['saving_l_per_100km'])}**")
         else:
             st.caption("No tips: your recent trips already look efficient.")
+    with tip_btn:
+        if best and st.button("See the trip", key="tip_trip", icon=":material/route:"):
+            session.open_trip(best[1])
 
-# ---------------- row 3: fuel by day + driving by hour ----------------
-g1, g2 = st.columns(2)
+# ---------------- fuel by day + driving by hour ----------------
+g1, g2 = st.columns(2, gap="medium")
 with g1:
-    with ui.card("Fuel use by day (litres)"):
-        today = datetime.now().date()
-        days = pd.date_range(today - timedelta(days=13), today).date
-        by_day = t.groupby("date")["litres"].sum().reindex(days, fill_value=0)
-        note = None
-        if by_day.sum() == 0:                                       # no trips in the last 2 weeks
-            by_day = t.groupby("date")["litres"].sum().sort_index().tail(14)
-            note = "No trips in the last 14 days: showing your last 14 driving days."
-        d = pd.DataFrame({"day": [pd.Timestamp(x).strftime("%d %b %Y") for x in by_day.index],
-                          "litres": by_day.values,
-                          "today": ["today" if x == today else "other" for x in by_day.index]})
-        fig = px.bar(d, x="day", y="litres", color="today", color_discrete_map={"today": "#e4572e", "other": "#4c78a8"},
-                     hover_data={"today": False})
+    today = datetime.now().date()
+    days = pd.date_range(today - timedelta(days=13), today).date
+    by_day = t.groupby("date")["litres"].sum().reindex(days, fill_value=0)
+    note = None
+    if by_day.sum() == 0:                                       # no trips in the last 2 weeks
+        by_day = t.groupby("date")["litres"].sum().sort_index().tail(14)
+        note = "No trips in the last 14 days: showing your last 14 driving days."
+    top_day = by_day.idxmax() if len(by_day) and by_day.max() > 0 else None
+    take = (f"Most fuel on **{pd.Timestamp(top_day):%d %b %Y}**: {by_day.max():.1f} L." if top_day is not None else None)
+    with ui.chart_card("Fuel use by day (litres)", note or None):
+        labels = [pd.Timestamp(x).strftime("%d %b %Y") for x in by_day.index]
+        fig = go.Figure(go.Bar(x=labels, y=by_day.values, marker_color=[theme.ORANGE if x == today else theme.SINGLE
+                                                                        for x in by_day.index],
+                               hovertemplate="%{x}: %{y:.2f} L<extra></extra>"))
         # day labels on a category axis: plotly never turns it into a time axis with sub-day ticks
-        fig.update_xaxes(type="category", categoryorder="array", categoryarray=list(d["day"]), title=None)
-        fig.update_layout(showlegend=False, height=280, margin=dict(l=0, r=0, t=10, b=0))
-        theme.plot(fig, fig.layout.height or 280)
-        if note:
-            st.caption(note)
+        fig.update_xaxes(type="category", categoryorder="array", categoryarray=labels, title=None)
+        fig.update_yaxes(title="litres")
+        theme.plot(fig, 280)
+        if take:
+            st.caption(take.replace("**", ""))
 with g2:
-    with ui.card("Driving by hour of day (km)"):
-        by_hour = t.groupby("hour")["dist_km"].sum().reindex(range(24), fill_value=0)   # 24 bars, zero-filled
-        fig = px.bar(x=list(range(24)), y=by_hour.values, labels={"x": "hour of day", "y": "km"})
-        fig.update_xaxes(type="linear", tickmode="array", tickvals=list(range(0, 24, 2)), range=[-0.5, 23.5])
-        fig.update_layout(height=280, margin=dict(l=0, r=0, t=10, b=0))
-        theme.plot(fig, fig.layout.height or 280)
+    by_hour = t.groupby("hour")["dist_km"].sum().reindex(range(24), fill_value=0)   # 24 bars, zero-filled
+    peak = int(by_hour.idxmax()) if by_hour.max() > 0 else None
+    with ui.chart_card("Driving by hour of day (km)"):
+        fig = go.Figure(go.Bar(x=list(range(24)), y=by_hour.values, marker_color=theme.SINGLE,
+                               hovertemplate="%{x}:00: %{y:.1f} km<extra></extra>"))
+        fig.update_xaxes(type="linear", tickmode="array", tickvals=list(range(0, 24, 2)), range=[-0.5, 23.5],
+                         title="hour of day")
+        fig.update_yaxes(title="km")
+        theme.plot(fig, 280)
+        if peak is not None:
+            st.caption(f"You drive most around {peak:02d}:00.")

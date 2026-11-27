@@ -1,4 +1,6 @@
 """Upload one or more trip logs -> predict -> save as trips -> open the trip detail."""
+from pathlib import Path
+
 import numpy as np
 import streamlit as st
 
@@ -7,6 +9,7 @@ from ui import components as ui
 from ui import session
 
 u = session.require_user()
+ROOT = Path(__file__).resolve().parents[1]
 P = session.PAGES
 ui.page_header("Upload trip", "CSV logs from Torque, Car Scanner, enviroCar or VED. Several files = several trips.")
 
@@ -16,12 +19,18 @@ if not my_cars:
     st.stop()
 car = session.active_car(u)
 
-left, right = st.columns([2, 1])
+SAMPLE = ROOT / "samples" / "corsa_d_2010_trip1.csv"
+left, right = st.columns([2, 1], gap="medium")
 with left:
-    with ui.card("Log files"):
+    with ui.card("Log files", "Drag and drop one or more CSV files. Several files = several trips."):
         files = st.file_uploader("Trip log (CSV)", type=["csv"], accept_multiple_files=True)
         st.caption("Needs at least time and speed. With MAF the real fuel use is measured and your car's "
                    "calibration improves; with RPM and engine load the engine models can be used.")
+        if SAMPLE.exists():
+            with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+                st.caption(":material/lightbulb: No log yet? Try a real sample trip (Opel Corsa D, with MAF):")
+                st.download_button("Download sample", SAMPLE.read_bytes(), file_name=SAMPLE.name, mime="text/csv",
+                                   icon=":material/download:", type="tertiary")
 with right:
     with ui.card("Trip settings"):
         ids = [c["id"] for c in my_cars]
@@ -61,12 +70,11 @@ def analyse(file_list):
     session.open_trip(res["trip_ids"][0])
 
 
-if st.button("Analyse trip", type="primary", disabled=not files, icon=":material/analytics:"):
+if st.button("Analyse trip", type="primary", disabled=not files, icon=":material/analytics:", width="stretch"):
     analyse([(f.name, f.getvalue()) for f in files])
 
 # ---------------- no log at hand: fetch a real trip from enviroCar ----------------
-st.divider()
-with ui.card("No log at hand? Try a real trip", "Downloads one track recorded by another driver from enviroCar "
+with ui.card(":material/cloud_download: No log at hand? Fetch a real trip", "Downloads one track recorded by another driver from enviroCar "
              "(open data) that this app has not used before, with real MAF so the measured fuel is shown too."):
     if st.button("Fetch a real trip", icon=":material/cloud_download:"):
         with st.spinner("Looking for an unseen enviroCar track with a real MAF sensor..."):

@@ -7,6 +7,11 @@ from ui import theme
 
 E = theme.esc
 
+if st.session_state.get("user_id"):           # already signed in (the page stays reachable, hidden, for the hand-over)
+    st.info("You are signed in.", icon=":material/check_circle:")
+    st.page_link("pages/overview.py", label="Go to Overview", icon=":material/dashboard:")
+    st.stop()
+
 st.html("""<style>
 [data-testid="stHeader"] { background: #000000; }
 [data-testid="stMainBlockContainer"] { padding-top: 5.5rem; max-width: 1180px; }

@@ -82,7 +82,7 @@ c.ok(bool(t4["calibrated"]), "4th trip uses the car's calibration", r2["calibrat
 c.ok(len((t4["route"] or {}).get("path") or []) > 10, "route stored")
 
 at.switch_page("pages/account.py").run()
-[b for b in at.button if b.label == "Log out"][0].click().run()
+[b for b in at.button if b.label == "Sign out"][0].click().run()
 c.ok("user_id" not in at.session_state, "logged out")
 c.page(at, "public page after logout")
 c.ok(any(b.label == "Get started" for b in at.button) or len(at.text_input) == 7, "back on the public pages")

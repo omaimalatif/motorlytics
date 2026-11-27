@@ -1,6 +1,5 @@
 """Quick estimate: fuel and cost for a trip without a log (typical driving for the chosen road type and style)."""
-import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as pgo
 import streamlit as st
 
 from core import cars, quick_estimate, weather
@@ -17,7 +16,7 @@ if not my_cars:
     st.stop()
 car = session.active_car(u)
 
-with st.form("quick"):
+with ui.card("Trip", "Distance, road type and how it will be driven."), st.form("quick", border=False):
     c1, c2, c3 = st.columns(3)
     ids = [c["id"] for c in my_cars]
     cid = c1.selectbox("Car", ids, index=ids.index(car["id"]),
@@ -53,9 +52,11 @@ est = st.session_state.get("quick_est")
 if est:
     chosen = next((c for c in my_cars if c["id"] == est["car_id"]), car)
     st.subheader(f"{est['dist_km']:.0f} km, {est['road_type']}, {est['style']} driving · {cars.car_title(chosen)}")
+    src_badge = {"calibration": ("calibrated", "good"), "pakwheels": ("PakWheels-adjusted", "info"),
+                 "none": ("uncorrected", "warn")}[est["factor_source"]]
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        ui.metric_tile("Fuel economy (km/L)", f"{est['kmpl']:.1f}", help=f"{est['l100']:.2f} L/100 km")
+        ui.metric_tile("Fuel economy (km/L)", f"{est['kmpl']:.1f}", help=f"{est['l100']:.2f} L/100 km", accent=True)
     with k2:
         ui.metric_tile("Fuel (L)", f"{est['litres']:.2f}")
     with k3:
@@ -63,8 +64,6 @@ if est:
     with k4:
         ui.metric_tile("Typical time (min)", f"{est['dur_min']:.0f}", help=f"At {est['avg_speed']:.0f} km/h average, "
                        "the typical speed for this road type and style.")
-    ui.badge({"calibration": "calibrated", "pakwheels": "PakWheels-adjusted", "none": "uncorrected"}[est["factor_source"]],
-             {"calibration": "good", "pakwheels": "info", "none": "warn"}[est["factor_source"]])
     raw_kmpl = 100 / est["raw_l100"]
     factor = est["kmpl"] / raw_kmpl                      # in km/L terms (= 1 / k on L/100 km)
     if est["factor_source"] == "pakwheels":
@@ -73,18 +72,25 @@ if est:
         calc = f"Model: {raw_kmpl:.1f} km/L × your calibration factor {factor:.2f} = {est['kmpl']:.1f} km/L"
     else:
         calc = f"Model: {raw_kmpl:.1f} km/L (no correction applied)"
-    st.markdown(f"**{calc}**")
+    color, icon = theme.BADGE[src_badge[1]]
+    with st.container(key="mlformula"):
+        st.markdown(f"**{calc}** &nbsp; :{color}-badge[{icon} {src_badge[0]}]")
     st.caption(f"Correction: {est['factor_text']}. Typical driving from {session.plural(est['profile_trips'], 'training trip')} of this "
                "road type and style" + (" (few trips: less reliable)" if est["profile_trips"] < 50 else "") + ".")
 
-    left, right = st.columns(2)
+    left, right = st.columns(2, gap="medium")
     with left:
-        with ui.card("Same trip, other driving styles"):
-            d = pd.DataFrame([{"style": s, "litres": v["litres"], "km/L": v["kmpl"]} for s, v in est["by_style"].items()])
-            fig = px.bar(d, x="style", y="litres", text=d["km/L"].map(lambda x: f"{x:.1f} km/L"),
-                         category_orders={"style": quick_estimate.STYLES})
-            fig.update_layout(height=260, margin=dict(l=0, r=0, t=10, b=0), xaxis_title=None, yaxis_title="litres")
-            theme.plot(fig, fig.layout.height or 280)
+        with ui.chart_card("Same trip, other driving styles", "Litres for this trip; the label is the km/L."):
+            order = [x for x in quick_estimate.STYLES if x in est["by_style"]]
+            fig = pgo.Figure(pgo.Bar(
+                x=order, y=[est["by_style"][x]["litres"] for x in order],
+                marker_color=[theme.STYLE_COLORS.get(x, theme.SINGLE) for x in order],
+                marker_line=dict(width=[2.5 if x == est["style"] else 0 for x in order], color=theme.TEXT),
+                text=[f"{est['by_style'][x]['kmpl']:.1f} km/L" for x in order], textposition="outside", cliponaxis=False,
+                hovertemplate="%{x}: %{y:.2f} L<extra></extra>"))
+            fig.update_yaxes(title="litres", range=[0, max(est["by_style"][x]["litres"] for x in order) * 1.25])
+            fig.update_xaxes(title=None)
+            theme.plot(fig, 270)
             if est["eco_saving_litres"] > 0.005:
                 st.caption(f"Driving eco would save about {est['eco_saving_litres']:.2f} L"
                            + (f" (PKR {est['eco_saving_pkr']:.0f})" if est["eco_saving_pkr"] else "") + " on this trip.")
@@ -100,7 +106,7 @@ if est:
             else:
                 st.caption("Enter your own km/L above to compare.")
 
-    if st.button("Save as trip", icon=":material/save:"):
+    if st.button("Save as trip", icon=":material/save:", type="primary"):
         tid = quick_estimate.save_estimate(u, chosen, est)
         st.session_state.pop("quick_est", None)
         st.toast("Saved as a quick-estimate trip")

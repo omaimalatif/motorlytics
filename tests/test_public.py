@@ -72,7 +72,7 @@ c.ok(nxt.title and nxt.title[0].value.startswith("Good") and "goto" not in nxt.s
      nxt.title[0].value if nxt.title else "")
 
 at.switch_page("pages/account.py").run()
-[b for b in at.button if b.label == "Log out"][0].click().run()
+[b for b in at.button if b.label == "Sign out"][0].click().run()
 c.page(at, "after logout")
 c.ok("user_id" not in at.session_state and any(b.label == "Get started" for b in at.button), "logout returns to Welcome")
 c.done()

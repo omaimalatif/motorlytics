@@ -180,6 +180,11 @@ hr {{ border-color: var(--ml-border) !important; }}
 .ml-takeaway {{ color: var(--ml-muted); font-size: .85rem; margin: 0; }}
 .ml-takeaway b {{ color: var(--ml-text); }}
 
+/* formula strip (Quick estimate): Model x factor = result */
+.st-key-mlformula {{ background: var(--ml-raised); border: 1px solid var(--ml-border); border-left: 3px solid var(--ml-orange);
+  border-radius: var(--ml-r-card); padding: 12px 16px; }}
+.st-key-mlformula p {{ font-variant-numeric: tabular-nums; margin: 0; }}
+
 /* ---------- metric tiles ---------- */
 [data-testid="stMetric"] {{
   background: var(--ml-raised); border: 1px solid var(--ml-border); border-radius: var(--ml-r-card);
@@ -198,7 +203,8 @@ hr {{ border-color: var(--ml-border) !important; }}
   border-radius: var(--ml-r-input); box-shadow: 0 6px 18px {_hex_rgba(RED, .28)}; transition: filter .15s, transform .15s;
 }}
 [data-testid^="stBaseButton-primary"]:hover {{ filter: brightness(1.08); transform: translateY(-1px); }}
-[data-testid^="stBaseButton-primary"]:disabled {{ filter: grayscale(.7) brightness(.6); box-shadow: none; transform: none; }}
+[data-testid^="stBaseButton-primary"]:disabled {{ background: var(--ml-raised) !important; color: #71717A !important;
+  border: 1px solid var(--ml-border) !important; box-shadow: none; transform: none; filter: none; }}
 [data-testid^="stBaseButton-secondary"] {{
   background: transparent !important; border: 1px solid var(--ml-border) !important; color: var(--ml-text) !important;
   border-radius: var(--ml-r-input); font-weight: 500; transition: border-color .15s, color .15s, background .15s;
@@ -247,7 +253,9 @@ hr {{ border-color: var(--ml-border) !important; }}
 [data-testid="stSidebarNavLink"][aria-current="page"] span {{ color: var(--ml-text) !important; font-weight: 600; }}
 [data-testid="stSidebarNavLink"][aria-current="page"] [data-testid="stIconMaterial"] {{ color: var(--ml-orange) !important; }}
 [data-testid="stNavSectionHeader"] {{ color: #71717A; text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; }}
-[data-testid="stSidebarHeader"] [data-testid="stLogo"], [data-testid="stHeaderLogo"] {{ height: 3rem; max-width: 100%; }}
+[data-testid="stSidebarLogo"], [data-testid="stSidebarHeader"] [data-testid="stLogo"] {{ height: 4.5rem !important; max-width: 100%; }}
+[data-testid="stSidebarHeader"] {{ height: auto; padding-top: 1rem; }}
+[data-testid="stTopNav"] [data-testid="stLogo"], [data-testid="stHeader"] [data-testid="stLogo"] {{ height: 2.6rem !important; }}
 [data-testid="stTopNavLink"][aria-current="page"] {{ box-shadow: inset 0 -2px 0 var(--ml-orange); }}
 
 /* ---------- badges / pills ---------- */

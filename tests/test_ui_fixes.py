@@ -153,23 +153,22 @@ at2.run()
 at2.switch_page("pages/analytics.py").run()
 c.page(at2, "analytics with 1 trip")
 c.ok(any("Charts fill in as you upload more trips" in e.value for e in at2.caption), "few-trips note")
-specs = [json.loads(e.proto.spec) for e in at2.get("plotly_chart")]
-time_x = specs[0]["layout"]["xaxis"]
-rng = [pd.Timestamp(x) for x in time_x["range"]]
-c.ok(time_x["type"] == "date" and "%d" in time_x.get("tickformat", "") and (rng[1] - rng[0]).days >= 6,
-     "fuel over time: date axis by day, padded range", f"{time_x.get('tickformat')}, {(rng[1] - rng[0]).days} days")
-c.ok(all(tr.get("mode", "markers") == "markers" and tr.get("marker", {}).get("size", 0) >= 8 for tr in specs[0]["data"]),
-     "fuel over time: visible markers")
-c.ok(all(tr.get("hoveron") == "points" for tr in specs[1]["data"]), "road type: points (not a box plot) with few trips")
-hist = specs[2]["data"][0]
-c.ok(hist["type"] == "histogram" and hist["xbins"]["size"] == 10 and specs[2]["layout"]["xaxis"]["range"] == [0, 105],
-     "eco-score histogram: bins of 10, range 0-105")
-bar_text = [x for tr in specs[3]["data"] for x in tr.get("text", [])]
+specs = {json.loads(e.proto.spec)["layout"].get("meta"): json.loads(e.proto.spec) for e in at2.get("plotly_chart")}
+infos = [i.value for i in at2.info]
+c.ok("fuel_over_time" not in specs and any("at least 2 trips" in i for i in infos),
+     "fuel over time: empty state with 1 trip")
+c.ok("eco_distribution" not in specs and any("at least 3 trips" in i for i in infos),
+     "eco-score distribution: empty state with 1 trip")
+bar_text = [x for tr in specs.get("style_road", {}).get("data", []) for x in tr.get("text", [])]
 c.ok(bar_text and all(re.fullmatch(r"1 trip|\d+ trips", x) for x in bar_text), "style bars labelled '1 trip' / 'n trips'",
      ", ".join(map(str, bar_text)))
-mv = specs[4]
+mv = specs.get("measured_vs_predicted", {"data": [], "layout": {}})
 names = {tr.get("name") for tr in mv["data"]}
 c.ok("coloraxis" not in mv["layout"] and "perfect prediction" in names and names & {"no", "yes"},
-     "measured vs model: categorical calibrated colours, labelled diagonal", ", ".join(sorted(n for n in names if n)))
-c.ok(mv["layout"]["xaxis"]["range"] == mv["layout"]["yaxis"]["range"], "measured vs model: equal axes")
+     "measured vs predicted: categorical calibrated colours, labelled diagonal", ", ".join(sorted(n for n in names if n)))
+c.ok(mv["layout"].get("xaxis", {}).get("range") == mv["layout"].get("yaxis", {}).get("range"), "measured vs predicted: equal axes")
+cards = [e.value for e in at2.markdown if e.value.startswith("**")]
+c.ok(all(any(title in x for x in cards) for title in ["Fuel use over time", "Fuel use by road type and driving style",
+                                                     "Measured vs predicted", "Cost by month (PKR)", "Eco-score distribution"]),
+     "five chart cards with titles")
 c.done()
