@@ -10,3 +10,7 @@ ved_raw_vehicle157_highway.csv,VED (held-out test vehicle; original VED columns)
 envirocar_city_mazda_cx5_2013.csv,enviroCar (validation set),Mazda CX-5 2013,2.0,4,city,4.24,8.81,yes
 envirocar_mixed_opel_corsa_d_2013.csv,enviroCar (validation set),Opel Corsa D 2013,1.4,4,mixed,11.81,6.61,yes
 envirocar_highway_bmw_1_2013.csv,enviroCar (validation set),BMW 1 Series 2013,1.5,4,highway,31.53,6.19,yes
+corsa_d_2010_trip1.csv,enviroCar (calibration demo),Opel Corsa D 2010,1.2,4,city,2.46,8.0,yes
+corsa_d_2010_trip2.csv,enviroCar (calibration demo),Opel Corsa D 2010,1.2,4,highway,23.99,6.21,yes
+corsa_d_2010_trip3.csv,enviroCar (calibration demo),Opel Corsa D 2010,1.2,4,highway,29.32,6.6,yes
+corsa_d_2010_trip4.csv,enviroCar (calibration demo),Opel Corsa D 2010,1.2,4,highway,27.34,6.08,yes

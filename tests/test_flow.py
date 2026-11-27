@@ -46,7 +46,7 @@ c.ok(db.get_user(uid)["petrol_pkr"] == 280.0, "petrol price saved")
 # upload 3 MAF trips (same call as the Upload trip page)
 at.switch_page("pages/upload_trip.py").run()
 c.page(at, "upload page")
-res = upload(db.get_user(uid), car, [SAMPLES / f"gps_trip{i}.csv" for i in (1, 3, 4)], temp=18.0)
+res = upload(db.get_user(uid), car, [SAMPLES / f"corsa_d_2010_trip{i}.csv" for i in (1, 2, 3)], temp=18.0)
 c.ok(len(res["trip_ids"]) == 3, "3 trips saved", str(res["trip_ids"]))
 c.ok(app_core.calibration_status(car["car_key"]).get("behaviour_only") is not None, "MAF trips calibrated the car")
 at.session_state["last_upload"] = res["trip_ids"]
@@ -71,7 +71,7 @@ c.page(at, "fill-up saved")
 c.ok(len(db.get_fillups(car["id"])) == 1, "fill-up stored")
 
 # a 4th trip is predicted with the car's calibration
-r2 = upload(db.get_user(uid), car, [SAMPLES / "envirocar_mixed_opel_corsa_d_2013.csv"], temp=18.0)
+r2 = upload(db.get_user(uid), car, [SAMPLES / "corsa_d_2010_trip4.csv"], temp=18.0)
 t4 = db.get_trip(r2["trip_ids"][0], uid)
 c.ok(bool(t4["calibrated"]), "4th trip uses the car's calibration", r2["calibration"][:60])
 c.ok(len((t4["route"] or {}).get("path") or []) > 10, "route stored")

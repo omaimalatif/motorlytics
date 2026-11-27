@@ -12,6 +12,10 @@ prediction matches the car that recorded the trip.
 | `gps_trip2.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 0.83 km | 16.2 km/h | **rejected: shorter than 1 km** |
 | `gps_trip3.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 2.83 km | 15.9 km/h | 10.09 L/100 km |
 | `gps_trip4.csv` | enviroCar | Opel Corsa 2011 (1.2 L, 4 cyl) | city | 1.69 km | 26.0 km/h | 7.29 L/100 km |
+| `corsa_d_2010_trip1.csv` | enviroCar, calibration demo | Opel Corsa D 2010 (1.2 L, 4 cyl) | city | 2.46 km | 24.3 km/h | 8.00 L/100 km |
+| `corsa_d_2010_trip2.csv` | enviroCar, calibration demo | Opel Corsa D 2010 (1.2 L, 4 cyl) | highway | 23.99 km | 85.3 km/h | 6.21 L/100 km |
+| `corsa_d_2010_trip3.csv` | enviroCar, calibration demo | Opel Corsa D 2010 (1.2 L, 4 cyl) | highway | 29.32 km | 76.6 km/h | 6.60 L/100 km |
+| `corsa_d_2010_trip4.csv` | enviroCar, calibration demo | Opel Corsa D 2010 (1.2 L, 4 cyl) | highway | 27.34 km | 82.8 km/h | 6.08 L/100 km |
 | `ved_city_vehicle575.csv` | VED, held-out test vehicle | VED vehicle 575 (2.4 L, 4 cyl) | city | 4.91 km | 12.6 km/h | 13.44 L/100 km |
 | `ved_mixed_vehicle530.csv` | VED, held-out test vehicle | VED vehicle 530 (2.5 L, 4 cyl) | mixed | 10.32 km | 45.1 km/h | 9.05 L/100 km |
 | `ved_highway_vehicle157.csv` | VED, held-out test vehicle | VED vehicle 157 (3.5 L, 6 cyl) | highway | 12.68 km | 72.3 km/h | 7.97 L/100 km |
@@ -22,9 +26,14 @@ prediction matches the car that recorded the trip.
 
 **Where they come from**
 
+- **`corsa_d_2010_trip1-4`: the calibration demo.** Four consecutive clean tracks of one Opel Corsa D 2010 from the
+  enviroCar open data (20-21 September 2016, Germany): real MAF on every reading, no speed glitches, each at
+  least 2 km. Add the car (Opel Corsa, 1.2 L, 4 cylinders), **upload trips 1-3 together, then trip 4**: trip 4 is
+  predicted 27 % too high uncalibrated (7.70 vs 6.08 L/100 km measured) and 2 % too high once the first three
+  trips have calibrated the car (6.19). enviroCar track ids: `57ead9bde4b0f05fc223ec00`,
+  `57ead9c3e4b0f05fc223ece8`, `57ead9cae4b0f05fc223ef56`, `57ead9d3e4b0f05fc223f34e`.
 - **`gps_trip1-4`**: four consecutive tracks of one Opel Corsa 2011 from the enviroCar open data (September 2016,
-  Germany), the same files used in the app tests. Upload trips 1 and 3 together, then trip 4, to see the per-car
-  calibration take effect.
+  Germany). They show how the app handles glitchy logs; for the calibration demo use `corsa_d_2010_trip1-4`.
   `gps_trip1`, `2` and `4` end with speed readings of 255 km/h (the OBD "no data" value). The app removes these
   glitches (see "How a log is read"), so the figures above are without them. Without its glitch readings
   `gps_trip2` is only 0.83 km long, so the app rejects it with "no trip of at least 1 km": it shows the 1 km rule.
