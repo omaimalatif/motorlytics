@@ -17,6 +17,7 @@ Data/*
 !Data/processed/
 Data/processed/*
 !Data/processed/results_trip/
+!Data/processed/envirocar_validation_ids.csv
 Data/processed/results_trip/*
 !Data/processed/results_trip/generalisation.txt
 !Data/processed/results_trip/external_exp1.txt

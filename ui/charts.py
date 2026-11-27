@@ -10,20 +10,23 @@ BANDS = [(0, 40, "aggressive"), (40, 70, "normal"), (70, 100, "eco")]
 
 
 def eco_gauge(score, style: str = None) -> go.Figure:
-    """Radial 0-100 gauge, bar coloured by the score's style band (the page shows the style name as a pill)."""
+    """Radial 0-100 gauge, bar coloured by the score's style band (the page shows the style name as a pill).
+    The number sits under the arc (not inside it), so it never overlaps the arc in a narrow column."""
     from core import scoring
     band = scoring.score_label(score)
     color = theme.STYLE_COLORS.get(band, theme.MUTED)
+    value = float(score) if score is not None and score == score else 0
     fig = go.Figure(go.Indicator(
-        mode="gauge+number", value=float(score) if score is not None and score == score else 0,
-        number=dict(font=dict(size=44, color=theme.INK, family="Plus Jakarta Sans, Inter, sans-serif"),
-                    valueformat=".0f"),
-        gauge=dict(axis=dict(range=[0, 100], tickvals=[0, 40, 70, 100], tickfont=dict(color=theme.CHART_TEXT, size=12),
+        mode="gauge", value=value,
+        gauge=dict(axis=dict(range=[0, 100], tickvals=[0, 40, 70, 100], tickfont=dict(color=theme.CHART_TEXT, size=11),
                              tickcolor="rgba(0,0,0,0)"),
-                   bar=dict(color=color, thickness=0.42), bgcolor="#CBD5E1", borderwidth=0,
+                   bar=dict(color=color, thickness=0.32), bgcolor="#CBD5E1", borderwidth=0,
                    steps=[dict(range=[a, b], color=theme._hex_rgba(theme.STYLE_COLORS[n], .45)) for a, b, n in BANDS]),
-        domain=dict(x=[0, 1], y=[0, 1])))
-    fig.update_layout(margin=dict(l=24, r=24, t=16, b=8))
+        domain=dict(x=[0.08, 0.92], y=[0.3, 1])))         # narrower arc: room for the "100" end label
+    fig.add_annotation(x=0.5, y=0.0, xref="paper", yref="paper", xanchor="center", yanchor="bottom", showarrow=False,
+                       text=f"<b>{value:.0f}</b>",
+                       font=dict(size=32, color=theme.INK, family="Plus Jakarta Sans, Inter, sans-serif"))
+    fig.update_layout(margin=dict(l=24, r=24, t=22, b=4))   # side room for the 0 / 100 end labels
     return fig
 
 

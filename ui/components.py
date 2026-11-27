@@ -105,7 +105,7 @@ def fit_view(lats, lons, width_px: int = 480, height_px: int = 320, padding: flo
 
 
 def route_deck(path, height: int = 320, width_px: int = 480) -> pdk.Deck:
-    """pydeck map of a GPS route: sky-blue line (4 px) with start (green) and end (red) dots on the free CARTO
+    """pydeck map of a GPS route (no scroll zoom, +/- buttons): blue line (4 px) with start (green) and end (red) dots on the free CARTO
     positron (light) basemap, view fitted to the route. path: [[lat, lon], ...]."""
     line = [[float(lon), float(lat)] for lat, lon in path]
     ends = [{"position": line[0], "color": theme.MAP_START}, {"position": line[-1], "color": theme.MAP_END}]
@@ -118,6 +118,12 @@ def route_deck(path, height: int = 320, width_px: int = 480) -> pdk.Deck:
                           get_radius=6, radius_units="pixels", radius_min_pixels=4, radius_max_pixels=8,
                           stroked=True, get_line_color=[255, 255, 255], line_width_min_pixels=1)],
         initial_view_state=pdk.ViewState(**view, pitch=0, bearing=0),
+        # scrolling the page over the map must not zoom it: no scroll zoom; drag, pinch, double-click and the
+        # +/- buttons still zoom
+        views=[pdk.View(type="MapView", controller={"scrollZoom": False, "dragPan": True, "dragRotate": False,
+                                                    "doubleClickZoom": True, "touchZoom": True, "touchRotate": False,
+                                                    "keyboard": True})],
+        widgets=[pdk.Widget("ZoomWidget", id="zoom", placement="top-right")],
         map_provider="carto", map_style=pdk.map_styles.CARTO_LIGHT)
 
 

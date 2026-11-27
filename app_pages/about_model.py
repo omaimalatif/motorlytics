@@ -41,7 +41,7 @@ if meta.get("selection"):
 models = pd.DataFrame([{"tier": k.split("/")[0], "model": k.split("/")[1], **v} for k, v in meta.get("models", {}).items()
                        if "mape" in v])
 with ui.card("Model error on unseen vehicles", "MAPE on the held-out VED vehicles (lower is better). Course models in "
-             "orange, reference models in teal; the outlined bar is the model the app uses."):
+             "blue, reference models in black; the outlined bar is the model the app uses."):
     if models.empty:
         st.info("Run 03_train.py to create the results.", icon=":material/info:")
     else:

@@ -44,7 +44,8 @@ runtime = [mf.MODELS / "meta_trip.json", ROOT / theme.LOGO, ROOT / theme.ICON, t
            ROOT / "assets" / "pk_cycles" / "highway.csv", ROOT / "samples" / "index.csv",
            ROOT / "samples" / "corsa_d_2010_trip1.csv", mf.PROC / "results_trip" / "test_metrics.csv",
            mf.PROC / "results_trip" / "model_selection_table.csv", mf.PROC / "results_trip" / "generalisation.txt",
-           ROOT / "tests" / "fixtures" / "SYNTHETIC_alto_lahore_city.csv", ROOT / ".streamlit" / "config.toml"]
+           ROOT / "tests" / "fixtures" / "SYNTHETIC_alto_lahore_city.csv", ROOT / ".streamlit" / "config.toml",
+           mf.PROC / "envirocar_validation_ids.csv"]
 bad = [os.path.relpath(p, ROOT) for p in runtime if not (p.exists() and committable(p) and exact_case(p))]
 c.ok(not bad, "runtime data files are in git with the exact spelling", ", ".join(bad))
 c.ok(all(not committable(ROOT / p) for p in ["models/calibration.json", "Data/motorlytics.db", "Data/uploads/x.jpg"]),
@@ -75,6 +76,7 @@ created = demo.ensure_first_start()
 user = db.get_user_by_email(demo.EMAIL)
 c.ok(created and db.DB_PATH.exists() and app_core.APP_CALIB.exists() and user, "first start creates the database, "
      "the calibration store and the demo account")
+c.ok(user["petrol_pkr"] == 384.0, "demo petrol price 384 PKR/L", str(user["petrol_pkr"]))
 trips = db.get_trips(user["id"])
 c.ok(len(db.get_cars(user["id"])) == 3 and len(trips) >= 8 and any(t["calibrated"] for t in trips),
      "demo account has 3 cars and calibrated trips", f"{len(trips)} trips")

@@ -31,7 +31,7 @@ if not car:
     st.stop()
 
 # ---------------- hero: car card [2/3] + quick actions [1/3] ----------------
-c1, c2 = st.columns([2, 1], gap="medium")
+c1, c2 = st.columns([3, 2], gap="medium")      # quick actions wide enough for full labels
 with c1:
     with ui.card(kind="hero"):
         st.subheader(cars.car_title(car))
@@ -68,8 +68,12 @@ dated = t.dropna(subset=["started"])
 this_p = now.to_period("M")
 if len(dated) and not (dated["started"].dt.to_period("M") == this_p).any():
     this_p = dated["started"].max().to_period("M")          # no trips this month: the latest month with trips
-in_month = "this month" if this_p == now.to_period("M") else f"in {this_p.strftime('%b %Y')}"
 prev_p = this_p - 1
+# the period is said once above the tiles (labels stay short)
+if this_p == now.to_period("M"):
+    st.caption(f":material/calendar_month: This month ({this_p.strftime('%b %Y')})")
+else:
+    st.caption(f":material/calendar_month: Latest month with trips: {this_p.strftime('%b %Y')}")
 m_now = dated[dated["started"].dt.to_period("M") == this_p]
 m_prev = dated[dated["started"].dt.to_period("M") == prev_p]
 
@@ -104,20 +108,20 @@ l100_daily = m_now.groupby(m_now["started"].dt.date).apply(
     include_groups=False).dropna().round(2).tolist() if len(m_now) else []
 k1, k2, k3, k4 = st.columns(4)
 with k1:
-    ui.metric_tile(f"PKR {in_month}", session.fmt(cur["pkr"], digits=0) if u.get("petrol_pkr") else "set price",
+    ui.metric_tile("Cost (PKR)", session.fmt(cur["pkr"], digits=0) if u.get("petrol_pkr") else "set price",
                    delta=change("pkr") if u.get("petrol_pkr") else None, delta_color="inverse",
                    delta_description=vs_text(change("pkr") if u.get("petrol_pkr") else None),
                    chart_data=spark("cost_pkr"), accent=True, help="Needs your petrol price (Account page).")
 with k2:
-    ui.metric_tile(f"Distance {in_month} (km)", session.fmt(cur["km"], digits=0), delta=change("km"),
+    ui.metric_tile("Distance (km)", session.fmt(cur["km"], digits=0), delta=change("km"),
                    delta_color="off", delta_description=vs_text(change("km")), chart_data=spark("dist_km"))
 with k3:
-    ui.metric_tile(f"Average {in_month} (L/100 km)", session.fmt(cur["l100"], digits=1), delta=change("l100"),
+    ui.metric_tile("Average (L/100 km)", session.fmt(cur["l100"], digits=1), delta=change("l100"),
                    delta_color="inverse", delta_description=vs_text(change("l100")),
                    chart_data=l100_daily if len(l100_daily) >= 2 else None,
                    help="Distance-weighted; measured where the log has MAF, otherwise the model's estimate.")
 with k4:
-    ui.metric_tile(f"Eco-score {in_month}", session.fmt(cur["eco"], digits=0), delta=change("eco", pct=False),
+    ui.metric_tile("Eco-score", session.fmt(cur["eco"], digits=0), delta=change("eco", pct=False),
                    delta_description=vs_text(change("eco", pct=False)), chart_data=spark("eco_score", "mean"), help="0-100, higher is calmer driving.")
 
 # ---------------- recent trips [1/3] + last route [2/3] ----------------

@@ -3,7 +3,7 @@
 enviroCar (https://envirocar.org) publishes OBD-II tracks as open data (ODbL). fetch_unseen_track():
   - lists a random page of older tracks (2014-2019, where tracks have a real MAF sensor rather than a
     calculated one), keeps petrol cars only,
-  - skips track ids already used: the validation download (Data/envirocar_rows.csv) and every track this
+  - skips track ids already used: the validation set (Data/processed/envirocar_validation_ids.csv) and every track this
     function fetched before (Data/uploads/fetched_tracks.json),
   - downloads candidates until one has real MAF on >= 80 % of rows and covers >= 1 km,
   - returns it as a CSV in the app's upload format (time, lat, lon, speed, rpm, maf, load) plus the car it
@@ -39,8 +39,15 @@ def _cache_path():
     return db.DB_PATH.parent / "uploads" / "fetched_tracks.json"
 
 
+VALIDATION_IDS = mf.PROC / "envirocar_validation_ids.csv"   # committed: the unique track ids used in validation
+
+
 @lru_cache(maxsize=1)
 def _validation_ids() -> frozenset:
+    """Track ids used in the external validation: from the small committed list (works online), else from the
+    full download Data/envirocar_rows.csv if only that is there."""
+    if VALIDATION_IDS.exists():
+        return frozenset(pd.read_csv(VALIDATION_IDS, dtype=str)["track_id"].dropna().unique())
     p = mf.DATA / "envirocar_rows.csv"
     if not p.exists():
         return frozenset()

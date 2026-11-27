@@ -103,7 +103,7 @@ with m2:
     with ui.card("Eco-score", "0-100 between the aggressive and eco driving-style centres (k-Means)."):
         score = trip["eco_score"]
         style_name = trip["style"] or scoring.score_label(score)       # same name as in the header
-        theme.plot(charts.eco_gauge(score, style_name), 230, margin=dict(l=24, r=24, t=16, b=8))
+        theme.plot(charts.eco_gauge(score, style_name), 230, margin=dict(l=24, r=24, t=22, b=4))
         with st.container(horizontal=True, gap="small"):
             ui.style_badge(style_name)
             st.caption(f"Idle {session.fmt(info.get('idle_pct'), '%', 0)} of the time.")

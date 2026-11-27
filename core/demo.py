@@ -3,7 +3,7 @@ start when the database has no users (e.g. online, where the disk resets), or by
 
 Adds: Demo Corsa (manual entry; samples/corsa_d_2010_trip1-4: 3 MAF trips, then a 4th predicted calibrated;
 a speed-only VED trip and one fill-up), Family Cultus (from the catalogue, no trips) and a SYNTHETIC test Alto
-(the made-up Lahore trips in tests/fixtures, PakWheels-adjusted). The petrol price 280 PKR/L is only a demo value.
+(the made-up Lahore trips in tests/fixtures, PakWheels-adjusted). The petrol price 384 PKR/L is only a demo value.
 """
 from io import StringIO
 
@@ -21,7 +21,7 @@ def create_demo_account(log=lambda *a: None) -> dict | None:
     if db.get_user_by_email(EMAIL):
         return None
     user, _ = auth.register("Demo Driver", EMAIL, PASSWORD, "Islamabad")
-    db.update_user(user["id"], petrol_pkr=280.0)
+    db.update_user(user["id"], petrol_pkr=384.0)
     user = db.get_user(user["id"])
     log("account:", EMAIL, "in", db.DB_PATH)
 

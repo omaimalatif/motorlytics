@@ -208,6 +208,12 @@ hr {{ border-color: var(--ml-border) !important; }}
 }}
 [data-testid="stMetricLabel"] p, [data-testid="stMetricLabel"] {{ color: var(--ml-muted) !important; font-size: .82rem; font-weight: 600; }}
 [data-testid="stMetricValue"] {{ font-family: {FONT_HEAD}; color: var(--ml-text); font-size: 1.75rem; font-weight: 700; }}
+/* never cut labels off with "...": wrap them */
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] *, [data-testid="stMetricDelta"], [data-testid="stMetricDelta"] *,
+[data-testid="stMetricDeltaDescription"] {{ white-space: normal !important; overflow: visible !important;
+  text-overflow: clip !important; }}
+[data-testid^="stBaseButton"] p, [data-testid="stPopover"] button p {{ white-space: normal !important;
+  overflow: visible !important; text-overflow: clip !important; line-height: 1.25; }}
 /* the key number of a page: a dark tile with an orange value */
 [class*="st-key-mlkpi-accent"] [data-testid="stMetric"] {{ background: var(--ml-ink); border-color: var(--ml-ink); }}
 [class*="st-key-mlkpi-accent"] [data-testid="stMetricLabel"] p, [class*="st-key-mlkpi-accent"] [data-testid="stMetricLabel"] {{
