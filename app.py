@@ -8,7 +8,7 @@ Env vars for testing: MOTORLYTICS_DB (SQLite file), MOTORLYTICS_CALIB (calibrati
 """
 import streamlit as st
 
-from core import auth, cars, db
+from core import cars, db
 from ui import components as ui
 from ui import session
 from ui import theme
@@ -19,44 +19,12 @@ theme.setup()
 st.logo(image=theme.LOGO, size="large", icon_image=theme.LOGO)   # original file, on the black sidebar
 
 
-def login_page():
-    st.title("Motorlytics")
-    st.caption("Fuel use, cost and eco-driving tips from your car's OBD-II trip logs.")
-    left, _ = st.columns([1, 1])
-    with left:
-        tab_in, tab_up = st.tabs(["Sign in", "Create account"])
-        with tab_in:
-            with st.form("login"):
-                email = st.text_input("Email")
-                pw = st.text_input("Password", type="password")
-                if st.form_submit_button("Sign in", type="primary"):
-                    u = auth.login(email, pw)
-                    if u:
-                        st.session_state["user_id"] = u["id"]
-                        st.rerun()
-                    st.error("Email or password is not correct.")
-        with tab_up:
-            with st.form("register"):
-                name = st.text_input("Name")
-                email = st.text_input("Email", key="reg_email")
-                city = st.text_input("City", help="Used for the current temperature (Open-Meteo).")
-                pw = st.text_input("Password (8+ characters)", type="password", key="reg_pw")
-                pw2 = st.text_input("Repeat password", type="password")
-                if st.form_submit_button("Create account", type="primary"):
-                    if pw != pw2:
-                        st.error("The passwords do not match.")
-                    else:
-                        u, err = auth.register(name, email, pw, city)
-                        if err:
-                            st.error(err)
-                        else:
-                            st.session_state["user_id"] = u["id"]
-                            st.rerun()
-
-
 user = session.user()
 if not user:
-    st.navigation([st.Page(login_page, title="Sign in", icon=":material/login:")], position="hidden").run()
+    # signed out: only the public pages, in a top bar (no app pages, no sidebar)
+    public = st.navigation([st.Page("pages/welcome.py", title="Welcome", icon=":material/home:", default=True),
+                            st.Page("pages/sign_in.py", title="Sign in", icon=":material/login:")], position="top")
+    public.run()
     st.stop()
 
 P = session.PAGES
@@ -76,9 +44,14 @@ pages = {
     "More": [
         st.Page(P["model"], title="About the model", icon=":material/model_training:"),
         st.Page(P["account"], title="Account", icon=":material/person:"),
+        # public pages stay reachable (hidden) so logout can switch to Welcome and Sign in can hand over
+        st.Page("pages/welcome.py", title="Welcome", icon=":material/home:", visibility="hidden"),
+        st.Page("pages/sign_in.py", title="Sign in", icon=":material/login:", visibility="hidden"),
     ],
 }
 nav = st.navigation(pages)
+if st.session_state.pop("goto", None) or nav.url_path == "sign_in":   # just signed in: open Overview
+    st.switch_page(P["overview"])
 
 with st.sidebar:
     st.markdown(f"**{user['name']}**")

@@ -66,7 +66,9 @@ svgs = list((ROOT / "assets" / "icons").glob("*.svg")) + list((ROOT / "assets" /
 c.ok(len(svgs) >= 10 and all(p.read_text(encoding="utf-8").lstrip().startswith("<svg") and "<image" not in
                               p.read_text(encoding="utf-8") for p in svgs), "icons and illustration are plain SVG drawings",
      f"{len(svgs)} files")
-c.ok(theme.icon("upload").startswith("<svg width=") and theme.icon("missing") == "", "icon() inlines an SVG")
+c.ok("ml-icon-upload" in theme.icon("upload") and theme.icon("missing") == ""
+     and ".ml-icon-upload { background-image: url(\"data:image/svg+xml;base64," in theme.icon_css(),
+     "icons: CSS classes with the SVG as data URI (st.html strips inline SVG and img)")
 c.ok(src.index("theme.setup()") < src.index(".run()"), "setup() runs before the page")
 for page in ["overview", "upload_trip", "quick_estimate", "trip_detail", "trip_history", "analytics", "my_car",
              "calibration", "about_model", "account"]:

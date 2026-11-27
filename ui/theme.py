@@ -101,17 +101,30 @@ def plot(fig, height: int = 300, key: str = None, margin: dict = None) -> None:
 
 
 # ---------------- icons and small HTML pieces ----------------
-def icon(name: str, size: int = 22, color: str = None) -> str:
-    """Inline SVG markup of assets/icons/<name>.svg (original line icons, currentColor), '' if missing."""
-    p = ICONS / f"{name}.svg"
-    if not p.exists():
+def _data_uri(svg: str) -> str:
+    import base64
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
+
+
+def icon_css(color: str = ORANGE) -> str:
+    """One CSS class per assets/icons/*.svg: .ml-icon-<name> (st.html strips inline <svg> and <img>, so icons
+    are background images of the injected style block)."""
+    rules = []
+    for p in sorted(ICONS.glob("*.svg")):
+        svg = p.read_text(encoding="utf-8").strip().replace("currentColor", color)
+        rules.append(f'.ml-icon-{p.stem} {{ background-image: url("{_data_uri(svg)}"); }}')
+    return "\n".join(rules)
+
+
+def icon(name: str, size: int = 22) -> str:
+    """<span> showing assets/icons/<name>.svg (original line icon, brand orange); '' if missing."""
+    if not (ICONS / f"{name}.svg").exists():
         return ""
-    svg = p.read_text(encoding="utf-8").strip()
-    style = f' style="color:{color}"' if color else ""
-    return svg.replace("<svg ", f'<svg width="{size}" height="{size}" aria-hidden="true"{style} ', 1)
+    return f'<span class="ml-icon ml-icon-{name}" style="width:{size}px;height:{size}px" aria-hidden="true"></span>'
 
 
 def image_svg(name: str) -> str:
+    """SVG markup of assets/images/<name>.svg, for st.image."""
     p = IMAGES / f"{name}.svg"
     return p.read_text(encoding="utf-8") if p.exists() else ""
 
@@ -241,14 +254,15 @@ hr {{ border-color: var(--ml-border) !important; }}
 [data-testid="stMarkdownBadge"], .ml-pill {{ border-radius: {R_PILL}px !important; padding: 2px 10px; font-weight: 600; }}
 .ml-pill {{ display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; border: 1px solid var(--ml-border);
   background: var(--ml-raised); color: var(--ml-text); }}
+.ml-icon {{ display: inline-block; background-repeat: no-repeat; background-position: center; background-size: contain; }}
 .ml-grad-text {{ background: var(--ml-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }}
 """
 
 
 def setup() -> None:
-    """Inject the CSS (one block, every page) and reset the per-run card counter."""
+    """Inject the CSS (one block, every page, icon classes included) and reset the per-run card counter."""
     st.session_state["_ml_card_n"] = 0
-    st.html(f"<style>{CSS}</style>")
+    st.html(f"<style>{CSS}\n{icon_css()}</style>")
 
 
 def next_key(prefix: str) -> str:

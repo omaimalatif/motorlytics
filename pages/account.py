@@ -30,4 +30,4 @@ if u.get("city"):
 st.divider()
 if st.button("Log out", icon=":material/logout:"):
     st.session_state.clear()
-    st.rerun()
+    st.switch_page("pages/welcome.py")
