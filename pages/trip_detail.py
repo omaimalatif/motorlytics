@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from core import cars, db, scoring
+from core import cars, db, scoring, texts
 from ui import components as ui
 from ui import session
 
@@ -103,9 +103,8 @@ with m2:
         style_name = trip["style"] or scoring.score_label(score)       # same name as in the header
         ui.badge(f"{style_name} style", {"eco": "good", "normal": "info", "aggressive": "bad"}.get(style_name, "neutral"))
         st.caption(f"Idle {session.fmt(info.get('idle_pct'), '%', 0)} of the time.")
-        if info.get("eco_l100") is not None:
-            st.caption(f"Driven like an eco driver: about {info['eco_l100']:.1f} L/100 km "
-                       f"(up to {info.get('possible_saving_pct', 0):.0f}% less).")
+        st.caption(texts.eco_summary(score, trip["style"], info.get("tips"), info.get("eco_l100"),
+                                     info.get("possible_saving_pct")))
 
 with ui.card("Speed over time"):
     sp = (trip["route"] or {}).get("speed") or []

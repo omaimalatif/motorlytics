@@ -30,3 +30,31 @@ def saving_text(litres_per_100km) -> str:
     if litres_per_100km is None:
         return ""
     return "less than 0.1 L/100 km" if litres_per_100km < 0.05 else f"about {litres_per_100km:.1f} L/100 km"
+
+
+# what a saving comes from, per tip feature (used in the eco-score card)
+SAVING_SOURCE = {
+    "idle_frac": "less idling", "stops_per_km": "fewer stops", "hard_accel_per_km": "gentler acceleration",
+    "hard_brake_per_km": "earlier, softer braking", "rpa": "a steadier pace", "speed_std": "a more even speed",
+    "frac_rpm_gt2500": "earlier gear changes", "rpm_p90": "lower revs",
+    "frac_speed_gt90": "a little less speed on the highway",
+}
+
+
+def eco_summary(eco_score, style, tips, eco_l100, saving_pct) -> str:
+    """'Smooth driving. Less idling could bring this to about 8.0 L/100 km (up to 21% less).'"""
+    parts = []
+    if eco_score is not None and eco_score == eco_score:
+        if eco_score >= 70:
+            parts.append("Smooth driving.")
+        elif style == "aggressive" or eco_score < 40:
+            parts.append("Frequent hard acceleration or braking.")
+    sources = [SAVING_SOURCE[t["feature"]] for t in sorted(tips or [], key=lambda t: -t["saving_l_per_100km"])
+               if t.get("feature") in SAVING_SOURCE][:2]
+    if eco_l100 is not None and saving_pct is not None and saving_pct >= 1:
+        cause = " and ".join(sources) if sources else "driving like eco drivers on this kind of road"
+        parts.append(f"{cause[0].upper() + cause[1:]} could bring this to about {eco_l100:.1f} L/100 km "
+                     f"(up to {saving_pct:.0f}% less).")
+    else:
+        parts.append("This trip is already close to eco driving for its road type.")
+    return " ".join(parts)
