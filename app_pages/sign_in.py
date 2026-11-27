@@ -9,28 +9,26 @@ E = theme.esc
 
 if st.session_state.get("user_id"):           # already signed in (the page stays reachable, hidden, for the hand-over)
     st.info("You are signed in.", icon=":material/check_circle:")
-    st.page_link("pages/overview.py", label="Go to Overview", icon=":material/dashboard:")
+    st.page_link("app_pages/overview.py", label="Go to Overview", icon=":material/dashboard:")
     st.stop()
 
 st.html("""<style>
-[data-testid="stHeader"] { background: #000000; }
+[data-testid="stHeader"] { background: #FFFFFF; }
 [data-testid="stMainBlockContainer"] { padding-top: 5.5rem; max-width: 1180px; }
 .st-key-mlbrand .ml-lockup { margin: 16px 0 20px 0; }
-.st-key-mlbrand { background: #000000; border: 1px solid #17171B; border-radius: 16px; padding: 32px 28px;
+.st-key-mlbrand { background: #D4ECF8; border: 1px solid #C3E1F2; border-radius: 16px; padding: 32px 28px;
   min-height: 100%; position: relative; overflow: hidden; }
-.st-key-mlbrand::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
-  background: var(--ml-gradient); opacity: .7; }
 @media (max-width: 640px) {   /* phones: the form first, the brand panel under it */
   [data-testid="stHorizontalBlock"]:has(.st-key-mlbrand) { flex-direction: column-reverse; } }
 .ml-benefits { display: flex; flex-direction: column; gap: 16px; margin: 4px 0 0 0; }
 .ml-benefit { display: flex; gap: 14px; align-items: flex-start; }
 .ml-benefit .ml-ic { flex: none; width: 40px; height: 40px; border-radius: 11px; display: inline-flex; align-items: center;
-  justify-content: center; color: #F26A10; background: rgba(242,106,16,.10); border: 1px solid rgba(242,106,16,.25); }
-.ml-benefit b { color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; display: block; margin-bottom: 2px; }
-.ml-benefit span.t { color: #A1A1AA; font-size: .9rem; line-height: 1.5; }
+  justify-content: center; color: #14689E; background: #EEF7FC; border: 1px solid #D6E8F3; }
+.ml-benefit b { color: #0B1220; font-family: 'Plus Jakarta Sans', sans-serif; display: block; margin-bottom: 2px; }
+.ml-benefit span.t { color: #5B6B7F; font-size: .9rem; line-height: 1.5; }
 .ml-auth-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1.6rem; margin: 0;
-  letter-spacing: -0.02em; color: #F4F4F5; }
-.ml-auth-sub { color: #A1A1AA; margin: 4px 0 0 0; font-size: .92rem; }
+  letter-spacing: -0.02em; color: #0B1220; }
+.ml-auth-sub { color: #5B6B7F; margin: 4px 0 0 0; font-size: .92rem; }
 </style>""")
 
 benefits = [("fuel", "Fuel use per trip", "Measured from MAF, or predicted by the ML model from how you drove."),
@@ -46,7 +44,7 @@ with left:
             f'<span class="t">{E(d)}</span></div></div>' for ic, t, d in benefits) + "</div>")
 
 with right:
-    st.page_link("pages/welcome.py", label="Back to Welcome", icon=":material/arrow_back:")
+    st.page_link("app_pages/welcome.py", label="Back to Welcome", icon=":material/arrow_back:")
     with st.container(key="mlcard-auth"):
         st.html('<p class="ml-auth-title">Welcome to Motorlytics</p>'
                 '<p class="ml-auth-sub">Sign in, or create a free account in a few seconds.</p>')

@@ -1,38 +1,38 @@
-# Motorlytics theme: fixed dark theme from the logo (black / red / orange), whatever the OS setting.
+# Motorlytics theme: clean light theme in white, sky blue and black, whatever the OS setting.
 # Colours, fonts and the CSS that goes beyond these options live in ui/theme.py (single source of truth;
 # keep the values below in sync with it).
 
 [client]
 toolbarMode = "minimal"          # no Deploy button or main menu
-
+# the page files live in app_pages/ (not pages/), so Streamlit never shows its automatic page list on start
 
 [theme]
-base = "dark"
-primaryColor = "#F26A10"
-backgroundColor = "#0B0B0D"
-secondaryBackgroundColor = "#141417"
-textColor = "#F4F4F5"
-borderColor = "#2A2A31"
+base = "light"
+primaryColor = "#0B1220"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F9FC"
+textColor = "#0B1220"
+borderColor = "#E3EAF0"
 showWidgetBorder = true
-baseRadius = "10px"
-buttonRadius = "10px"
-linkColor = "#F26A10"
+baseRadius = "8px"
+buttonRadius = "8px"
+linkColor = "#14689E"
 font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap, sans-serif"
 headingFont = "Plus Jakarta Sans:https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap, sans-serif"
 metricValueFontWeight = 700
-dataframeBorderColor = "#2A2A31"
-dataframeHeaderBackgroundColor = "#1B1B20"
-# badge / status colours: success, warning, error (+ calm info, gray); yellow = the "normal" driving style
-greenColor = "#22C55E"
-orangeColor = "#F59E0B"
-redColor = "#DF3511"
-yellowColor = "#C98500"
-blueColor = "#5B9BD5"
-violetColor = "#8B5CF6"
-grayColor = "#A1A1AA"
-chartCategoricalColors = ["#E8650A", "#0D9488", "#8B5CF6"]
+dataframeBorderColor = "#E3EAF0"
+dataframeHeaderBackgroundColor = "#F5F9FC"
+# badge / status colours (readable on white): success, warning, error, info, gray; yellow = the "normal" driving style
+greenColor = "#15803D"
+orangeColor = "#B45309"
+redColor = "#D92D20"
+yellowColor = "#A16207"
+blueColor = "#14689E"
+violetColor = "#6D28D9"
+grayColor = "#5B6B7F"
+chartCategoricalColors = ["#1F8FD6", "#0B1220", "#8BA3B8"]
 
 [theme.sidebar]
-backgroundColor = "#000000"
-secondaryBackgroundColor = "#141417"
-borderColor = "#1F1F24"
+backgroundColor = "#F8FBFD"
+secondaryBackgroundColor = "#EEF7FC"
+borderColor = "#E3EAF0"

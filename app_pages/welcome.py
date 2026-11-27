@@ -6,8 +6,13 @@ import re
 
 import streamlit as st
 
-import motorlytics_features as mf
+from pathlib import Path
+
 from ui import theme
+
+# plain paths (no pandas import here, so the first page shows fast)
+ROOT = Path(__file__).resolve().parents[1]
+PROC, MODELS = ROOT / "Data" / "processed", ROOT / "models"
 
 E = theme.esc
 FALLBACK = {"trips": 12793, "vehicles": 196, "test_mape": 8.7, "cal_mape": 10.3}
@@ -20,30 +25,31 @@ def headline_stats() -> dict:
     out = dict(FALLBACK)
     try:
         import pyarrow.parquet as pq
-        p = mf.PROC / "trips.parquet"
+        p = PROC / "trips.parquet"
         if p.exists():
-            out["trips"] = pq.ParquetFile(p).metadata.num_rows
-            out["vehicles"] = int(pq.read_table(p, columns=["vehid"]).column("vehid").to_pandas().nunique())
+            f = pq.ParquetFile(p)                 # read_table would import pandas (pandas metadata): slow start
+            out["trips"] = f.metadata.num_rows
+            out["vehicles"] = len(f.read(columns=["vehid"], use_pandas_metadata=False).column(0).unique())
     except Exception:
         pass
     meta = {}
     try:
-        meta = json.loads((mf.MODELS / "meta_trip.json").read_text())
+        meta = json.loads((MODELS / "meta_trip.json").read_text())
         course = [m["mape"] for m in meta.get("models", {}).values() if m.get("group") == "course" and m.get("mape")]
         if course:
             out["test_mape"] = min(course)
     except Exception:
         pass
     app_tier, app_algo = (meta.get("best_behaviour_only") or "behaviour_only/LWR").split("/")
-    sel = mf.PROC / "results_trip" / "model_selection_table.csv"
-    gen = mf.PROC / "results_trip" / "generalisation.txt"
+    sel = PROC / "results_trip" / "model_selection_table.csv"
+    gen = PROC / "results_trip" / "generalisation.txt"
     try:
         if sel.exists():
-            import pandas as pd
-            d = pd.read_csv(sel)
-            row = d[(d["tier"] == app_tier) & (d["model"] == app_algo)]
-            if len(row):
-                out["cal_mape"] = float(row["envirocar_mape_cal3"].iloc[0])
+            import csv                        # no pandas on the first page (fast start)
+            with sel.open(encoding="utf-8") as f:
+                row = next((r for r in csv.DictReader(f) if r["tier"] == app_tier and r["model"] == app_algo), None)
+            if row:
+                out["cal_mape"] = float(row["envirocar_mape_cal3"])
         elif gen.exists():                    # first block in the file is enviroCar: before, after
             m = re.search(rf"^\s*3\s+{app_tier}\s+course\s+{app_algo}\s+\d+\s+\d+\s+[\d.]+\s+([\d.]+)",
                           gen.read_text(encoding="utf-8"), re.M)
@@ -56,60 +62,58 @@ def headline_stats() -> dict:
 
 def go_auth(mode: str) -> None:
     st.session_state["auth_mode"] = mode
-    st.switch_page("pages/sign_in.py")
+    st.switch_page("app_pages/sign_in.py")
 
 
 st.html("""<style>
-[data-testid="stHeader"] { background: #000000; }
+[data-testid="stHeader"] { background: #D4ECF8; }
 [data-testid="stMainBlockContainer"] { padding-top: 0; max-width: 1180px; }
-.st-key-mlhero { background: #000000; width: 100vw !important; max-width: 100vw; margin-left: calc(50% - 50vw);
+.st-key-mlhero { background: #D4ECF8; width: 100vw !important; max-width: 100vw; margin-left: calc(50% - 50vw);
   padding: 8px 16px 56px;
-  border-bottom: 1px solid #17171B; position: relative; }
-.st-key-mlhero::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
-  background: var(--ml-gradient); opacity: .55; }
+  border-bottom: 1px solid #C3E1F2; position: relative; }
 .st-key-mlhero .ml-lockup { margin: 64px 0 12px 0; }
 @media (max-width: 640px) { .st-key-mlhero .ml-wordmark { font-size: 46px !important; } }
 @media (max-width: 640px) { .st-key-mlhero { padding-top: 40px; } }
 .ml-hero-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(2rem, 4.6vw, 3.4rem);
-  line-height: 1.08; letter-spacing: -0.03em; text-align: center; margin: 0; color: #F4F4F5; }
-.ml-hero-sub { color: #A1A1AA; text-align: center; font-size: clamp(1rem, 1.6vw, 1.15rem); max-width: 720px;
+  line-height: 1.08; letter-spacing: -0.03em; text-align: center; margin: 0; color: #0B1220; }
+.ml-hero-sub { color: #5B6B7F; text-align: center; font-size: clamp(1rem, 1.6vw, 1.15rem); max-width: 720px;
   margin: 14px auto 0 auto; line-height: 1.55; }
 .ml-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 8px 0 0 0; }
 .ml-stat { background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: 12px; padding: 18px 20px; }
 .ml-stat-value { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 2rem; letter-spacing: -0.02em; }
-.ml-stat-label { color: #A1A1AA; font-size: .875rem; margin-top: 2px; }
+.ml-stat-label { color: #5B6B7F; font-size: .875rem; margin-top: 2px; }
 .ml-section { margin: 56px 0 8px 0; }
-.ml-eyebrow { color: #F26A10; font-weight: 600; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
+.ml-eyebrow { color: #14689E; font-weight: 600; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
 .ml-h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: clamp(1.5rem, 2.6vw, 2rem);
-  letter-spacing: -0.02em; margin: 6px 0 6px 0; color: #F4F4F5; }
-.ml-lead { color: #A1A1AA; max-width: 720px; margin: 0 0 20px 0; line-height: 1.6; }
+  letter-spacing: -0.02em; margin: 6px 0 6px 0; color: #0B1220; }
+.ml-lead { color: #5B6B7F; max-width: 720px; margin: 0 0 20px 0; line-height: 1.6; }
 .ml-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .ml-step, .ml-feature { background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: 12px;
-  padding: 22px; box-shadow: var(--ml-shadow); transition: transform .15s ease, border-color .15s ease; }
-.ml-step:hover, .ml-feature:hover { transform: translateY(-2px); border-color: rgba(242,106,16,.45); }
+  padding: 22px; transition: transform .15s ease, border-color .15s ease; }
+.ml-step:hover, .ml-feature:hover { border-color: #1F8FD6; }
 .ml-step-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.ml-step-n { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #3A3A44; font-size: 1.6rem; }
+.ml-step-n { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; color: #C3D3E0; font-size: 1.6rem; }
 .ml-ic { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
-  color: #F26A10; background: rgba(242,106,16,.10); border: 1px solid rgba(242,106,16,.25); }
-.ml-step h4, .ml-feature h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.05rem; margin: 0 0 6px 0; color: #F4F4F5; }
-.ml-step p, .ml-feature p { color: #A1A1AA; font-size: .92rem; line-height: 1.55; margin: 0; }
+  color: #14689E; background: #EEF7FC; border: 1px solid #D6E8F3; }
+.ml-step h4, .ml-feature h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.05rem; margin: 0 0 6px 0; color: #0B1220; }
+.ml-step p, .ml-feature p { color: #5B6B7F; font-size: .92rem; line-height: 1.55; margin: 0; }
 .ml-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
 .ml-feature .ml-ic { margin-bottom: 14px; }
 .ml-ml-card { background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: 12px; padding: 22px 24px; }
-.ml-ml-card h4 { font-family: 'Plus Jakarta Sans', sans-serif; margin: 16px 0 6px 0; font-size: 1rem; color: #F4F4F5; }
+.ml-ml-card h4 { font-family: 'Plus Jakarta Sans', sans-serif; margin: 16px 0 6px 0; font-size: 1rem; color: #0B1220; }
 .ml-ml-card h4:first-child { margin-top: 0; }
-.ml-ml-card p { color: #A1A1AA; line-height: 1.6; margin: 0; font-size: .93rem; }
-.ml-ml-card b { color: #F4F4F5; font-weight: 600; }
+.ml-ml-card p { color: #5B6B7F; line-height: 1.6; margin: 0; font-size: .93rem; }
+.ml-ml-card b { color: #0B1220; font-weight: 600; }
 .ml-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0 0; }
 .ml-chip { border-radius: 999px; padding: 3px 11px; font-size: .78rem; font-weight: 600; border: 1px solid var(--ml-border);
-  background: var(--ml-raised); color: #F4F4F5; }
-.ml-chip.course { border-color: rgba(242,106,16,.45); color: #F8A66B; }
-.ml-footer { margin: 64px calc(50% - 50vw) -4rem; padding: 32px calc(50vw - 50% + 16px) 40px; background: #000000;
-  border-top: 1px solid #17171B; color: #A1A1AA; font-size: .875rem; }
+  background: var(--ml-raised); color: #0B1220; }
+.ml-chip.course { border-color: #1F8FD6; color: #14689E; }
+.ml-footer { margin: 64px calc(50% - 50vw) -4rem; padding: 32px calc(50vw - 50% + 16px) 40px; background: #0B1220;
+  color: #A9B4C2; font-size: .875rem; }
 .ml-footer-grid { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 32px; }
-.ml-footer b { color: #F4F4F5; font-family: 'Plus Jakarta Sans', sans-serif; }
-.ml-footer a { color: #A1A1AA; text-decoration: none; border-bottom: 1px solid #3A3A44; }
-.ml-footer a:hover { color: #F26A10; border-color: #F26A10; }
+.ml-footer b { color: #FFFFFF; font-family: 'Plus Jakarta Sans', sans-serif; }
+.ml-footer a { color: #D4ECF8; text-decoration: none; border-bottom: 1px solid #334155; }
+.ml-footer a:hover { color: #FFFFFF; border-color: #D4ECF8; }
 .ml-footer-links { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 </style>""")
 

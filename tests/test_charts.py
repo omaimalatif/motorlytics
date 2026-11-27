@@ -64,7 +64,7 @@ at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=180)
 at.session_state["user_id"] = user["id"]
 at.run()
 for page in ["overview", "analytics", "trip_history", "calibration"]:
-    at.switch_page(f"pages/{page}.py").run()
+    at.switch_page(f"app_pages/{page}.py").run()
     c.page(at, page)
     specs = check_specs(at, page)
     if page == "analytics":
@@ -108,7 +108,7 @@ for page in ["overview", "analytics", "trip_history", "calibration"]:
 problems = []
 for t in db.get_trips(user["id"]):
     at.session_state["trip_id"] = t["id"]
-    at.switch_page("pages/trip_detail.py").run()
+    at.switch_page("app_pages/trip_detail.py").run()
     header = " ".join(e.value for e in at.caption)
     badges = [e.value for e in at.markdown if "badge[" in e.value]
     if f"{t['style']} style" not in header or not any(f"{t['style']} style" in b for b in badges):

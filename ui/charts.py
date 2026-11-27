@@ -40,15 +40,14 @@ def speed_area(sp: list, stop_kmh: float = 2.0) -> go.Figure:
         x0, x1 = float(g["minute"].iloc[0]), float(g["minute"].iloc[-1])
         if x1 - x0 < 0.05:
             continue
-        fig.add_vrect(x0=x0, x1=x1, fillcolor="rgba(161,161,170,0.10)", line_width=0, layer="below")
+        fig.add_vrect(x0=x0, x1=x1, fillcolor="rgba(91,107,127,0.08)", line_width=0, layer="below")
         if first:                                          # one legend entry for the shading
             fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="stopped",
-                                     marker=dict(size=10, symbol="square", color="rgba(161,161,170,0.35)")))
+                                     marker=dict(size=10, symbol="square", color="rgba(91,107,127,0.25)")))
             first = False
     fig.add_trace(go.Scatter(
         x=d["minute"], y=d["speed"], mode="lines", name="speed", line=dict(color=theme.ORANGE, width=2.5),
-        fill="tozeroy", fillgradient=dict(type="vertical", colorscale=[[0, "rgba(242,106,16,0)"],
-                                                                         [1, "rgba(242,106,16,0.35)"]]),
+        fill="tozeroy", fillcolor="rgba(31,143,214,0.12)",
         hovertemplate="%{x:.1f} min · %{y:.0f} km/h<extra></extra>"))
     fig.update_xaxes(title="minutes")
     fig.update_yaxes(title="km/h", rangemode="tozero")

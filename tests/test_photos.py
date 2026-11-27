@@ -20,7 +20,7 @@ at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=180)
 at.session_state["user_id"] = user["id"]
 at.run()
 
-at.switch_page("pages/my_car.py").run()
+at.switch_page("app_pages/my_car.py").run()
 at.selectbox[0].set_value("Suzuki").run()
 at.selectbox[1].set_value("Cultus").run()
 at.selectbox[2].set_value(2018).run()
@@ -42,7 +42,7 @@ try:
     c.ok(False, "invalid file rejected")
 except ValueError:
     c.ok(True, "invalid file rejected")
-at.switch_page("pages/my_car.py").run()
+at.switch_page("app_pages/my_car.py").run()
 c.page(at, "my car with own photo")
 car_photos.remove_user_photo(db.get_car(car["id"]))
 c.ok(not Path(path).exists(), "own photo file deleted on removal")
@@ -51,6 +51,6 @@ other = db.add_car(user["id"], "Xyzzy", "Nomodel", None, 2.0, 4.0, body_type="SU
 pic = car_photos.car_picture(other)
 c.ok(pic["kind"] == "drawing" and pic["path"].endswith("suv.svg"), "unknown model -> body-type drawing")
 at.session_state["car_id"] = other["id"]
-at.switch_page("pages/overview.py").run()
+at.switch_page("app_pages/overview.py").run()
 c.page(at, "overview with drawing")
 c.done()

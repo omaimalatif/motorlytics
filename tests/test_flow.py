@@ -29,7 +29,7 @@ uid = at.session_state["user_id"]
 c.ok(db.get_user(uid)["password_hash"].startswith("pbkdf2_sha256$"), "password stored as a salted hash")
 
 # add a car manually
-at.switch_page("pages/my_car.py").run()
+at.switch_page("app_pages/my_car.py").run()
 at.toggle[0].set_value(True).run()
 fields = {t.label: t for t in at.text_input}
 fields["Make"].set_value("Opel")
@@ -43,13 +43,13 @@ car = db.get_cars(uid)[0]
 c.ok(car["disp_L"] == 1.2 and car["car_key"], "car saved with engine size and calibration key")
 
 # petrol price
-at.switch_page("pages/account.py").run()
+at.switch_page("app_pages/account.py").run()
 at.number_input[0].set_value(280.0)
 [b for b in at.button if b.label == "Save"][0].click().run()
 c.ok(db.get_user(uid)["petrol_pkr"] == 280.0, "petrol price saved")
 
 # upload 3 MAF trips (same call as the Upload trip page)
-at.switch_page("pages/upload_trip.py").run()
+at.switch_page("app_pages/upload_trip.py").run()
 c.page(at, "upload page")
 res = upload(db.get_user(uid), car, [SAMPLES / f"corsa_d_2010_trip{i}.csv" for i in (1, 2, 3)], temp=18.0)
 c.ok(len(res["trip_ids"]) == 3, "3 trips saved", str(res["trip_ids"]))
@@ -59,7 +59,7 @@ at.session_state["trip_id"] = res["trip_ids"][0]
 
 for page in ["trip_detail", "trip_history", "overview", "analytics", "calibration", "about_model", "my_car",
              "account", "quick_estimate"]:
-    at.switch_page(f"pages/{page}.py").run()
+    at.switch_page(f"app_pages/{page}.py").run()
     c.page(at, page)
     if page == "trip_detail":
         metrics = dict((m.label, m.value) for m in at.metric)
@@ -68,7 +68,7 @@ for page in ["trip_detail", "trip_history", "overview", "analytics", "calibratio
              f"{metrics.get('Measured (L/100 km)')} / {metrics.get('Model predicted (L/100 km)')}")
 
 # fill-up through the form
-at.switch_page("pages/calibration.py").run()
+at.switch_page("app_pages/calibration.py").run()
 at.number_input[0].set_value(0.4)
 at.multiselect[0].set_value(res["trip_ids"])
 [b for b in at.button if b.label == "Save fill-up"][0].click().run()
@@ -81,7 +81,7 @@ t4 = db.get_trip(r2["trip_ids"][0], uid)
 c.ok(bool(t4["calibrated"]), "4th trip uses the car's calibration", r2["calibration"][:60])
 c.ok(len((t4["route"] or {}).get("path") or []) > 10, "route stored")
 
-at.switch_page("pages/account.py").run()
+at.switch_page("app_pages/account.py").run()
 [b for b in at.button if b.label == "Sign out"][0].click().run()
 c.ok("user_id" not in at.session_state, "logged out")
 c.page(at, "public page after logout")

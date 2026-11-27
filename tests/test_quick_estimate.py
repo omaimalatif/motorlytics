@@ -53,7 +53,7 @@ at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=180)
 at.session_state["user_id"] = user["id"]
 at.session_state["car_id"] = corsa["id"]
 at.run()
-at.switch_page("pages/quick_estimate.py").run()
+at.switch_page("app_pages/quick_estimate.py").run()
 c.page(at, "quick estimate form")
 [n for n in at.number_input if n.label == "Distance (km)"][0].set_value(25.0)
 [s for s in at.selectbox if s.label == "Road type"][0].set_value("highway")
@@ -68,7 +68,7 @@ trips = db.get_trips(user["id"])
 c.ok(len(trips) == n0 + 1 and trips[0]["tips"].get("quick_estimate") and trips[0]["route"] is None,
      "Save stores one quick-estimate trip")
 at.session_state["trip_id"] = trips[0]["id"]
-at.switch_page("pages/trip_detail.py").run()
+at.switch_page("app_pages/trip_detail.py").run()
 c.page(at, "trip detail of a quick estimate")
 c.ok(any("Quick estimate, not a recorded trip" in i.value for i in at.info), "trip detail says it is an estimate")
 c.done()

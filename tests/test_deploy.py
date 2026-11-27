@@ -55,9 +55,9 @@ c.ok(mf.DATA.name == "Data" and mf.DATA.is_absolute() and mf.MODELS.is_absolute(
      "data paths anchored to the project and spelled 'Data'")
 src = (ROOT / "core" / "db.py").read_text(encoding="utf-8")
 c.ok('ROOT / "Data" / "motorlytics.db"' in src, "database path uses 'Data' (the real folder name)")
-code = " ".join(p.read_text(encoding="utf-8") for d in ["core", "ui", "pages"] for p in (ROOT / d).glob("*.py"))
+code = " ".join(p.read_text(encoding="utf-8") for d in ["core", "ui", "app_pages"] for p in (ROOT / d).glob("*.py"))
 code += (ROOT / "app.py").read_text(encoding="utf-8")
-lits = set(re.findall(r'["\']((?:assets|samples|models|pages|Data)/[\w./-]+\.\w+)["\']', code))
+lits = set(re.findall(r'["\']((?:assets|samples|models|app_pages|Data)/[\w./-]+\.\w+)["\']', code))
 missing = sorted(x for x in lits if not exact_case(ROOT / x))
 c.ok(not missing, "every literal file path in the app matches the files exactly", ", ".join(missing))
 

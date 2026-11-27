@@ -2,6 +2,8 @@
 Plotly template and the map colours. .streamlit/config.toml repeats the base theme colours (Streamlit reads
 them before any Python runs); tests/test_theme.py checks that both agree.
 
+Look: white, sky blue and black; flat (no gradients, glows or hover jumps), thin borders, generous spacing.
+
     from ui import theme
     theme.setup()                 # once per run (app.py does it for every page)
     theme.plot(fig, height=300)   # every Plotly chart
@@ -9,9 +11,7 @@ them before any Python runs); tests/test_theme.py checks that both agree.
 import html
 from pathlib import Path
 
-import plotly.graph_objects as go
-import plotly.io as pio
-import streamlit as st
+import streamlit as st          # Plotly is imported only when a chart is drawn (keeps the first page fast)
 
 ROOT = Path(__file__).resolve().parents[1]
 # brand: the name only, "Motorlytics", with the first "o" drawn as a gauge (no separate icon)
@@ -21,27 +21,31 @@ GAUGE_O_SVG = ROOT / "assets" / "brand" / "gauge_o.svg"   # the gauge "o" inside
 ICONS = ROOT / "assets" / "icons"
 IMAGES = ROOT / "assets" / "images"
 
-# ---------------- colours ----------------
-BLACK = "#000000"          # Welcome hero, Sign-in brand panel, sidebar
-BG = "#0B0B0D"             # page background
-SURFACE = "#141417"        # cards
-RAISED = "#1B1B20"         # raised cards, tiles, inputs
-BORDER = "#2A2A31"
-TEXT = "#F4F4F5"
-MUTED = "#A1A1AA"
-GRID = "#26262C"
+# ---------------- colours: white, sky blue, black ----------------
+INK = "#0B1220"            # near-black: text, primary buttons, footer
+BG = "#FFFFFF"             # page background
+SURFACE = "#FFFFFF"        # cards (with a 1px border)
+RAISED = "#F5F9FC"         # tiles, inputs, table headers
+BORDER = "#E3EAF0"
+TEXT = INK
+MUTED = "#5B6B7F"
+GRID = "#EEF2F6"
+SKY = "#D4ECF8"            # sky blue bands: Welcome hero, Sign-in panel, active nav item
+SKY_SOFT = "#EEF7FC"       # soft sky: hover, highlighted cards, upload area
+ACCENT = "#1F8FD6"         # sky blue accent: charts, map route, the "lytics" of the name
+ACCENT_TEXT = "#14689E"    # the accent for text on white (readable contrast)
+SIDEBAR = "#F8FBFD"
+BLACK = INK                # the black elements (footer, primary buttons)
+RED = "#D92D20"            # destructive actions
+GRADIENT = INK             # kept name for older callers: a flat colour now (no gradients)
 
-CRIMSON = "#80031F"        # subtle glows, gradient start
-RED = "#DF3511"            # accents, destructive actions
-ORANGE = "#F26A10"         # primary buttons, active nav item, key numbers
-GRADIENT = "linear-gradient(135deg, #80031F 0%, #DF3511 55%, #F26A10 100%)"
+SUCCESS, WARNING, ERROR = "#15803D", "#B45309", "#D92D20"    # always with an icon and text
 
-SUCCESS, WARNING, ERROR = "#22C55E", "#F59E0B", "#DF3511"    # always with an icon and text
-
-# charts (colour-blind checked on the dark background); style names are always shown as text as well
+# charts (colour-blind checked on white); style names are always shown as text as well
 STYLE_COLORS = {"eco": "#0E9384", "normal": "#C98500", "aggressive": "#E5484D"}
-CATEGORICAL = ["#E8650A", "#0D9488", "#8B5CF6"]               # fixed order
-MEASURED, PREDICTED, SINGLE = "#0D9488", "#E8650A", "#E8650A"
+CATEGORICAL = [ACCENT, INK, "#8BA3B8"]                        # fixed order
+MEASURED, PREDICTED, SINGLE = INK, ACCENT, ACCENT
+ORANGE = ACCENT            # kept name for older callers: the accent colour
 
 # badge kinds -> Streamlit palette names (their colours are set in config.toml) and a default icon
 BADGE = {"good": ("green", ":material/check_circle:"), "info": ("blue", ":material/info:"),
@@ -54,13 +58,13 @@ STYLE_BADGE = {"eco": ("green", ":material/eco:"), "normal": ("yellow", ":materi
 FONT_HEAD = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif"
 FONT_BODY = "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif"
 SPACE = (4, 8, 12, 16, 24, 32, 48)
-R_CARD, R_INPUT, R_PILL = 12, 10, 999
+R_CARD, R_INPUT, R_PILL = 12, 8, 999
 
 # ---------------- maps (pydeck, RGB) ----------------
-MAP_STYLE = "dark"                                  # CARTO dark-matter (pdk.map_styles.CARTO_DARK)
-MAP_ROUTE = [242, 106, 16]                          # ORANGE
-MAP_START = [34, 197, 94]                           # SUCCESS green
-MAP_END = [223, 53, 17]                             # RED
+MAP_STYLE = "light"                                 # CARTO positron (pdk.map_styles.CARTO_LIGHT)
+MAP_ROUTE = [31, 143, 214]                          # ACCENT sky blue
+MAP_START = [21, 128, 61]                           # SUCCESS green
+MAP_END = [217, 45, 32]                             # RED
 
 
 def _hex_rgba(hex_color: str, alpha: float) -> str:
@@ -68,9 +72,14 @@ def _hex_rgba(hex_color: str, alpha: float) -> str:
     return f"rgba({int(h[0:2], 16)}, {int(h[2:4], 16)}, {int(h[4:6], 16)}, {alpha})"
 
 
-# ---------------- Plotly template ----------------
-def _template() -> go.layout.Template:
-    axis = dict(gridcolor=GRID, linecolor=GRID, zerolinecolor=GRID, tickcolor="rgba(0,0,0,0)", showline=False,
+# ---------------- Plotly template (registered with the first chart) ----------------
+def template():
+    """Register the 'motorlytics' Plotly template (once), make it the default, and return it."""
+    import plotly.graph_objects as go
+    import plotly.io as pio
+    if "motorlytics" in pio.templates:
+        return pio.templates["motorlytics"]
+    axis = dict(gridcolor=GRID, linecolor=BORDER, zerolinecolor=BORDER, tickcolor="rgba(0,0,0,0)", showline=False,
                 zeroline=False, tickfont=dict(color=MUTED, size=11), title=dict(font=dict(color=MUTED, size=12)),
                 automargin=True)
     t = go.layout.Template()
@@ -78,7 +87,7 @@ def _template() -> go.layout.Template:
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", colorway=CATEGORICAL,
         font=dict(family=FONT_BODY.replace("'", ""), color=MUTED, size=12),
         xaxis={**axis, "showgrid": False}, yaxis={**axis, "showgrid": True},
-        hoverlabel=dict(bgcolor=RAISED, bordercolor=ORANGE, font=dict(color=TEXT, family="Inter, sans-serif", size=12)),
+        hoverlabel=dict(bgcolor="#FFFFFF", bordercolor=BORDER, font=dict(color=TEXT, family="Inter, sans-serif", size=12)),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, bgcolor="rgba(0,0,0,0)",
                     font=dict(color=TEXT, size=12), title=dict(text="")),
         barcornerradius=6, bargap=0.28, bargroupgap=0.08, margin=dict(l=8, r=8, t=28, b=8),
@@ -88,17 +97,18 @@ def _template() -> go.layout.Template:
     t.data.bar = [go.Bar(marker=dict(line=dict(width=0)), textfont=dict(color=TEXT, size=11))]
     t.data.histogram = [go.Histogram(marker=dict(color=SINGLE, line=dict(width=0)))]
     t.data.box = [go.Box(line=dict(width=1.5))]
+    pio.templates["motorlytics"] = t
+    pio.templates.default = "motorlytics"
     return t
 
 
-pio.templates["motorlytics"] = _template()
-pio.templates.default = "motorlytics"
 PLOT_CONFIG = {"displayModeBar": False, "displaylogo": False, "scrollZoom": False}
 
 
 def plot(fig, height: int = 300, key: str = None, margin: dict = None) -> None:
     """Show a Plotly figure with the motorlytics template (theme=None, so Streamlit's chart theme does not
     override it)."""
+    template()
     fig.update_layout(template="motorlytics", height=height, margin=margin or dict(l=8, r=8, t=28, b=8))
     st.plotly_chart(fig, theme=None, width="stretch", config=PLOT_CONFIG, key=key)
 
@@ -109,7 +119,7 @@ def _data_uri(svg: str) -> str:
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
 
 
-def icon_css(color: str = ORANGE) -> str:
+def icon_css(color: str = INK) -> str:
     """One CSS class per assets/icons/*.svg: .ml-icon-<name> (st.html strips inline <svg> and <img>, so icons
     are background images of the injected style block)."""
     rules = []
@@ -122,14 +132,14 @@ def icon_css(color: str = ORANGE) -> str:
 
 
 def brand_lockup(size: int = 64) -> str:
-    """The logo as HTML: the word 'Motorlytics' in the heading font, the first 'o' a gauge, 'lytics' in the brand
-    gradient. size: font size in px."""
+    """The logo as HTML: the word 'Motorlytics' in the heading font, the first 'o' a gauge, 'lytics' in sky blue.
+    size: font size in px."""
     return (f'<div class="ml-lockup"><span class="ml-wordmark" style="font-size:{size}px" aria-label="Motorlytics">'
             f'M<span class="ml-gauge-o" aria-hidden="true"></span>tor<span class="ml-grad-text">lytics</span></span></div>')
 
 
 def icon(name: str, size: int = 22) -> str:
-    """<span> showing assets/icons/<name>.svg (original line icon, brand orange); '' if missing."""
+    """<span> showing assets/icons/<name>.svg (original line icon, ink); '' if missing."""
     if not (ICONS / f"{name}.svg").exists():
         return ""
     return f'<span class="ml-icon ml-icon-{name}" style="width:{size}px;height:{size}px" aria-hidden="true"></span>'
@@ -150,127 +160,111 @@ CSS = f"""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {{
-  --ml-black: {BLACK}; --ml-bg: {BG}; --ml-surface: {SURFACE}; --ml-raised: {RAISED}; --ml-border: {BORDER};
-  --ml-text: {TEXT}; --ml-muted: {MUTED}; --ml-orange: {ORANGE}; --ml-red: {RED}; --ml-crimson: {CRIMSON};
-  --ml-gradient: {GRADIENT}; --ml-success: {SUCCESS}; --ml-warning: {WARNING}; --ml-error: {ERROR};
-  --ml-r-card: {R_CARD}px; --ml-r-input: {R_INPUT}px;
-  --ml-shadow: 0 1px 2px rgba(0,0,0,.45), 0 8px 24px rgba(0,0,0,.28);
+  --ml-ink: {INK}; --ml-bg: {BG}; --ml-surface: {SURFACE}; --ml-raised: {RAISED}; --ml-border: {BORDER};
+  --ml-text: {TEXT}; --ml-muted: {MUTED}; --ml-sky: {SKY}; --ml-sky-soft: {SKY_SOFT}; --ml-accent: {ACCENT};
+  --ml-accent-text: {ACCENT_TEXT}; --ml-red: {RED}; --ml-r-card: {R_CARD}px; --ml-r-input: {R_INPUT}px;
 }}
 
 /* ---------- base ---------- */
 .stApp {{ background: var(--ml-bg); color: var(--ml-text); }}
 html, body, .stApp, .stMarkdown, button, input, textarea, select {{ font-family: {FONT_BODY}; }}
-.stApp h1, .stApp h2, .stApp h3, .stApp h4 {{ font-family: {FONT_HEAD}; font-weight: 700; letter-spacing: -0.015em; }}
+.stApp h1, .stApp h2, .stApp h3, .stApp h4 {{ font-family: {FONT_HEAD}; font-weight: 700; letter-spacing: -0.015em;
+  color: var(--ml-text); }}
 .stApp h1 {{ font-size: 2rem; }}
 [data-testid="stMain"] {{ overflow-x: hidden; }}
 [data-testid="stMainBlockContainer"] {{ padding-top: 2.5rem; padding-bottom: 4rem; max-width: 1280px; }}
-[data-testid="stHeader"] {{ background: transparent; }}
+[data-testid="stHeader"] {{ background: #FFFFFF; }}
 [data-testid="stCaptionContainer"], .stCaption {{ color: var(--ml-muted); }}
-a {{ color: var(--ml-orange); }}
+a {{ color: var(--ml-accent-text); }}
 hr {{ border-color: var(--ml-border) !important; }}
 .ml-num, [data-testid="stMetricValue"], .ml-stat-value {{ font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }}
 
-/* ---------- page header ---------- */
-.ml-page-title {{ font-family: {FONT_HEAD}; font-size: 1.85rem; font-weight: 700; letter-spacing: -0.02em;
-  color: var(--ml-text); margin: 0; line-height: 1.2; }}
-.ml-page-sub {{ color: var(--ml-muted); font-size: .95rem; margin: 6px 0 0 0; }}
-.ml-accent-line {{ height: 2px; width: 56px; border-radius: 2px; background: var(--ml-gradient); margin: 14px 0 8px 0; }}
+/* ---------- page header: a thin divider under the title ---------- */
+.ml-accent-line {{ height: 1px; width: 100%; background: var(--ml-border); margin: 12px 0 8px 0; }}
 
 /* ---------- cards: st.container(key="mlcard-...") ---------- */
 [class*="st-key-mlcard"] {{
   background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: var(--ml-r-card);
-  box-shadow: var(--ml-shadow); padding: 18px 20px; gap: 12px;
+  padding: 18px 20px; gap: 12px;
 }}
 [class*="st-key-mlcard-raised"] {{ background: var(--ml-raised); }}
-[class*="st-key-mlcard-hero"] {{ background:
-  radial-gradient(120% 140% at 100% 0%, {_hex_rgba(CRIMSON, .28)} 0%, rgba(0,0,0,0) 55%), var(--ml-surface); }}
-[class*="st-key-mlcard-click"] {{ transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease; }}
-[class*="st-key-mlcard-click"]:hover {{ transform: translateY(-2px); border-color: {_hex_rgba(ORANGE, .55)};
-  box-shadow: 0 10px 28px rgba(0,0,0,.4), 0 0 0 1px {_hex_rgba(ORANGE, .15)}; }}
-.ml-card-title {{ font-family: {FONT_HEAD}; font-weight: 700; font-size: 1.02rem; color: var(--ml-text); margin: 0; }}
-.ml-card-sub {{ color: var(--ml-muted); font-size: .85rem; margin: 2px 0 0 0; }}
+[class*="st-key-mlcard-hero"] {{ background: var(--ml-sky-soft); border-color: #D6E8F3; }}
+[class*="st-key-mlcard-click"] {{ transition: border-color .15s ease; }}
+[class*="st-key-mlcard-click"]:hover {{ border-color: var(--ml-accent); }}
 .ml-takeaway {{ color: var(--ml-muted); font-size: .85rem; margin: 0; }}
-.ml-takeaway b {{ color: var(--ml-text); }}
 
 /* formula strip (Quick estimate): Model x factor = result */
-.st-key-mlformula {{ background: var(--ml-raised); border: 1px solid var(--ml-border); border-left: 3px solid var(--ml-orange);
+.st-key-mlformula {{ background: var(--ml-raised); border: 1px solid var(--ml-border); border-left: 3px solid var(--ml-accent);
   border-radius: var(--ml-r-card); padding: 12px 16px; }}
 .st-key-mlformula p {{ font-variant-numeric: tabular-nums; margin: 0; }}
 
 /* ---------- metric tiles ---------- */
 [data-testid="stMetric"] {{
-  background: var(--ml-raised); border: 1px solid var(--ml-border); border-radius: var(--ml-r-card);
-  padding: 14px 16px; box-shadow: 0 1px 2px rgba(0,0,0,.35); height: 100%;
+  background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: var(--ml-r-card);
+  padding: 14px 16px; height: 100%;
 }}
 [data-testid="stMetricLabel"] p, [data-testid="stMetricLabel"] {{ color: var(--ml-muted) !important; font-size: .8rem; font-weight: 500; }}
 [data-testid="stMetricValue"] {{ font-family: {FONT_HEAD}; color: var(--ml-text); font-size: 1.75rem; font-weight: 700; }}
-[class*="st-key-mlkpi-accent"] [data-testid="stMetricValue"] {{ color: var(--ml-orange); }}
-[class*="st-key-mlkpi"] [data-testid="stMetric"] {{ position: relative; overflow: hidden; }}
-[class*="st-key-mlkpi"] [data-testid="stMetric"]::before {{ content: ""; position: absolute; left: 0; right: 0; top: 0;
-  height: 2px; background: var(--ml-gradient); opacity: .9; }}
+[class*="st-key-mlkpi-accent"] [data-testid="stMetricValue"] {{ color: var(--ml-accent-text); }}
 
-/* ---------- buttons ---------- */
+/* ---------- buttons: primary solid black, secondary white with a border ---------- */
 [data-testid^="stBaseButton-primary"] {{
-  background: var(--ml-gradient) !important; border: 0 !important; color: #fff !important; font-weight: 600;
-  border-radius: var(--ml-r-input); box-shadow: 0 6px 18px {_hex_rgba(RED, .28)}; transition: filter .15s, transform .15s;
+  background: var(--ml-ink) !important; border: 1px solid var(--ml-ink) !important; color: #FFFFFF !important;
+  font-weight: 600; border-radius: var(--ml-r-input); transition: background .15s;
 }}
-[data-testid^="stBaseButton-primary"]:hover {{ filter: brightness(1.08); transform: translateY(-1px); }}
-[data-testid^="stBaseButton-primary"]:disabled {{ background: var(--ml-raised) !important; color: #71717A !important;
-  border: 1px solid var(--ml-border) !important; box-shadow: none; transform: none; filter: none; }}
+[data-testid^="stBaseButton-primary"]:hover {{ background: #1E293B !important; border-color: #1E293B !important; }}
+[data-testid^="stBaseButton-primary"]:disabled {{ background: var(--ml-raised) !important; color: #94A3B8 !important;
+  border: 1px solid var(--ml-border) !important; }}
 [data-testid^="stBaseButton-secondary"] {{
-  background: transparent !important; border: 1px solid var(--ml-border) !important; color: var(--ml-text) !important;
-  border-radius: var(--ml-r-input); font-weight: 500; transition: border-color .15s, color .15s, background .15s;
+  background: #FFFFFF !important; border: 1px solid var(--ml-border) !important; color: var(--ml-text) !important;
+  border-radius: var(--ml-r-input); font-weight: 500; transition: border-color .15s, background .15s;
 }}
-[data-testid^="stBaseButton-secondary"]:hover {{ border-color: var(--ml-orange) !important; color: var(--ml-orange) !important;
-  background: {_hex_rgba(ORANGE, .06)} !important; }}
-[class*="st-key-mldanger"] [data-testid^="stBaseButton"] {{ background: transparent !important;
-  border: 1px solid {_hex_rgba(RED, .6)} !important; color: {RED} !important; box-shadow: none; }}
-[class*="st-key-mldanger"] [data-testid^="stBaseButton"]:hover {{ background: {_hex_rgba(RED, .12)} !important; }}
+[data-testid^="stBaseButton-secondary"]:hover {{ border-color: var(--ml-ink) !important; background: var(--ml-raised) !important; }}
+[class*="st-key-mldanger"] [data-testid^="stBaseButton"] {{ background: #FFFFFF !important;
+  border: 1px solid {_hex_rgba(RED, .5)} !important; color: {RED} !important; }}
+[class*="st-key-mldanger"] [data-testid^="stBaseButton"]:hover {{ background: {_hex_rgba(RED, .06)} !important; }}
 [data-testid="stPopover"] button {{ border-radius: var(--ml-r-input); }}
 
 /* ---------- inputs and selects ---------- */
 [data-testid="stTextInputRootElement"], [data-testid="stNumberInputContainer"], [data-testid="stSelectbox"] > div > div,
 [data-testid="stMultiSelect"] > div > div, [data-testid="stDateInput"] > div > div, .stTextArea textarea {{
-  background: var(--ml-raised) !important; border-color: var(--ml-border) !important; border-radius: var(--ml-r-input) !important;
+  background: #FFFFFF !important; border-color: var(--ml-border) !important; border-radius: var(--ml-r-input) !important;
 }}
 [data-testid="stTextInputRootElement"]:focus-within, [data-testid="stNumberInputContainer"]:focus-within {{
-  border-color: var(--ml-orange) !important; box-shadow: 0 0 0 3px {_hex_rgba(ORANGE, .15)}; }}
+  border-color: var(--ml-accent) !important; }}
 [data-testid="stWidgetLabel"] p {{ color: var(--ml-text); font-weight: 500; font-size: .875rem; }}
 [data-testid="stForm"] {{ border: 0; padding: 0; }}
 
 /* ---------- tabs ---------- */
 [data-testid="stTabs"] [role="tablist"] {{ gap: 6px; border-bottom: 1px solid var(--ml-border); }}
-[data-testid="stTab"] {{ color: var(--ml-muted); font-weight: 600; padding: 8px 14px; border-radius: 8px 8px 0 0; }}
-[data-testid="stTab"]:hover {{ color: var(--ml-text); background: {_hex_rgba(ORANGE, .05)}; }}
-[data-testid="stTab"][aria-selected="true"] {{ color: var(--ml-text); box-shadow: inset 0 -2px 0 var(--ml-orange); }}
+[data-testid="stTab"] {{ color: var(--ml-muted); font-weight: 600; padding: 8px 14px; }}
+[data-testid="stTab"]:hover {{ color: var(--ml-text); }}
+[data-testid="stTab"][aria-selected="true"] {{ color: var(--ml-text); box-shadow: inset 0 -2px 0 var(--ml-ink); }}
 
 /* ---------- expanders, dataframes, uploader, alerts ---------- */
 [data-testid="stExpander"] details {{ background: var(--ml-surface); border: 1px solid var(--ml-border) !important;
   border-radius: var(--ml-r-card); }}
-[data-testid="stExpander"] summary:hover {{ color: var(--ml-orange); }}
 [data-testid="stDataFrame"], [data-testid="stTable"] {{ border: 1px solid var(--ml-border); border-radius: var(--ml-r-card);
   overflow: hidden; }}
-[data-testid="stFileUploaderDropzone"] {{ background: var(--ml-raised); border: 1.5px dashed #3A3A44;
-  border-radius: var(--ml-r-card); padding: 28px 20px; transition: border-color .15s, background .15s; }}
-[data-testid="stFileUploaderDropzone"]:hover {{ border-color: var(--ml-orange); background: {_hex_rgba(ORANGE, .05)}; }}
+[data-testid="stFileUploaderDropzone"] {{ background: var(--ml-sky-soft); border: 1.5px dashed #A9CFE6;
+  border-radius: var(--ml-r-card); padding: 28px 20px; transition: border-color .15s; }}
+[data-testid="stFileUploaderDropzone"]:hover {{ border-color: var(--ml-accent); }}
 [data-testid="stAlertContainer"] {{ border-radius: var(--ml-r-card); }}
 
 /* ---------- sidebar ---------- */
-[data-testid="stSidebar"] {{ background: var(--ml-black); border-right: 1px solid #17171B; }}
-[data-testid="stSidebarNavLink"] {{ border-radius: 10px; border-left: 3px solid transparent; margin: 1px 0;
-  transition: background .15s; }}
-[data-testid="stSidebarNavLink"]:hover {{ background: {_hex_rgba(ORANGE, .06)}; }}
-[data-testid="stSidebarNavLink"][aria-current="page"] {{ background: {_hex_rgba(ORANGE, .12)};
-  border-left-color: var(--ml-orange); }}
-[data-testid="stSidebarNavLink"][aria-current="page"] span {{ color: var(--ml-text) !important; font-weight: 600; }}
-[data-testid="stSidebarNavLink"][aria-current="page"] [data-testid="stIconMaterial"] {{ color: var(--ml-orange) !important; }}
-[data-testid="stNavSectionHeader"] {{ color: #71717A; text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; }}
-[data-testid="stSidebarLogo"], [data-testid="stSidebarHeader"] [data-testid="stLogo"] {{ height: 4.5rem !important; max-width: 100%; }}
+[data-testid="stSidebar"] {{ background: {SIDEBAR}; border-right: 1px solid var(--ml-border); }}
+[data-testid="stSidebarNavLink"] {{ border-radius: 8px; margin: 1px 0; transition: background .15s; }}
+[data-testid="stSidebarNavLink"]:hover {{ background: var(--ml-sky-soft); }}
+[data-testid="stSidebarNavLink"][aria-current="page"] {{ background: var(--ml-sky); }}
+[data-testid="stSidebarNavLink"][aria-current="page"] span {{ color: var(--ml-ink) !important; font-weight: 600; }}
+[data-testid="stSidebarNavLink"][aria-current="page"] [data-testid="stIconMaterial"] {{ color: var(--ml-ink) !important; }}
+[data-testid="stNavSectionHeader"] {{ color: #8091A5; text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; }}
+[data-testid="stSidebarLogo"], [data-testid="stSidebarHeader"] [data-testid="stLogo"] {{ height: 2.4rem !important; max-width: 100%; }}
 [data-testid="stSidebarHeader"] {{ height: auto; padding-top: 1rem; }}
-[data-testid="stTopNav"] [data-testid="stLogo"], [data-testid="stHeader"] [data-testid="stLogo"] {{ height: 2.6rem !important; }}
-[data-testid="stTopNavLink"][aria-current="page"] {{ box-shadow: inset 0 -2px 0 var(--ml-orange); }}
+[data-testid="stTopNav"] [data-testid="stLogo"], [data-testid="stHeader"] [data-testid="stLogo"] {{ height: 2rem !important; }}
+[data-testid="stTopNavLink"][aria-current="page"] {{ background: var(--ml-sky); }}
 
-/* ---------- badges / pills ---------- */
+/* ---------- badges, pills, brand ---------- */
 [data-testid="stMarkdownBadge"], .ml-pill {{ border-radius: {R_PILL}px !important; padding: 2px 10px; font-weight: 600; }}
 .ml-pill {{ display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; border: 1px solid var(--ml-border);
   background: var(--ml-raised); color: var(--ml-text); }}
@@ -278,8 +272,8 @@ hr {{ border-color: var(--ml-border) !important; }}
 .ml-gauge-o {{ display: inline-block; width: .6em; height: .6em; margin: 0 .025em; vertical-align: -0.02em;
   background-size: contain; background-repeat: no-repeat; background-position: center; }}
 .ml-lockup {{ display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }}
-.ml-wordmark {{ font-family: {FONT_HEAD}; font-weight: 800; letter-spacing: -0.03em; color: var(--ml-text); line-height: 1; }}
-.ml-grad-text {{ background: var(--ml-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }}
+.ml-wordmark {{ font-family: {FONT_HEAD}; font-weight: 800; letter-spacing: -0.03em; color: var(--ml-ink); line-height: 1; }}
+.ml-grad-text {{ color: var(--ml-accent); }}
 """
 
 

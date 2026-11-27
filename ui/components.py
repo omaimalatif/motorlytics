@@ -122,8 +122,8 @@ def fit_view(lats, lons, width_px: int = 480, height_px: int = 320, padding: flo
 
 
 def route_deck(path, height: int = 320, width_px: int = 480) -> pdk.Deck:
-    """pydeck map of a GPS route: orange line (4 px) with start (green) and end (red) dots on the free CARTO
-    dark-matter basemap, view fitted to the route. path: [[lat, lon], ...]."""
+    """pydeck map of a GPS route: sky-blue line (4 px) with start (green) and end (red) dots on the free CARTO
+    positron (light) basemap, view fitted to the route. path: [[lat, lon], ...]."""
     line = [[float(lon), float(lat)] for lat, lon in path]
     ends = [{"position": line[0], "color": theme.MAP_START}, {"position": line[-1], "color": theme.MAP_END}]
     view = fit_view([p[1] for p in line], [p[0] for p in line], width_px=width_px, height_px=height)
@@ -133,9 +133,9 @@ def route_deck(path, height: int = 320, width_px: int = 480) -> pdk.Deck:
                           cap_rounded=True, joint_rounded=True),
                 pdk.Layer("ScatterplotLayer", data=ends, get_position="position", get_fill_color="color",
                           get_radius=6, radius_units="pixels", radius_min_pixels=4, radius_max_pixels=8,
-                          stroked=True, get_line_color=[11, 11, 13], line_width_min_pixels=1)],
+                          stroked=True, get_line_color=[255, 255, 255], line_width_min_pixels=1)],
         initial_view_state=pdk.ViewState(**view, pitch=0, bearing=0),
-        map_provider="carto", map_style=pdk.map_styles.CARTO_DARK)
+        map_provider="carto", map_style=pdk.map_styles.CARTO_LIGHT)
 
 
 def route_map(path, height: int = 320, key: str = None, width_px: int = 480) -> None:

@@ -45,7 +45,7 @@ at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=180)
 at.session_state["user_id"] = user["id"]
 at.session_state["trip_id"] = tid
 at.run()
-at.switch_page("pages/trip_detail.py").run()
+at.switch_page("app_pages/trip_detail.py").run()
 c.page(at, "trip detail")
 caps = [e.value for e in at.caption]
 c.ok(any("could bring this to about" in x or "already close to eco driving" in x for x in caps),

@@ -60,7 +60,7 @@ at.session_state["user_id"] = user["id"]
 at.session_state["car_id"] = mine["id"]
 at.session_state["fetched_log"] = fb
 at.run()
-at.switch_page("pages/upload_trip.py").run()
+at.switch_page("app_pages/upload_trip.py").run()
 c.page(at, "upload page with a fetched log")
 c.ok(any(b.label == "Analyse this trip" for b in at.button), "fetched log offered for analysis")
 [b for b in at.button if b.label == "Analyse this trip"][0].click().run()
@@ -80,7 +80,7 @@ from ui import session as sess  # noqa: E402
 
 c.ok(all(not x.get("is_demo") for x in sess.user_cars(user)), "demo car not offered as one of the user's cars")
 at.session_state["trip_id"] = t_demo["id"]
-at.switch_page("pages/trip_detail.py").run()
+at.switch_page("app_pages/trip_detail.py").run()
 c.ok(any("not your car" in str(getattr(e, "value", "")) for e in list(at.caption) + list(at.markdown)),
      "trip detail says it is not the user's car")
 c.done()

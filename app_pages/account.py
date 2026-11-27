@@ -31,7 +31,7 @@ with left:
                 st.caption(f"Could not find the weather for '{u['city']}'.")
         if st.button("Sign out", icon=":material/logout:", width="stretch", key="mldanger-signout"):
             st.session_state.clear()
-            st.switch_page("pages/welcome.py")
+            st.switch_page("app_pages/welcome.py")
 
 with right:
     with ui.card("Settings", "Your petrol price turns litres into rupees; your city gives the current temperature."):

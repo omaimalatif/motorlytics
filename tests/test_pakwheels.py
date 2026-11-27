@@ -47,7 +47,7 @@ at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=180)
 at.session_state["user_id"] = user["id"]
 at.session_state["trip_id"] = res["trip_ids"][0]
 for page in ["trip_detail", "my_car", "calibration", "overview"]:
-    at.switch_page(f"pages/{page}.py").run()
+    at.switch_page(f"app_pages/{page}.py").run()
     c.page(at, page)
 fresh = db.add_car(user["id"], "Suzuki", "Alto", 2020, 0.66, 3.0, transmission="Manual")
 # AppTest drops the sidebar after switch_page, so check it on a fresh run with the car already selected

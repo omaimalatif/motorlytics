@@ -18,24 +18,28 @@ from ui.components import route_deck  # noqa: E402
 c = Checks("test_theme")
 cfg = tomllib.loads((ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8"))
 th = cfg["theme"]
-c.ok(th["base"] == "dark" and th["primaryColor"] == theme.ORANGE and th["backgroundColor"] == theme.BG
-     and th["secondaryBackgroundColor"] == theme.SURFACE and th["textColor"] == theme.TEXT,
+c.ok(th["base"] == "light" and th["primaryColor"] == theme.INK and th["backgroundColor"] == theme.BG
+     and th["secondaryBackgroundColor"] == theme.RAISED and th["textColor"] == theme.TEXT,
      "config.toml base colours match ui/theme.py")
 c.ok(cfg["client"]["toolbarMode"] == "minimal", "Deploy button and main menu hidden")
-c.ok(cfg["theme"]["sidebar"]["backgroundColor"] == theme.BLACK, "sidebar is pure black (logo blends in)")
+c.ok(cfg["theme"]["sidebar"]["backgroundColor"] == theme.SIDEBAR, "sidebar colour matches ui/theme.py")
+c.ok("gradient" not in theme.CSS and "box-shadow: 0 " not in theme.CSS and "translateY" not in theme.CSS,
+     "flat look: no gradients, glows or hover jumps")
+c.ok(not (ROOT / "pages").exists() and (ROOT / "app_pages").is_dir(),
+     "page files in app_pages/ (no automatic page list flashes on start)")
 c.ok(th["chartCategoricalColors"] == theme.CATEGORICAL, "categorical chart colours in the fixed order")
 
-t = pio.templates["motorlytics"].layout
-c.ok(pio.templates.default == "motorlytics" and t.paper_bgcolor == "rgba(0,0,0,0)" and t.yaxis.gridcolor == "#26262C"
-     and t.hoverlabel.bordercolor == theme.ORANGE and t.barcornerradius == 6, "Plotly template registered and default")
+t = theme.template().layout
+c.ok(pio.templates.default == "motorlytics" and t.paper_bgcolor == "rgba(0,0,0,0)" and t.yaxis.gridcolor == theme.GRID
+     and t.hoverlabel.bordercolor == theme.BORDER and t.barcornerradius == 6, "Plotly template registered and default")
 fig = px.bar(x=[1, 2], y=[3, 4])
 c.ok(fig.layout.template.layout.barcornerradius == 6, "px charts pick up the template")
 c.ok(theme.STYLE_COLORS == {"eco": "#0E9384", "normal": "#C98500", "aggressive": "#E5484D"}
-     and (theme.MEASURED, theme.PREDICTED) == ("#0D9488", "#E8650A"), "style and measured / predicted colours")
+     and (theme.MEASURED, theme.PREDICTED) == (theme.INK, theme.ACCENT), "style and measured / predicted colours")
 
 spec = json.loads(route_deck([[42.28, -83.74], [42.29, -83.73]]).to_json())
-c.ok("dark" in spec["mapStyle"] and spec["layers"][0]["getColor"] == theme.MAP_ROUTE
-     and spec["layers"][1]["data"][0]["color"] == theme.MAP_START, "map: CARTO dark, orange route, green start")
+c.ok("positron" in spec["mapStyle"] and spec["layers"][0]["getColor"] == theme.MAP_ROUTE
+     and spec["layers"][1]["data"][0]["color"] == theme.MAP_START, "map: CARTO light, sky-blue route, green start")
 
 for sel in ['st-key-mlcard', 'stMetric', 'stBaseButton-primary', 'stBaseButton-secondary', 'stTextInputRootElement',
             'stTab', 'stExpander', 'stDataFrame', 'stFileUploaderDropzone', 'stSidebarNavLink', 'aria-current',
@@ -75,7 +79,7 @@ c.ok("ml-icon-upload" in theme.icon("upload") and theme.icon("missing") == ""
 c.ok(src.index("theme.setup()") < src.index(".run()"), "setup() runs before the page")
 for page in ["overview", "upload_trip", "quick_estimate", "trip_detail", "trip_history", "analytics", "my_car",
              "calibration", "about_model", "account"]:
-    at.switch_page(f"pages/{page}.py").run()
+    at.switch_page(f"app_pages/{page}.py").run()
     c.page(at, page)
     charts = [json.loads(e.proto.spec) for e in at.get("plotly_chart")]
     if any(e.proto.theme for e in at.get("plotly_chart")) or any(

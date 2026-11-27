@@ -68,7 +68,7 @@ def metrics(at_):
 
 # (2) measured vs predicted on Trip detail
 at.session_state["trip_id"] = a
-at.switch_page("pages/trip_detail.py").run()
+at.switch_page("app_pages/trip_detail.py").run()
 c.page(at, "trip detail (MAF, uncalibrated)")
 m = metrics(at)
 c.ok("Measured (L/100 km)" in m and re.fullmatch(r"[\d.]+", m["Measured (L/100 km)"]), "MAF trip: Measured tile",
@@ -80,19 +80,19 @@ c.ok(any("Not calibrated yet: this trip's MAF data will calibrate your car" in t
      "friendly calibration line")
 c.ok(any("Speed-only model (LWR)" in t for t in texts_seen["trip detail (MAF)"]), "model badge uses the friendly name")
 at.session_state["trip_id"] = b
-at.switch_page("pages/trip_detail.py").run()
+at.switch_page("app_pages/trip_detail.py").run()
 m = metrics(at)
 c.ok("Measured (L/100 km)" not in m and "Model error" not in m and any(k.startswith("Model predicted") for k in m),
      "speed-only trip: only the prediction")
 scan(at, "trip detail (speed only)")
 at.session_state["trip_id"] = c_trip
-at.switch_page("pages/trip_detail.py").run()
+at.switch_page("app_pages/trip_detail.py").run()
 m = metrics(at)
 c.ok("Model predicted after calibration (L/100 km)" in m, "calibrated trip: 'after calibration' label", ", ".join(m))
 scan(at, "trip detail (calibrated)")
 
 # (2) Trip history has measured and predicted columns
-at.switch_page("pages/trip_history.py").run()
+at.switch_page("app_pages/trip_history.py").run()
 c.page(at, "trip history")
 cols = list(at.dataframe[0].value.columns)
 c.ok("measured_l100" in cols and "pred_l100" in cols, "history shows measured and predicted columns")
@@ -101,13 +101,13 @@ scan(at, "trip history")
 # (3) Trip detail is hidden from the sidebar, still reachable; empty state without a selected trip
 c.ok('visibility="hidden"' in (ROOT / "app.py").read_text(encoding="utf-8"), "Trip detail hidden in navigation")
 at.session_state["trip_id"] = None
-at.switch_page("pages/trip_detail.py").run()
+at.switch_page("app_pages/trip_detail.py").run()
 c.page(at, "trip detail without a trip")
 c.ok(any("No trip selected" in i.value for i in at.info) and any(bt.label == "Go to Trip history" for bt in at.button),
      "empty state with a button to Trip history")
 
 # (4) nickname and colour exactly as typed
-at.switch_page("pages/my_car.py").run()
+at.switch_page("app_pages/my_car.py").run()
 c.page(at, "my car")
 md = [e.value for e in at.markdown] + [e.value for e in at.subheader]
 c.ok(any("My Black Beauty" in t for t in md) and not any("MY BLACK BEAUTY" in t for t in md), "nickname as typed")
@@ -120,7 +120,7 @@ c.ok(any("My Black Beauty" in str(getattr(e, "value", "")) for e in fresh.sideba
      "sidebar shows the nickname as typed")
 
 for page in ["overview", "calibration", "about_model", "upload_trip", "analytics"]:
-    at.switch_page(f"pages/{page}.py").run()
+    at.switch_page(f"app_pages/{page}.py").run()
     c.page(at, page)
     scan(at, page)
 
@@ -130,7 +130,7 @@ for chosen, expect in [(alto, "PakWheels factor"), (car, None)]:
     at.session_state["car_id"] = chosen["id"]
     if "quick_est" in at.session_state:
         del at.session_state["quick_est"]
-    at.switch_page("pages/quick_estimate.py").run()
+    at.switch_page("app_pages/quick_estimate.py").run()
     [n for n in at.number_input if n.label == "Distance (km)"][0].set_value(20.0)
     [bt for bt in at.button if bt.label == "Estimate"][0].click().run()
     line = [e.value for e in at.markdown if e.value.startswith("**Model:")]
@@ -150,7 +150,7 @@ upload(u2, car2, [SAMPLES / "gps_trip1.csv"])
 at2 = AppTest.from_file(str(ROOT / "app.py"), default_timeout=180)
 at2.session_state["user_id"] = u2["id"]
 at2.run()
-at2.switch_page("pages/analytics.py").run()
+at2.switch_page("app_pages/analytics.py").run()
 c.page(at2, "analytics with 1 trip")
 c.ok(any("Charts fill in as you upload more trips" in e.value for e in at2.caption), "few-trips note")
 specs = {json.loads(e.proto.spec)["layout"].get("meta"): json.loads(e.proto.spec) for e in at2.get("plotly_chart")}

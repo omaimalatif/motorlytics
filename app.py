@@ -11,9 +11,7 @@ import os
 
 import streamlit as st
 
-from core import cars, db
-from ui import components as ui
-from ui import session
+from core import db          # light: sqlite only. pandas, Plotly and the models load only after sign-in
 from ui import theme
 
 st.set_page_config(page_title="Motorlytics", page_icon=theme.ICON, layout="wide")
@@ -23,8 +21,11 @@ st.set_page_config(page_title="Motorlytics", page_icon=theme.ICON, layout="wide"
 def first_start() -> bool:
     """Once per server process: database + calibration store, and the demo account if there are no users (online the
     disk starts empty and resets on restart). MOTORLYTICS_NO_DEMO=1 turns the demo off (tests)."""
+    db.init_db()
     if os.environ.get("MOTORLYTICS_NO_DEMO") == "1":
-        db.init_db()
+        return False
+    calib = os.environ.get("MOTORLYTICS_CALIB") or db.ROOT / "models" / "calibration.json"
+    if db.user_count() and os.path.exists(calib):         # normal start: nothing to set up, nothing heavy to import
         return False
     from core import demo
     return demo.ensure_first_start()
@@ -36,13 +37,18 @@ theme.setup()
 st.logo(image=theme.LOGO, size="large")   # the wordmark everywhere (no separate icon)
 
 
-user = session.user()
+uid = st.session_state.get("user_id")
+user = db.get_user(uid) if uid else None
 if not user:
     # signed out: only the public pages, in a top bar (no app pages, no sidebar)
-    public = st.navigation([st.Page("pages/welcome.py", title="Welcome", icon=":material/home:", default=True),
-                            st.Page("pages/sign_in.py", title="Sign in", icon=":material/login:")], position="top")
+    public = st.navigation([st.Page("app_pages/welcome.py", title="Welcome", icon=":material/home:", default=True),
+                            st.Page("app_pages/sign_in.py", title="Sign in", icon=":material/login:")], position="top")
     public.run()
     st.stop()
+
+from core import cars  # noqa: E402  (signed in: the app pages need these)
+from ui import components as ui  # noqa: E402
+from ui import session  # noqa: E402
 
 P = session.PAGES
 pages = {
@@ -62,8 +68,8 @@ pages = {
         st.Page(P["model"], title="About the model", icon=":material/model_training:"),
         st.Page(P["account"], title="Account", icon=":material/person:"),
         # public pages stay reachable (hidden) so logout can switch to Welcome and Sign in can hand over
-        st.Page("pages/welcome.py", title="Welcome", icon=":material/home:", visibility="hidden"),
-        st.Page("pages/sign_in.py", title="Sign in", icon=":material/login:", visibility="hidden"),
+        st.Page("app_pages/welcome.py", title="Welcome", icon=":material/home:", visibility="hidden"),
+        st.Page("app_pages/sign_in.py", title="Sign in", icon=":material/login:", visibility="hidden"),
     ],
 }
 nav = st.navigation(pages)

@@ -18,7 +18,7 @@ at.run()
 
 
 def cards():
-    at.switch_page("pages/my_car.py").run()
+    at.switch_page("app_pages/my_car.py").run()
     c.page(at, f"my car with {cars.car_profile(car['id'])['long_trips']} long trip(s)")
     md = [e.value for e in at.markdown]
     caps = [e.value for e in at.caption]

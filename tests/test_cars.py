@@ -20,7 +20,7 @@ at.session_state["user_id"] = user["id"]
 at.run()
 
 # catalogue suggestions for a Suzuki Cultus 2018
-at.switch_page("pages/my_car.py").run()
+at.switch_page("app_pages/my_car.py").run()
 at.selectbox[0].set_value("Suzuki").run()
 at.selectbox[1].set_value("Cultus").run()
 at.selectbox[2].set_value(2018).run()
@@ -47,7 +47,7 @@ at.number_input(key=f"edit{cid}_odo").set_value(85000.0)
 [b for b in at.button if b.label == "Save changes"][0].click().run()
 c.ok(db.get_car(cid)["fuel_type"] == "CNG" and db.get_car(cid)["car_key"] == car["car_key"],
      "edit saved, calibration key unchanged")
-at.switch_page("pages/upload_trip.py").run()
+at.switch_page("app_pages/upload_trip.py").run()
 c.ok(any("CNG car" in w.value for w in at.warning), "CNG warning on upload page")
 db.update_car(cid, user["id"], fuel_type="petrol")
 
@@ -61,7 +61,7 @@ c.ok(prof["trips"] == 3 and abs(prof["km"] - t["dist_km"].sum()) < 1e-6, "profil
 c.ok(abs(prof["litres"] - lit) < 1e-6 and abs(prof["avg_l100"] - lit / t["dist_km"].sum() * 100) < 1e-6,
      "profile litres and average")
 c.ok(abs(prof["range_km"] - 35 / prof["avg_l100"] * 100) < 1e-6, "full-tank range")
-at.switch_page("pages/my_car.py").run()
+at.switch_page("app_pages/my_car.py").run()
 c.page(at, "my car with trips")
 
 # second car, delete needs confirmation
@@ -83,7 +83,7 @@ db.init_db()
 db.init_db()
 c.ok(db.get_car(cid) is not None, "init_db twice keeps data")
 # (21) cylinders are whole numbers; small engines keep 2 decimals
-at.switch_page("pages/my_car.py").run()
+at.switch_page("app_pages/my_car.py").run()
 at.toggle[0].set_value(False).run()
 def box(label):
     return [b for b in at.selectbox if b.label == label][-1]
@@ -116,7 +116,7 @@ c.ok(db.get_car(alto["id"])["cylinders"] == 4 and isinstance(db.get_car(alto["id
 db.update_car(alto["id"], user["id"], cylinders=3.0)
 c.ok(db.get_car(alto["id"])["cylinders"] == 3, "update stores an integer")
 at.session_state["car_id"] = alto["id"]
-at.switch_page("pages/my_car.py").run()
+at.switch_page("app_pages/my_car.py").run()
 c.page(at, "Alto profile")
 edit_cyl = [n for n in at.number_input if n.label == "Cylinders"]
 c.ok(edit_cyl and isinstance(edit_cyl[0].value, int), "edit form cylinders is an integer input", repr(edit_cyl[0].value if edit_cyl else None))
