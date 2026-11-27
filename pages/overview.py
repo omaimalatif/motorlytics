@@ -80,7 +80,7 @@ last = t.iloc[0]
 r1, r2, r3 = st.columns([2, 1, 1])
 with r1:
     with ui.card("Last trip", f"{session.fmt_dt(last['started'])} · {last['dist_km']:.1f} km · {last['l100']:.1f} L/100 km"):
-        ui.route_map((last["route"] or {}).get("path"), height=300, key="overview_map", width_px=440)
+        ui.route_map((last["route"] or {}).get("path"), height=300, key="overview_map", width_px=420)
 with r2:
     with ui.card("Recent trips"):
         for _, r in t.head(5).iterrows():

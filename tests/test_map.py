@@ -25,7 +25,7 @@ for f in idx[idx["uploads"] != "no"]["file"]:
     if not {"lat", "lon"} <= set(d.columns):
         continue
     path = d[["lat", "lon"]].dropna().values.tolist()
-    for page, w, h in [("trip detail", 560, 340), ("overview", 440, 300)]:
+    for page, w, h in [("trip detail", 480, 340), ("overview", 420, 300)]:
         spec = json.loads(route_deck(path, height=h, width_px=w).to_json())
         v = spec["initialViewState"]
         cx, cy = px(v["latitude"], v["longitude"], v["zoom"])
