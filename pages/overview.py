@@ -35,7 +35,7 @@ with c1:
             ui.car_photo(car, caption=False)
         with h_txt:
             st.subheader(cars.car_title(car))
-            st.caption(" · ".join(x for x in [session.fmt(car.get("disp_L"), "L", 1) if car.get("disp_L") else None,
+            st.caption(" · ".join(x for x in [cars.fmt_disp(car.get("disp_L")) if car.get("disp_L") else None,
                                               car.get("transmission"), car.get("fuel_type")] if x)
                        or "Add transmission and fuel type on the My car page.")
         month = t[(t["started"].dt.year == datetime.now().year) & (t["started"].dt.month == datetime.now().month)] \

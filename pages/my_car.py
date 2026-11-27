@@ -80,8 +80,8 @@ if my_cars:
         st.subheader(cars.car_title(car))
         if car.get("nickname"):
             st.caption(" ".join(str(car[k]) for k in ("make", "model", "year") if car.get(k)))
-        details = [("Engine", session.fmt(car.get("disp_L"), "L", 1)),
-                   ("Cylinders", session.fmt(car.get("cylinders"), digits=0)),
+        details = [("Engine", cars.fmt_disp(car.get("disp_L")) or "–"),
+                   ("Cylinders", str(car["cylinders"]) if car.get("cylinders") else "–"),
                    ("Transmission", car.get("transmission") or "–"), ("Fuel type", car.get("fuel_type") or "–"),
                    ("Body type", car.get("body_type") or "–"), ("Assembled", car.get("assembled") or "–"),
                    ("Colour", car.get("colour") or "–"), ("Fuel tank", session.fmt(car.get("tank_litres"), "L", 0)),
@@ -169,10 +169,10 @@ if my_cars:
             model = c2.text_input("Model", value=car.get("model") or "")
             year = c3.number_input("Year", min_value=1980, max_value=2030, step=1,
                                    value=int(car["year"]) if car.get("year") else None)
-            disp = c4.number_input("Engine (L)", min_value=0.5, max_value=8.0, step=0.1,
+            disp = c4.number_input("Engine (L)", min_value=0.5, max_value=8.0, step=0.1, format="%.2f",
                                    value=float(car["disp_L"]) if car.get("disp_L") else None)
-            cyl = c5.number_input("Cylinders", min_value=2.0, max_value=12.0, step=1.0,
-                                  value=float(car["cylinders"]) if car.get("cylinders") else None)
+            cyl = c5.number_input("Cylinders", min_value=2, max_value=12, step=1,
+                                  value=int(car["cylinders"]) if car.get("cylinders") else None)
             extra = detail_fields(f"edit{car['id']}", car)
             if st.form_submit_button("Save changes", type="primary"):
                 if not (make.strip() and model.strip() and disp):
@@ -180,7 +180,7 @@ if my_cars:
                 else:
                     db.update_car(car["id"], u["id"], make=make.strip(), model=model.strip(),
                                   year=int(year) if year else None, disp_L=float(disp),
-                                  cylinders=float(cyl) if cyl else cars.estimate_cylinders(disp), **extra)
+                                  cylinders=int(cyl) if cyl else cars.estimate_cylinders(disp), **extra)
                     st.success("Saved.")
                     st.rerun()
 
@@ -211,9 +211,9 @@ with ui.card():
             e1, e2 = st.columns(2)
             sfx = f"{make}_{model}_{year}"                      # new car -> widgets reset to the new suggestion
             disp = e1.selectbox("Engine size", opts, key=f"add_disp_{sfx}",
-                                format_func=lambda o: f"{o:.1f} L ({dict(info['options'])[o]} listings)")
-            cyl = e2.number_input("Cylinders (estimated)", value=float(cars.estimate_cylinders(disp)), step=1.0,
-                                  min_value=2.0, max_value=12.0, key=f"add_cyl_{sfx}")
+                                format_func=lambda o: f"{cars.fmt_disp(o)} ({dict(info['options'])[o]} listings)")
+            cyl = e2.number_input("Cylinders (estimated)", value=cars.estimate_cylinders(disp), step=1,
+                                  min_value=2, max_value=12, key=f"add_cyl_{sfx}")
             extra = detail_fields(f"add_{sfx}", info)
         else:
             extra = {}
@@ -223,14 +223,14 @@ with ui.card():
         model = c2.text_input("Model")
         year = c3.number_input("Year", min_value=1980, max_value=2030, value=None, step=1)
         e1, e2 = st.columns(2)
-        disp = e1.number_input("Engine size (L)", min_value=0.5, max_value=8.0, value=None, step=0.1)
-        cyl = e2.number_input("Cylinders", min_value=2.0, max_value=12.0,
-                              value=float(cars.estimate_cylinders(disp)) if disp else None, step=1.0,
+        disp = e1.number_input("Engine size (L)", min_value=0.5, max_value=8.0, value=None, step=0.1, format="%.2f")
+        cyl = e2.number_input("Cylinders", min_value=2, max_value=12,
+                              value=cars.estimate_cylinders(disp) if disp else None, step=1,
                               help="Estimated from engine size if you leave it.")
         extra = detail_fields("add_manual", {})
     if st.button("Add car", type="primary", disabled=not (make and model and disp), icon=":material/add:"):
         new = db.add_car(u["id"], make.strip(), model.strip(), int(year) if year else None, float(disp),
-                         float(cyl) if cyl else cars.estimate_cylinders(disp), **extra)
+                         int(cyl) if cyl else cars.estimate_cylinders(disp), **extra)
         st.session_state["car_id"] = new["id"]
         with st.spinner("Looking for an example photo of this model..."):
             car_photos.attach_example_photo(new)          # Wikipedia; falls back to a drawing if none / offline

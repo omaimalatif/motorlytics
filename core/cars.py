@@ -85,7 +85,7 @@ def engine_options(make: str, model: str, year=None) -> list:
     m = c[(c["make"] == make) & (c["model"] == model)]
     if year is not None and (m["year"] == year).any():
         m = m[m["year"] == year]
-    vc = m["disp_L"].round(1).value_counts()
+    vc = m["disp_L"].map(round_disp).value_counts()
     return [(float(k), int(v)) for k, v in vc.items()]
 
 
@@ -113,8 +113,25 @@ def lookup(make: str, model: str, year=None) -> dict:
             "listings": int(len(m))}
 
 
-def estimate_cylinders(disp_L) -> float:
-    return mf.estimate_cylinders(disp_L)
+def estimate_cylinders(disp_L) -> int | None:
+    c = mf.estimate_cylinders(disp_L)
+    return None if c != c else int(c)
+
+
+def round_disp(disp_L):
+    """Engine size in L: 2 decimals below 1 L (660 cc -> 0.66), 1 decimal above (1,298 cc -> 1.3)."""
+    if disp_L is None or disp_L != disp_L:
+        return disp_L
+    return round(float(disp_L), 2 if disp_L < 1 else 1)
+
+
+def fmt_disp(disp_L, unit: str = " L") -> str:
+    """'0.66 L', '0.8 L', '1.3 L'; '' if unknown."""
+    if disp_L is None or disp_L != disp_L:
+        return ""
+    d = round_disp(disp_L)
+    s = f"{d:.2f}".rstrip("0") if d < 1 else f"{d:.1f}"
+    return s + unit
 
 
 def car_title(car: dict) -> str:
@@ -175,4 +192,4 @@ def car_label(car: dict) -> str:
         return "no car"
     parts = [str(car.get(k)) for k in ("make", "model", "year") if car.get(k)]
     disp = car.get("disp_L")
-    return " ".join(parts) + (f" ({disp:.1f} L)" if disp is not None and not np.isnan(disp) else "")
+    return " ".join(parts) + (f" ({fmt_disp(disp)})" if disp is not None and not np.isnan(disp) else "")

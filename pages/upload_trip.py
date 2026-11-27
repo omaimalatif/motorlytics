@@ -81,7 +81,7 @@ with ui.card("No log at hand? Try a real trip", "Downloads one track recorded by
                            icon=":material/wifi_off:")
     fl = st.session_state.get("fetched_log")
     if fl:
-        st.markdown(f"**{fl['car']}**" + (f" ({fl['disp_L']:.1f} L)" if fl.get("disp_L") else "")
+        st.markdown(f"**{fl['car']}**" + (f" ({cars.fmt_disp(fl['disp_L'])})" if fl.get("disp_L") else "")
                     + f" · {fl['dist_km']:.1f} km · {fl['source']}")
         if fl.get("track_id"):
             st.caption(f"enviroCar track {fl['track_id']}" + (f", recorded {fl['begin'][:10]}" if fl.get("begin") else ""))

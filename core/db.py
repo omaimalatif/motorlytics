@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS cars (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     make TEXT, model TEXT, year INTEGER,
-    disp_L REAL, cylinders REAL,
+    disp_L REAL, cylinders INTEGER,
     car_key TEXT UNIQUE
 );
 CREATE TABLE IF NOT EXISTS trips (
@@ -75,6 +75,21 @@ def init_db(path=None) -> None:
         for col, typ in CAR_EXTRA_COLUMNS.items():
             if col not in have:
                 con.execute(f"ALTER TABLE cars ADD COLUMN {col} {typ}")
+        # cylinders are whole numbers (older rows were stored as 3.0)
+        con.execute("UPDATE cars SET cylinders = CAST(ROUND(cylinders) AS INTEGER) "
+                    "WHERE cylinders IS NOT NULL AND typeof(cylinders) != 'integer'")
+
+
+def _int_cyl(v):
+    return None if v is None or v != v else int(round(float(v)))
+
+
+def _car(r) -> dict:
+    """Car row as a dict with cylinders as an int (a REAL column in older databases)."""
+    d = dict(r)
+    if "cylinders" in d:
+        d["cylinders"] = _int_cyl(d["cylinders"])
+    return d
 
 
 def _rows(cur) -> list:
@@ -118,7 +133,7 @@ def update_user(user_id, **fields) -> None:
 def add_car(user_id, make, model, year, disp_L, cylinders, **extra) -> dict:
     """extra: any of CAR_EXTRA_COLUMNS (nickname, colour, transmission, fuel_type, body_type, assembled,
     tank_litres, odometer_km, registration)."""
-    fields = {"make": make, "model": model, "year": year, "disp_L": disp_L, "cylinders": cylinders,
+    fields = {"make": make, "model": model, "year": year, "disp_L": disp_L, "cylinders": _int_cyl(cylinders),
               **{k: v for k, v in extra.items() if k in CAR_EXTRA_COLUMNS}}
     with connect() as con:
         cur = con.execute(f"INSERT INTO cars(user_id,{','.join(fields)}) VALUES (?{',?' * len(fields)})",
@@ -132,18 +147,20 @@ def add_car(user_id, make, model, year, disp_L, cylinders, **extra) -> dict:
 def get_car(car_id) -> dict | None:
     with connect() as con:
         r = con.execute("SELECT * FROM cars WHERE id=?", (car_id,)).fetchone()
-    return dict(r) if r else None
+    return _car(r) if r else None
 
 
 def get_cars(user_id, include_demo: bool = True) -> list:
     q = "SELECT * FROM cars WHERE user_id=?" + ("" if include_demo else " AND COALESCE(is_demo, 0) = 0")
     with connect() as con:
-        return _rows(con.execute(q + " ORDER BY id", (user_id,)))
+        return [_car(r) for r in con.execute(q + " ORDER BY id", (user_id,)).fetchall()]
 
 
 def update_car(car_id, user_id, **fields) -> dict | None:
     """Change any of CAR_FIELDS for the user's own car; car_key never changes (calibration stays)."""
     upd = {k: v for k, v in fields.items() if k in CAR_FIELDS}
+    if "cylinders" in upd:
+        upd["cylinders"] = _int_cyl(upd["cylinders"])
     if upd:
         with connect() as con:
             con.execute(f"UPDATE cars SET {', '.join(f'{k}=?' for k in upd)} WHERE id=? AND user_id=?",

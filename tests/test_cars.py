@@ -79,4 +79,42 @@ c.ok(len(db.get_cars(user["id"])) == 1, "car deleted after confirming")
 db.init_db()
 db.init_db()
 c.ok(db.get_car(cid) is not None, "init_db twice keeps data")
+# (21) cylinders are whole numbers; small engines keep 2 decimals
+at.switch_page("pages/my_car.py").run()
+at.toggle[0].set_value(False).run()
+def box(label):
+    return [b for b in at.selectbox if b.label == label][-1]
+
+
+box("Make").set_value("Suzuki").run()
+box("Model").set_value("Alto").run()
+box("Year").set_value(2019).run()
+sfx = "Suzuki_Alto_2019"
+d = at.selectbox(key=f"add_disp_{sfx}")
+c.ok(d.value == 0.66 and d.format_func(0.66).startswith("0.66 L"), "Alto engine offered as 0.66 L, not 0.7",
+     d.format_func(d.value))
+cyl_in = at.number_input(key=f"add_cyl_{sfx}")
+c.ok(cyl_in.value == 3 and isinstance(cyl_in.value, int) and cyl_in.step == 1, "cylinders input is a whole number (3)",
+     repr(cyl_in.value))
+c.ok(cyl_in.proto.format in ("%d", ""), "cylinders shown as '3', not '3.00'", cyl_in.proto.format)
+at.button[[b.label for b in at.button].index("Add car")].click().run()
+alto = [x for x in db.get_cars(user["id"]) if x["model"] == "Alto"][0]
+c.ok(alto["disp_L"] == 0.66 and alto["cylinders"] == 3 and isinstance(alto["cylinders"], int),
+     "stored as 0.66 L and integer 3 cylinders", f"{alto['disp_L']}, {alto['cylinders']!r}")
+c.ok(cars.car_label(alto).endswith("(0.66 L)"), "car label shows 0.66 L", cars.car_label(alto))
+# an older row stored as 4.0 is converted by init_db and reads back as int
+with db.connect() as con:
+    con.execute("UPDATE cars SET cylinders=4.0 WHERE id=?", (alto["id"],))
+db.init_db()
+with db.connect() as con:
+    raw = con.execute("SELECT cylinders FROM cars WHERE id=?", (alto["id"],)).fetchone()[0]
+c.ok(db.get_car(alto["id"])["cylinders"] == 4 and isinstance(db.get_car(alto["id"])["cylinders"], int),
+     "existing float row reads back as an integer", f"raw {raw!r}")
+db.update_car(alto["id"], user["id"], cylinders=3.0)
+c.ok(db.get_car(alto["id"])["cylinders"] == 3, "update stores an integer")
+at.session_state["car_id"] = alto["id"]
+at.switch_page("pages/my_car.py").run()
+c.page(at, "Alto profile")
+edit_cyl = [n for n in at.number_input if n.label == "Cylinders"]
+c.ok(edit_cyl and isinstance(edit_cyl[0].value, int), "edit form cylinders is an integer input", repr(edit_cyl[0].value if edit_cyl else None))
 c.done()
