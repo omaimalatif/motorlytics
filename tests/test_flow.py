@@ -58,8 +58,9 @@ for page in ["trip_detail", "trip_history", "overview", "analytics", "calibratio
     c.page(at, page)
     if page == "trip_detail":
         metrics = dict((m.label, m.value) for m in at.metric)
-        c.ok(metrics.get("Measured", "").endswith("L/100 km") and "Model predicted" in metrics,
-             "trip detail shows measured and predicted fuel", f"{metrics.get('Measured')} / {metrics.get('Model predicted')}")
+        c.ok("Measured (L/100 km)" in metrics and "Model predicted (L/100 km)" in metrics,
+             "trip detail shows measured and predicted fuel",
+             f"{metrics.get('Measured (L/100 km)')} / {metrics.get('Model predicted (L/100 km)')}")
 
 # fill-up through the form
 at.switch_page("pages/calibration.py").run()

@@ -61,7 +61,7 @@ c.page(at, "quick estimate form")
 [b for b in at.button if b.label == "Estimate"][0].click().run()
 c.page(at, "estimate shown")
 labels = [m.label for m in at.metric]
-c.ok("Fuel economy" in labels and "Cost" in labels, "result tiles shown")
+c.ok("Fuel economy (km/L)" in labels and "Cost (PKR)" in labels, "result tiles shown")
 c.ok(len(db.get_trips(user["id"])) == n0, "nothing saved before clicking Save")
 [b for b in at.button if b.label == "Save as trip"][0].click().run()
 trips = db.get_trips(user["id"])

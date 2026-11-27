@@ -42,7 +42,7 @@ with c1:
             if len(t) else t
         s1, s2, s3 = st.columns(3)
         with s1:
-            ui.metric_tile("Average L/100 km", session.fmt(t["l100"].mean() if len(t) else None, digits=1),
+            ui.metric_tile("Average (L/100 km)", session.fmt(t["l100"].mean() if len(t) else None, digits=1),
                            help="Measured where the log has MAF, otherwise the model's estimate.")
         with s2:
             cost = month["cost_pkr"].sum(min_count=1) if len(month) else None

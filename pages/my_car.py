@@ -104,18 +104,18 @@ if my_cars:
     with s[0]:
         ui.metric_tile("Trips", f"{prof['trips']}")
     with s[1]:
-        ui.metric_tile("Distance", session.fmt(prof["km"], "km", 0))
+        ui.metric_tile("Distance (km)", session.fmt(prof["km"], digits=0))
     with s[2]:
-        ui.metric_tile("Fuel", session.fmt(prof["litres"], "L", 1))
+        ui.metric_tile("Fuel (L)", session.fmt(prof["litres"], digits=1))
     with s[3]:
-        ui.metric_tile("Spent", session.fmt(prof["pkr"], "PKR", 0), help="Trips with a petrol price set.")
+        ui.metric_tile("Spent (PKR)", session.fmt(prof["pkr"], digits=0), help="Trips with a petrol price set.")
     with s[4]:
-        ui.metric_tile("Average", session.fmt(prof["avg_l100"], "L/100 km", 1),
+        ui.metric_tile("Average (L/100 km)", session.fmt(prof["avg_l100"], digits=1),
                        help=f"Distance-weighted, measured where available. Mean measured "
                             f"{session.fmt(prof['avg_measured_l100'], digits=1)}, mean predicted "
                             f"{session.fmt(prof['avg_predicted_l100'], digits=1)} L/100 km.")
     with s[5]:
-        ui.metric_tile("Full-tank range", session.fmt(prof["range_km"], "km", 0),
+        ui.metric_tile("Full-tank range (km)", session.fmt(prof["range_km"], digits=0),
                        help="Tank size ÷ your average L/100 km × 100." if car.get("tank_litres")
                        else "Add the tank size below to see the range.")
 
@@ -124,11 +124,11 @@ if my_cars:
     with ui.card("Pakistani reference (PakWheels)"):
         if ref:
             r1, r2, r3 = st.columns(3)
-            r1.metric("PakWheels city", f"{ref['city_kmpl']:.0f} km/L", help=f"{100 / ref['city_kmpl']:.1f} L/100 km")
-            r2.metric("PakWheels highway", f"{ref['highway_kmpl']:.0f} km/L",
+            r1.metric("PakWheels city (km/L)", f"{ref['city_kmpl']:.0f}", help=f"{100 / ref['city_kmpl']:.1f} L/100 km")
+            r2.metric("PakWheels highway (km/L)", f"{ref['highway_kmpl']:.0f}",
                       help=f"{100 / ref['highway_kmpl']:.1f} L/100 km")
             mine = 100 / prof["avg_l100"] if prof.get("avg_l100") else None
-            r3.metric("Your average", f"{mine:.1f} km/L" if mine else "–", help="Distance-weighted over your trips.")
+            r3.metric("Your average (km/L)", f"{mine:.1f}" if mine else "–", help="Distance-weighted over your trips.")
             st.caption(f"{ref['make']} {ref['model']} around {ref['engine_cc']} cc, median of: "
                        f"{', '.join(ref['variants'][:6])}{' ...' if len(ref['variants']) > 6 else ''}. "
                        f"[PakWheels fuel average]({ref['source_url']}), retrieved {ref['retrieved']}. PakWheels does "

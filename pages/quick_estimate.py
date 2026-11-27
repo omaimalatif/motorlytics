@@ -54,13 +54,13 @@ if est:
     st.subheader(f"{est['dist_km']:.0f} km, {est['road_type']}, {est['style']} driving · {cars.car_title(chosen)}")
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        ui.metric_tile("Fuel economy", f"{est['kmpl']:.1f} km/L", help=f"{est['l100']:.2f} L/100 km")
+        ui.metric_tile("Fuel economy (km/L)", f"{est['kmpl']:.1f}", help=f"{est['l100']:.2f} L/100 km")
     with k2:
-        ui.metric_tile("Fuel", f"{est['litres']:.2f} L")
+        ui.metric_tile("Fuel (L)", f"{est['litres']:.2f}")
     with k3:
-        ui.metric_tile("Cost", session.fmt(est["cost_pkr"], "PKR", 0) if est["cost_pkr"] is not None else "set price")
+        ui.metric_tile("Cost (PKR)", session.fmt(est["cost_pkr"], digits=0) if est["cost_pkr"] is not None else "set price")
     with k4:
-        ui.metric_tile("Time (typical)", f"{est['dur_min']:.0f} min", help=f"At {est['avg_speed']:.0f} km/h average, "
+        ui.metric_tile("Typical time (min)", f"{est['dur_min']:.0f}", help=f"At {est['avg_speed']:.0f} km/h average, "
                        "the typical speed for this road type and style.")
     ui.badge({"calibration": "calibrated", "pakwheels": "PakWheels-adjusted", "none": "uncorrected"}[est["factor_source"]],
              {"calibration": "good", "pakwheels": "info", "none": "warn"}[est["factor_source"]])
@@ -91,7 +91,7 @@ if est:
         with ui.card("Your own figure"):
             cl = est.get("claimed")
             if cl:
-                st.metric("You said", f"{cl['kmpl']:.1f} km/L", delta=f"estimate {cl['difference_pct']:+.0f}%",
+                st.metric("You said (km/L)", f"{cl['kmpl']:.1f}", delta=f"estimate {cl['difference_pct']:+.0f}%",
                           delta_color="off")
                 st.caption(f"At your figure: {cl['litres']:.2f} L" + (f", PKR {cl['cost_pkr']:.0f}" if cl["cost_pkr"]
                                                                       else "") + ". A fill-up on the Calibration page "

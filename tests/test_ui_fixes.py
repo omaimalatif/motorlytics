@@ -50,7 +50,12 @@ def page_texts(at_):
     return [str(x) for x in out]
 
 
+UNIT_IN_VALUE = re.compile(r"L/100|km/L|km|PKR|min|km/h|/ 100")
+
+
 def scan(at_, page):
+    vals = [str(mt.value) for mt in at_.metric if UNIT_IN_VALUE.search(str(mt.value))]
+    c.ok(not vals, f"tiles on {page}: unit in the label, number only in the value", ", ".join(vals))
     texts = page_texts(at_)
     texts_seen[page] = texts
     bad = sorted({p for p in INTERNAL for t in texts if re.search(p, t)})
@@ -66,9 +71,10 @@ at.session_state["trip_id"] = a
 at.switch_page("pages/trip_detail.py").run()
 c.page(at, "trip detail (MAF, uncalibrated)")
 m = metrics(at)
-c.ok("Measured" in m and m["Measured"].endswith("L/100 km"), "MAF trip: Measured tile", m.get("Measured"))
-c.ok("Model predicted" in m and "Model error" in m and m["Model error"].endswith("%"),
-     "MAF trip: Model predicted and error % side by side", f"{m.get('Model predicted')} / {m.get('Model error')}")
+c.ok("Measured (L/100 km)" in m and re.fullmatch(r"[\d.]+", m["Measured (L/100 km)"]), "MAF trip: Measured tile",
+     m.get("Measured (L/100 km)"))
+c.ok("Model predicted (L/100 km)" in m and "Model error" in m and m["Model error"].endswith("%"),
+     "MAF trip: Model predicted and error % side by side", f"{m.get('Model predicted (L/100 km)')} / {m.get('Model error')}")
 scan(at, "trip detail (MAF)")
 c.ok(any("Not calibrated yet: this trip's MAF data will calibrate your car" in t for t in texts_seen["trip detail (MAF)"]),
      "friendly calibration line")
@@ -76,13 +82,13 @@ c.ok(any("Speed-only model (LWR)" in t for t in texts_seen["trip detail (MAF)"])
 at.session_state["trip_id"] = b
 at.switch_page("pages/trip_detail.py").run()
 m = metrics(at)
-c.ok("Measured" not in m and "Model error" not in m and any(k.startswith("Model predicted") for k in m),
+c.ok("Measured (L/100 km)" not in m and "Model error" not in m and any(k.startswith("Model predicted") for k in m),
      "speed-only trip: only the prediction")
 scan(at, "trip detail (speed only)")
 at.session_state["trip_id"] = c_trip
 at.switch_page("pages/trip_detail.py").run()
 m = metrics(at)
-c.ok("Model predicted (after calibration)" in m, "calibrated trip: 'after calibration' label", ", ".join(m))
+c.ok("Model predicted after calibration (L/100 km)" in m, "calibrated trip: 'after calibration' label", ", ".join(m))
 scan(at, "trip detail (calibrated)")
 
 # (2) Trip history has measured and predicted columns

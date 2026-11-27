@@ -22,11 +22,11 @@ k1, k2, k3, k4 = st.columns(4)
 with k1:
     ui.metric_tile("Trips", f"{len(t)}")
 with k2:
-    ui.metric_tile("Distance", session.fmt(t["dist_km"].sum(), "km", 0))
+    ui.metric_tile("Distance (km)", session.fmt(t["dist_km"].sum(), digits=0))
 with k3:
-    ui.metric_tile("Fuel", session.fmt(t["litres"].sum(), "L", 1))
+    ui.metric_tile("Fuel (L)", session.fmt(t["litres"].sum(), digits=1))
 with k4:
-    ui.metric_tile("Average L/100 km", session.fmt(t["litres"].sum() / t["dist_km"].sum() * 100, digits=1),
+    ui.metric_tile("Average (L/100 km)", session.fmt(t["litres"].sum() / t["dist_km"].sum() * 100, digits=1),
                    help="Distance-weighted.")
 
 

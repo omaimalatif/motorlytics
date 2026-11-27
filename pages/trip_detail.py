@@ -48,47 +48,47 @@ k = info.get("k") or 1.0
 pred = trip["pred_l100"]
 raw = pred / k if k else pred
 if trip["calibrated"]:
-    pred_label, pred_help = "Model predicted (after calibration)", (
+    pred_label, pred_help = "Model predicted after calibration", (
         f"The model alone said {raw:.1f} L/100 km; your car's correction factor k = {k:.2f} gives {pred:.1f}.")
 elif info.get("reference_adjusted"):
-    pred_label, pred_help = "Model predicted (PakWheels-adjusted)", (
+    pred_label, pred_help = "Model predicted, PakWheels-adjusted", (
         f"The model alone said {raw:.1f} L/100 km; adjusted to the PakWheels average for this model: {pred:.1f}.")
 else:
     pred_label, pred_help = "Model predicted", "The model's estimate from how the trip was driven."
-cost_text = session.fmt(trip["cost_pkr"], "PKR", 0) if trip["cost_pkr"] is not None else "set price"
+cost_text = session.fmt(trip["cost_pkr"], digits=0) if trip["cost_pkr"] is not None else "set price"
 cost_help = "From the measured fuel and your petrol price (Account page)." if measured else     "From the predicted fuel and your petrol price (Account page)."
 if measured:
     err = (pred - trip["measured_l100"]) / trip["measured_l100"] * 100
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        ui.metric_tile("Measured", session.fmt(trip["measured_l100"], "L/100 km"),
+        ui.metric_tile("Measured (L/100 km)", session.fmt(trip["measured_l100"]),
                        help="Real fuel use, worked out from the MAF (air flow) sensor in your log.")
     with k2:
-        ui.metric_tile(pred_label, session.fmt(pred, "L/100 km"), help=pred_help)
+        ui.metric_tile(f"{pred_label} (L/100 km)", session.fmt(pred), help=pred_help)
     with k3:
         ui.metric_tile("Model error", f"{err:+.0f}%", help="(predicted - measured) / measured. Positive: the "
                        "model expected more fuel than the car used.")
     with k4:
-        ui.metric_tile("Cost", cost_text, help=cost_help)
+        ui.metric_tile("Cost (PKR)", cost_text, help=cost_help)
 else:
     k1, k2, k3, k4 = st.columns(4)
     with k1:
-        ui.metric_tile(pred_label, session.fmt(pred, "L/100 km"), help=pred_help + " This log has no MAF, so "
+        ui.metric_tile(f"{pred_label} (L/100 km)", session.fmt(pred), help=pred_help + " This log has no MAF, so "
                        "the real fuel use cannot be measured.")
     with k2:
-        ui.metric_tile("Distance", session.fmt(trip["dist_km"], "km", 2))
+        ui.metric_tile("Distance (km)", session.fmt(trip["dist_km"], digits=2))
     with k3:
-        ui.metric_tile("Duration", session.fmt(trip["dur_min"], "min", 1))
+        ui.metric_tile("Duration (min)", session.fmt(trip["dur_min"], digits=1))
     with k4:
-        ui.metric_tile("Cost", cost_text, help=cost_help)
+        ui.metric_tile("Cost (PKR)", cost_text, help=cost_help)
 if measured:
     d1, d2, d3 = st.columns(3)
     with d1:
-        ui.metric_tile("Distance", session.fmt(trip["dist_km"], "km", 2))
+        ui.metric_tile("Distance (km)", session.fmt(trip["dist_km"], digits=2))
     with d2:
-        ui.metric_tile("Duration", session.fmt(trip["dur_min"], "min", 1))
+        ui.metric_tile("Duration (min)", session.fmt(trip["dur_min"], digits=1))
     with d3:
-        ui.metric_tile("Average speed", session.fmt(trip["avg_speed"], "km/h", 0))
+        ui.metric_tile("Average speed (km/h)", session.fmt(trip["avg_speed"], digits=0))
 
 m1, m2 = st.columns([2, 1])
 with m1:
@@ -97,7 +97,7 @@ with m1:
 with m2:
     with ui.card("Eco-score"):
         score = trip["eco_score"]
-        st.metric("Eco-score", session.fmt(score, digits=0) + " / 100", help="0-100 between the aggressive and "
+        st.metric("Eco-score (out of 100)", session.fmt(score, digits=0), help="0-100 between the aggressive and "
                   "eco driving-style centres (k-Means).")
         st.progress(int(score or 0) / 100)
         style_name = trip["style"] or scoring.score_label(score)       # same name as in the header
