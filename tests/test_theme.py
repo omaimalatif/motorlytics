@@ -60,6 +60,13 @@ at.run()
 c.ok(any("st-key-mlcard" in e.proto.body for e in at.get("html")), "theme CSS injected (app.py runs theme.setup() "
      "before every page)")
 src = (ROOT / "app.py").read_text(encoding="utf-8")
+c.ok("page_icon=theme.LOGO" in src and "st.logo(image=theme.LOGO" in src and theme.LOGO == "assets/brand/motorlytics_logo.png",
+     "logo file used for the sidebar and the browser tab")
+svgs = list((ROOT / "assets" / "icons").glob("*.svg")) + list((ROOT / "assets" / "images").glob("*.svg"))
+c.ok(len(svgs) >= 10 and all(p.read_text(encoding="utf-8").lstrip().startswith("<svg") and "<image" not in
+                              p.read_text(encoding="utf-8") for p in svgs), "icons and illustration are plain SVG drawings",
+     f"{len(svgs)} files")
+c.ok(theme.icon("upload").startswith("<svg width=") and theme.icon("missing") == "", "icon() inlines an SVG")
 c.ok(src.index("theme.setup()") < src.index(".run()"), "setup() runs before the page")
 for page in ["overview", "upload_trip", "quick_estimate", "trip_detail", "trip_history", "analytics", "my_car",
              "calibration", "about_model", "account"]:

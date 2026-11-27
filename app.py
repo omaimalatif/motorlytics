@@ -13,9 +13,10 @@ from ui import components as ui
 from ui import session
 from ui import theme
 
-st.set_page_config(page_title="Motorlytics", page_icon=":material/local_gas_station:", layout="wide")
+st.set_page_config(page_title="Motorlytics", page_icon=theme.LOGO, layout="wide")
 db.init_db()
 theme.setup()
+st.logo(image=theme.LOGO, size="large", icon_image=theme.LOGO)   # original file, on the black sidebar
 
 
 def login_page():
