@@ -8,8 +8,11 @@ setup("photos")
 from PIL import Image  # noqa: E402
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
-from core import auth, car_photos, db  # noqa: E402
+from core import auth, car_photos, cars, db  # noqa: E402
 
+if not cars.SRC.exists():                      # e.g. a fresh clone / the online app: the catalogue is not in git
+    print(f"  NOTE  skipped: the car catalogue {cars.SRC.name} is not in this checkout (Add a car is manual-only)")
+    raise SystemExit(0)
 c = Checks("test_photos")
 db.init_db()
 user, _ = auth.register("Photo Tester", "photos@example.com", "secret123", None)

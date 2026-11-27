@@ -8,6 +8,9 @@ from streamlit.testing.v1 import AppTest  # noqa: E402
 
 from core import auth, cars, db  # noqa: E402
 
+if not cars.SRC.exists():                      # e.g. a fresh clone / the online app: the catalogue is not in git
+    print(f"  NOTE  skipped: the car catalogue {cars.SRC.name} is not in this checkout (Add a car is manual-only)")
+    raise SystemExit(0)
 c = Checks("test_cars")
 db.init_db()
 user, _ = auth.register("Test Driver", "cars@example.com", "secret123", "Lahore")
