@@ -143,7 +143,7 @@ def car_profile(car_id) -> dict:
         return {}
     t = pd.DataFrame(db.get_trips(car["user_id"], car_id))
     out = {"car": car, "trips": 0, "km": 0.0, "litres": 0.0, "pkr": None, "avg_measured_l100": None,
-           "avg_predicted_l100": None, "avg_l100": None, "best_trip": None, "worst_trip": None,
+           "avg_predicted_l100": None, "avg_l100": None, "best_trip": None, "worst_trip": None, "long_trips": 0,
            "calibration_k": None, "calibration_trips": 0, "calibration_tier": None, "range_km": None}
     status = app_core.calibration_status(car["car_key"])
     if status:
@@ -160,6 +160,7 @@ def car_profile(car_id) -> dict:
                avg_predicted_l100=float(t["pred_l100"].mean()) if t["pred_l100"].notna().any() else None,
                avg_l100=litres / km * 100 if km > 0 else None)        # distance-weighted
     long = t[t["dist_km"] >= 3]
+    out["long_trips"] = int(len(long))                     # best / worst only make sense with 2 or more
     if len(long):
         keep = ["id", "started_at", "dist_km", "l100", "eco_score"]
         out["best_trip"] = long.loc[long["l100"].idxmin(), keep].to_dict()

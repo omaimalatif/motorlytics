@@ -140,20 +140,26 @@ if my_cars:
             st.caption(f"{car.get('make')} {car.get('model')} is not in the PakWheels reference table yet, so "
                        "predictions are not adjusted. Calibrate with a MAF trip or a fill-up for your own car.")
 
-    b1, b2 = st.columns(2)
-    for col, key, title in [(b1, "best_trip", "Best trip"), (b2, "worst_trip", "Least efficient trip")]:
-        with col:
-            with ui.card(title, "Trips of at least 3 km"):
-                tr = prof.get(key)
-                if tr:
-                    when = pd.to_datetime(tr["started_at"], errors="coerce", format="mixed")
-                    st.markdown(f"**{tr['l100']:.1f} L/100 km** · {tr['dist_km']:.1f} km · eco-score "
-                                f"{tr['eco_score']:.0f}")
-                    st.caption(f"{when:%d %b %Y, %H:%M}" if pd.notna(when) else "")
-                    if st.button("Open trip", key=f"open_{key}"):
-                        session.open_trip(tr["id"])
-                else:
-                    st.caption("No trips of 3 km or more yet.")
+    def trip_summary(tr, key):
+        when = pd.to_datetime(tr["started_at"], errors="coerce", format="mixed")
+        st.markdown(f"**{tr['l100']:.1f} L/100 km** · {tr['dist_km']:.1f} km · eco-score {tr['eco_score']:.0f}")
+        st.caption(session.fmt_dt(when))
+        if st.button("Open trip", key=f"open_{key}"):
+            session.open_trip(tr["id"])
+
+    n_long = prof.get("long_trips", 0)
+    if n_long >= 2:                                        # best and least efficient are different trips
+        b1, b2 = st.columns(2)
+        for col, key, title in [(b1, "best_trip", "Best trip"), (b2, "worst_trip", "Least efficient trip")]:
+            with col:
+                with ui.card(title, "Trips of at least 3 km"):
+                    trip_summary(prof[key], key)
+    elif n_long == 1:                                      # one trip: do not show it as both best and worst
+        with ui.card("Your trip", "Your only trip of at least 3 km so far"):
+            trip_summary(prof["best_trip"], "only_trip")
+            st.caption("Upload more trips to compare your best and least efficient.")
+    else:
+        st.caption("No trips of 3 km or more yet. Upload more trips to compare your best and least efficient.")
 
     # ---------------- edit ----------------
     with st.expander("Edit car details", icon=":material/edit:"):
