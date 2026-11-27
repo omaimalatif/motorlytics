@@ -30,12 +30,12 @@ RAISED = "#F5F9FC"         # tiles, inputs, table headers
 BORDER = "#E3EAF0"
 TEXT = INK
 MUTED = "#3E4C5E"          # secondary text: dark enough to read easily (about 9:1 on white)
-GRID = "#E6ECF2"
+GRID = "#D5DEE8"            # chart gridlines
 SKY = "#D4ECF8"            # sky blue bands: Welcome hero, Sign-in panel
 SKY_SOFT = "#EEF7FC"       # soft sky: hover, highlighted cards, upload area
 ACCENT = "#1F8FD6"         # sky blue accent: charts, map route, the "lytics" of the name
 ACCENT_TEXT = "#14689E"    # sky blue for text on white (readable contrast)
-ORANGE = "#F97316"         # the warm pop colour: active nav item, key numbers, highlights, sparklines
+ORANGE = "#EA580C"         # the warm pop colour: active nav item, key numbers, highlights, sparklines
 ORANGE_TEXT = "#C2410C"    # orange for small text on white (readable contrast)
 ORANGE_SOFT = "#FDBA74"    # orange numbers on the dark tiles
 SIDEBAR = INK              # dark sidebar for contrast
@@ -46,10 +46,13 @@ GRADIENT = INK             # kept name for older callers: a flat colour now (no 
 
 SUCCESS, WARNING, ERROR = "#15803D", "#B45309", "#D92D20"    # always with an icon and text
 
-# charts (colour-blind checked on white); style names are always shown as text as well
-STYLE_COLORS = {"eco": "#0E9384", "normal": "#C98500", "aggressive": "#E5484D"}
-CATEGORICAL = [ACCENT, INK, ORANGE]                           # fixed order
-MEASURED, PREDICTED, SINGLE = INK, ACCENT, ACCENT
+# charts: dark, saturated colours only (readable on white); style names are always shown as text as well
+CHART_BLUE = "#0369A1"     # deep sky blue: single-series charts, predictions
+CHART_ORANGE = "#C2410C"   # deep orange: highlights (today, 7-trip average, speed line)
+CHART_TEXT = "#1E293B"     # axis tick labels
+STYLE_COLORS = {"eco": "#0F766E", "normal": "#A16207", "aggressive": "#B91C1C"}
+CATEGORICAL = [CHART_BLUE, INK, CHART_ORANGE]                 # fixed order
+MEASURED, PREDICTED, SINGLE = INK, CHART_BLUE, CHART_BLUE
 
 # badge kinds -> Streamlit palette names (their colours are set in config.toml) and a default icon
 BADGE = {"good": ("green", ":material/check_circle:"), "info": ("blue", ":material/info:"),
@@ -66,9 +69,9 @@ R_CARD, R_INPUT, R_PILL = 12, 8, 999
 
 # ---------------- maps (pydeck, RGB) ----------------
 MAP_STYLE = "light"                                 # CARTO positron (pdk.map_styles.CARTO_LIGHT)
-MAP_ROUTE = [31, 143, 214]                          # ACCENT sky blue
-MAP_START = [21, 128, 61]                           # SUCCESS green
-MAP_END = [217, 45, 32]                             # RED
+MAP_ROUTE = [3, 105, 161]                           # CHART_BLUE (dark)
+MAP_START = [21, 128, 61]                           # dark green
+MAP_END = [185, 28, 28]                             # dark red
 
 
 def _hex_rgba(hex_color: str, alpha: float) -> str:
@@ -83,22 +86,22 @@ def template():
     import plotly.io as pio
     if "motorlytics" in pio.templates:
         return pio.templates["motorlytics"]
-    axis = dict(gridcolor=GRID, linecolor=BORDER, zerolinecolor=BORDER, tickcolor="rgba(0,0,0,0)", showline=False,
-                zeroline=False, tickfont=dict(color=MUTED, size=11), title=dict(font=dict(color=MUTED, size=12)),
-                automargin=True)
+    axis = dict(gridcolor=GRID, linecolor="#94A3B8", zerolinecolor="#94A3B8", tickcolor="rgba(0,0,0,0)",
+                showline=False, zeroline=False, tickfont=dict(color=CHART_TEXT, size=12),
+                title=dict(font=dict(color=INK, size=13)), automargin=True)
     t = go.layout.Template()
     t.layout = go.Layout(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", colorway=CATEGORICAL,
-        font=dict(family=FONT_BODY.replace("'", ""), color=MUTED, size=12),
+        font=dict(family=FONT_BODY.replace("'", ""), color=CHART_TEXT, size=12),
         xaxis={**axis, "showgrid": False}, yaxis={**axis, "showgrid": True},
         hoverlabel=dict(bgcolor="#FFFFFF", bordercolor=BORDER, font=dict(color=TEXT, family="Inter, sans-serif", size=12)),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, bgcolor="rgba(0,0,0,0)",
                     font=dict(color=TEXT, size=12), title=dict(text="")),
         barcornerradius=6, bargap=0.28, bargroupgap=0.08, margin=dict(l=8, r=8, t=28, b=8),
-        hovermode="closest", dragmode=False, uniformtext=dict(minsize=10, mode="hide"),
+        hovermode="closest", dragmode=False,
     )
-    t.data.scatter = [go.Scatter(line=dict(width=2.5), marker=dict(size=8, line=dict(width=0)))]
-    t.data.bar = [go.Bar(marker=dict(line=dict(width=0)), textfont=dict(color=TEXT, size=11))]
+    t.data.scatter = [go.Scatter(line=dict(width=2.5), marker=dict(size=9, line=dict(width=0)))]
+    t.data.bar = [go.Bar(marker=dict(line=dict(width=0)), textfont=dict(color=INK, size=12))]
     t.data.histogram = [go.Histogram(marker=dict(color=SINGLE, line=dict(width=0)))]
     t.data.box = [go.Box(line=dict(width=1.5))]
     pio.templates["motorlytics"] = t

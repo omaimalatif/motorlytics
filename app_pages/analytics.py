@@ -60,7 +60,7 @@ with ui.chart_card("Fuel use over time", take or "Each dot is a trip; the line i
                                          hovertemplate="%{text}<br>%{y:.1f} L/100 km · %{customdata[0]:.1f} km<extra></extra>"))
         if len(d) >= 3:
             fig.add_trace(go.Scatter(x=d["day"], y=roll, mode="lines", name="7-trip average",
-                                     line=dict(color=theme.ORANGE, width=2.5, dash="dot", shape="spline"),
+                                     line=dict(color=theme.CHART_ORANGE, width=3, dash="dot", shape="spline"),
                                      hovertemplate="7-trip average %{y:.1f} L/100 km<extra></extra>"))
         lo, hi = d["day"].min(), d["day"].max()
         pad = pd.Timedelta(days=3) if (hi - lo) < pd.Timedelta(days=7) else pd.Timedelta(days=1)
@@ -123,7 +123,7 @@ with a2:
                                              marker=dict(size=10, color=color, line=dict(width=1, color=theme.BG)),
                                              hovertemplate="measured %{x:.1f} · predicted %{y:.1f}<extra></extra>"))
             fig.add_trace(go.Scatter(x=[0, top], y=[0, top], mode="lines", name="perfect prediction",
-                                     line=dict(dash="dash", color=theme.MUTED, width=1.5), hoverinfo="skip"))
+                                     line=dict(dash="dash", color=theme.INK, width=1.5), hoverinfo="skip"))
             fig.update_xaxes(range=[0, top], title="measured L/100 km", showgrid=True, constrain="domain")
             fig.update_yaxes(range=[0, top], scaleanchor="x", scaleratio=1, title="predicted L/100 km", constrain="domain")
             fig.update_layout(meta="measured_vs_predicted")

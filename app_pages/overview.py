@@ -181,7 +181,7 @@ with g1:
     take = (f"Most fuel on **{pd.Timestamp(top_day):%d %b %Y}**: {by_day.max():.1f} L." if top_day is not None else None)
     with ui.chart_card("Fuel use by day (litres)", note or None):
         labels = [pd.Timestamp(x).strftime("%d %b %Y") for x in by_day.index]
-        fig = go.Figure(go.Bar(x=labels, y=by_day.values, marker_color=[theme.ORANGE if x == today else theme.SINGLE
+        fig = go.Figure(go.Bar(x=labels, y=by_day.values, marker_color=[theme.CHART_ORANGE if x == today else theme.SINGLE
                                                                         for x in by_day.index],
                                hovertemplate="%{x}: %{y:.2f} L<extra></extra>"))
         # day labels on a category axis: plotly never turns it into a time axis with sub-day ticks

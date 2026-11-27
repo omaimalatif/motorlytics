@@ -34,8 +34,12 @@ c.ok(pio.templates.default == "motorlytics" and t.paper_bgcolor == "rgba(0,0,0,0
      and t.hoverlabel.bordercolor == theme.BORDER and t.barcornerradius == 6, "Plotly template registered and default")
 fig = px.bar(x=[1, 2], y=[3, 4])
 c.ok(fig.layout.template.layout.barcornerradius == 6, "px charts pick up the template")
-c.ok(theme.STYLE_COLORS == {"eco": "#0E9384", "normal": "#C98500", "aggressive": "#E5484D"}
-     and (theme.MEASURED, theme.PREDICTED) == (theme.INK, theme.ACCENT), "style and measured / predicted colours")
+def lum(h):
+    r, g, b = (int(h.lstrip("#")[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+data_colours = list(theme.STYLE_COLORS.values()) + theme.CATEGORICAL + [theme.MEASURED, theme.PREDICTED, theme.SINGLE]
+c.ok(all(lum(x) < 0.45 for x in data_colours) and (theme.MEASURED, theme.PREDICTED) == (theme.INK, theme.CHART_BLUE),
+     "chart colours are all dark (readable on white)", ", ".join(f"{x}:{lum(x):.2f}" for x in data_colours))
 
 spec = json.loads(route_deck([[42.28, -83.74], [42.29, -83.73]]).to_json())
 c.ok("positron" in spec["mapStyle"] and spec["layers"][0]["getColor"] == theme.MAP_ROUTE

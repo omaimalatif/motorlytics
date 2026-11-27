@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 100" width="440" height="200">
   <title>Hatchback (drawing)</title>
-  <path d="M14 70 L14 54 Q16 46 30 44 L62 40 L88 20 Q94 16 104 16 L150 16 Q160 16 167 24 L184 46 Q202 49 205 58 L205 70 Z" fill="#8a8f98"/>
-  <path d="M70 41 L92 23 Q96 20 104 20 L120 20 L120 41 Z" fill="#cfd6de"/>
-  <path d="M126 20 L148 20 Q156 20 161 26 L175 41 L126 41 Z" fill="#cfd6de"/>
-  <rect x="14" y="66" width="191" height="6" rx="3" fill="#6f747c"/>
-  <circle cx="58" cy="72" r="15" fill="#3a3d42"/><circle cx="58" cy="72" r="6" fill="#b9bec5"/>
-  <circle cx="166" cy="72" r="15" fill="#3a3d42"/><circle cx="166" cy="72" r="6" fill="#b9bec5"/>
+  <path d="M14 70 L14 54 Q16 46 30 44 L62 40 L88 20 Q94 16 104 16 L150 16 Q160 16 167 24 L184 46 Q202 49 205 58 L205 70 Z" fill="#475569"/>
+  <path d="M70 41 L92 23 Q96 20 104 20 L120 20 L120 41 Z" fill="#94A3B8"/>
+  <path d="M126 20 L148 20 Q156 20 161 26 L175 41 L126 41 Z" fill="#94A3B8"/>
+  <rect x="14" y="66" width="191" height="6" rx="3" fill="#334155"/>
+  <circle cx="58" cy="72" r="15" fill="#0F172A"/><circle cx="58" cy="72" r="6" fill="#64748B"/>
+  <circle cx="166" cy="72" r="15" fill="#0F172A"/><circle cx="166" cy="72" r="6" fill="#64748B"/>
 </svg>
