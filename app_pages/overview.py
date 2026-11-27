@@ -34,17 +34,13 @@ if not car:
 c1, c2 = st.columns([2, 1], gap="medium")
 with c1:
     with ui.card(kind="hero"):
-        h_pic, h_txt = st.columns([1, 2], vertical_alignment="center", gap="medium")
-        with h_pic:
-            ui.car_photo(car, caption=False)
-        with h_txt:
-            st.subheader(cars.car_title(car))
-            specs = [cars.fmt_disp(car.get("disp_L")) if car.get("disp_L") else None,
-                     f"{car['cylinders']} cylinders" if car.get("cylinders") else None,
-                     car.get("transmission"), car.get("fuel_type")]
-            st.caption(" · ".join(x for x in specs if x) or "Add transmission and fuel type on the My car page.")
-            ui.badge(cal_label, cal_kind)
-            st.caption(cal_text)
+        st.subheader(cars.car_title(car))
+        specs = [cars.fmt_disp(car.get("disp_L")) if car.get("disp_L") else None,
+                 f"{car['cylinders']} cylinders" if car.get("cylinders") else None,
+                 car.get("transmission"), car.get("fuel_type")]
+        st.caption(" · ".join(x for x in specs if x) or "Add transmission and fuel type on the My car page.")
+        ui.badge(cal_label, cal_kind)
+        st.caption(cal_text)
 with c2:
     with ui.card("Quick actions"):
         a1, a2 = st.columns(2)

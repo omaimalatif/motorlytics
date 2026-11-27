@@ -49,8 +49,7 @@ if not user:
 from core import cars  # noqa: E402  (signed in: the app pages need these)
 from ui import components as ui  # noqa: E402
 from ui import session  # noqa: E402
-
-st.logo(image=theme.LOGO_LIGHT, size="large")    # light-text wordmark on the dark sidebar
+# no logo at the top of the sidebar after sign-in (the navigation starts right away)
 
 P = session.PAGES
 pages = {
@@ -96,8 +95,6 @@ with st.sidebar:
                 st.rerun()
         else:
             st.markdown(f"**{cars.car_title(car)}**")
-        if car:
-            ui.car_photo(car, width=200, caption=False)
         label, kind, text = session.calibration_state(car)
         ui.badge(label, kind)
         st.caption(text)

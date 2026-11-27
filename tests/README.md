@@ -5,8 +5,8 @@ database and calibration store** (set through the `MOTORLYTICS_DB` and `MOTORLYT
 variables in `_helpers.py`), so your real app data is never touched.
 
 **Requirements:** the project environment (`pip install -r requirements.txt`) and trained models in `models/`
-(run `03_train.py` and `04_driving_styles.py` first). Some checks use the internet (Wikipedia car photos,
-enviroCar, Open-Meteo); without it those checks fall back or are reported as NOTE instead of failing.
+(run `03_train.py` and `04_driving_styles.py` first). Some checks use the internet (enviroCar,
+Open-Meteo); without it those checks fall back or are reported as NOTE instead of failing.
 
 ## Run
 
@@ -27,7 +27,6 @@ python tests/test_flow.py                                  (one test, full outpu
 |---|---|
 | `test_flow.py` | Register (salted hash) → add car → petrol price → upload 3 MAF trips (car gets calibrated) → every page renders → fill-up form → 4th trip predicted calibrated with a route → logout |
 | `test_cars.py` | Catalogue suggestions (Suzuki Cultus 2018), saved details, masked registration, edit keeps the calibration key, CNG warning, car profile numbers equal a direct calculation, delete needs confirmation, safe database migration |
-| `test_photos.py` | Credited Wikipedia example photo (internet), own photo resized and shown first, invalid file rejected, removal, body-type drawing for unknown models |
 | `test_pakwheels.py` | PakWheels match for a Suzuki Alto, mixed-trip clamp (unit test), city ≤ mixed ≤ highway km/L on the synthetic Alto trips, own calibration replaces the PakWheels factor, badges and sidebar |
 | `test_samples.py` | Every file in `samples/` uploads; measured fuel equals the training pipeline's value; the raw VED file uses the full model tier |
 | `test_cli.py` | `05_predict_trip.py` on the samples: tiers, measured figure, calibration and fill-up from the command line |

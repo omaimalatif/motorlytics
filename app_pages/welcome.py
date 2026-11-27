@@ -103,6 +103,8 @@ st.html("""<style>
 .ml-step p, .ml-feature p { color: #3E4C5E; font-size: .92rem; line-height: 1.55; margin: 0; }
 .ml-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
 .ml-feature .ml-ic { margin-bottom: 14px; }
+.ml-ml-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .ml-ml-grid { grid-template-columns: 1fr; } }
 .ml-ml-card { background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: 12px; padding: 22px 24px; }
 .ml-ml-card h4 { font-family: 'Plus Jakarta Sans', sans-serif; margin: 16px 0 6px 0; font-size: 1rem; color: #0B1220; }
 .ml-ml-card h4:first-child { margin-top: 0; }
@@ -181,22 +183,19 @@ chips_course = "".join(f'<span class="ml-chip course">{m}</span>' for m in
 chips_ref = "".join(f'<span class="ml-chip">{m}</span>' for m in ["Ridge", "Random Forest", "LightGBM"])
 st.html('<div class="ml-section"><p class="ml-eyebrow">The ML behind it</p>'
         '<h2 class="ml-h2">Course models, tested on cars they have never seen</h2></div>')
-ml_text, ml_art = st.columns([1.25, 1], gap="large", vertical_alignment="center")
-with ml_text:
-    st.html(f"""<div class="ml-ml-card">
-<h4>Course models</h4><p>Trained on {s['trips']:,} trips from {s['vehicles']} vehicles of the Vehicle Energy Dataset
-(Ann Arbor, 2017-18). The test vehicles are held out completely, so every score is on cars the models never saw.</p>
-<div class="ml-chips">{chips_course}</div>
-<h4>Reference models</h4><p>Beyond the syllabus, for comparison only; the app never uses them.</p>
-<div class="ml-chips">{chips_ref}</div>
-<h4>How the app model was chosen</h4><p>Per input type (speed only, speed + RPM, speed + RPM + load), the course model
-with the lowest error on 21 European enviroCar cars <b>after 3-trip calibration</b>, among those within 2 points of the
-best course model on the held-out VED cars.</p>
-<h4>Speed-glitch cleaning</h4><p>OBD loggers write 255 km/h when they have no reading, and single readings can spike.
-These are removed and filled in over time before any feature is computed, in training and in the app.</p>
-<p style="margin-top:14px"><b>About the model</b> has the full results after you sign in.</p></div>""")
-with ml_art:
-    st.image(theme.image_svg("hero_car"), width="stretch")
+st.html(f"""<div class="ml-ml-grid">
+<div class="ml-ml-card"><h4>Course models</h4><p>Trained on {s['trips']:,} trips from {s['vehicles']} vehicles of the
+Vehicle Energy Dataset (Ann Arbor, 2017-18). The test vehicles are held out completely, so every score is on cars the
+models never saw.</p><div class="ml-chips">{chips_course}</div></div>
+<div class="ml-ml-card"><h4>Reference models</h4><p>Beyond the syllabus, for comparison only; the app never uses them.</p>
+<div class="ml-chips">{chips_ref}</div></div>
+<div class="ml-ml-card"><h4>How the app model was chosen</h4><p>Per input type (speed only, speed + RPM, speed + RPM +
+load), the course model with the lowest error on 21 European enviroCar cars <b>after 3-trip calibration</b>, among those
+within 2 points of the best course model on the held-out VED cars.</p></div>
+<div class="ml-ml-card"><h4>Speed-glitch cleaning</h4><p>OBD loggers write 255 km/h when they have no reading, and single
+readings can spike. These are removed and filled in over time before any feature is computed, in training and in the
+app.</p></div></div>
+<p class="ml-lead" style="margin-top:16px"><b>About the model</b> has the full results after you sign in.</p>""")
 
 # ---------------- 6. footer ----------------
 links = [("VED", "https://github.com/gsoh/VED"), ("enviroCar", "https://envirocar.org"),

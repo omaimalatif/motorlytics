@@ -89,5 +89,11 @@ for page in ["overview", "upload_trip", "quick_estimate", "trip_detail", "trip_h
     if any(e.proto.theme for e in at.get("plotly_chart")) or any(
             sp["layout"].get("template", {}).get("layout", {}).get("barcornerradius") != 6 for sp in charts):
         c.ok(False, f"{page}: charts use the motorlytics template without Streamlit's chart theme")
-c.ok(True, "every page renders; every chart uses the motorlytics template")
+    if page != "about_model" and [e for e in at.main if type(e).__name__ == "Image"]:   # About shows result figures
+        c.ok(False, f"{page}: no car pictures")
+c.ok(True, "every page renders; every chart uses the motorlytics template; no car pictures")
+code = " ".join(p_.read_text(encoding="utf-8") for d in ["core", "ui", "app_pages"] for p_ in (ROOT / d).glob("*.py"))
+code += (ROOT / "app.py").read_text(encoding="utf-8")
+c.ok("wikipedia" not in code.lower() and "car_photo" not in code and "st.logo(image=theme.LOGO_LIGHT" not in code,
+     "no internet car photos, no car pictures, no wordmark in the signed-in sidebar")
 c.done()

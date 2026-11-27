@@ -61,7 +61,7 @@ def connect(path=None) -> sqlite3.Connection:
 CAR_EXTRA_COLUMNS = {"nickname": "TEXT", "colour": "TEXT", "transmission": "TEXT", "fuel_type": "TEXT",
                      "body_type": "TEXT", "assembled": "TEXT", "tank_litres": "REAL", "odometer_km": "REAL",
                      "registration": "TEXT",
-                     # picture: photo_source = 'user' | 'wikipedia' | 'none' (looked up, nothing found) | NULL
+                     # car pictures were removed from the app; these columns stay so older databases still open
                      "photo_path": "TEXT", "photo_source": "TEXT", "photo_credit": "TEXT",
                      # 1 = demo car built from a fetched enviroCar track / bundled sample (not the user's car)
                      "is_demo": "INTEGER"}

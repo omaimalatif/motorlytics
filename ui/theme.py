@@ -16,11 +16,9 @@ import streamlit as st          # Plotly is imported only when a chart is drawn 
 ROOT = Path(__file__).resolve().parents[1]
 # brand: the name only, "Motorlytics", with the first "o" drawn as a gauge (no separate icon)
 LOGO = "assets/brand/motorlytics_wordmark.png"      # the wordmark as an image, dark text: public top bar
-LOGO_LIGHT = "assets/brand/motorlytics_wordmark_light.png"   # light text: the dark sidebar after sign-in
 ICON = "assets/brand/gauge_o.png"                   # the gauge "o" alone: browser tab only (it needs an image)
 GAUGE_O_SVG = ROOT / "assets" / "brand" / "gauge_o.svg"   # the gauge "o" inside the live wordmark on the pages
 ICONS = ROOT / "assets" / "icons"
-IMAGES = ROOT / "assets" / "images"
 
 # ---------------- colours: white, sky blue, black ----------------
 INK = "#0B1220"            # near-black: text, primary buttons, footer
@@ -150,12 +148,6 @@ def icon(name: str, size: int = 22) -> str:
     if not (ICONS / f"{name}.svg").exists():
         return ""
     return f'<span class="ml-icon ml-icon-{name}" style="width:{size}px;height:{size}px" aria-hidden="true"></span>'
-
-
-def image_svg(name: str) -> str:
-    """SVG markup of assets/images/<name>.svg, for st.image."""
-    p = IMAGES / f"{name}.svg"
-    return p.read_text(encoding="utf-8") if p.exists() else ""
 
 
 def esc(text) -> str:

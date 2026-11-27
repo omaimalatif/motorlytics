@@ -9,13 +9,13 @@ from io import StringIO
 
 import pandas as pd
 
-from core import app_core, auth, car_photos, cars, db
+from core import app_core, auth, cars, db
 
 EMAIL, PASSWORD = "demo@motorlytics.test", "demo12345"
 SAMPLES, FIXTURES = db.ROOT / "samples", db.ROOT / "tests" / "fixtures"
 
 
-def create_demo_account(photos: bool = True, log=lambda *a: None) -> dict | None:
+def create_demo_account(log=lambda *a: None) -> dict | None:
     """Create the demo account with its cars and trips; None if it already exists. log: print-like callback."""
     db.init_db()
     if db.get_user_by_email(EMAIL):
@@ -60,12 +60,6 @@ def create_demo_account(photos: bool = True, log=lambda *a: None) -> dict | None
     log("SYNTHETIC test Alto: made-up Lahore trips (PakWheels-adjusted)")
     show(app_core.ingest_logs(user, alto, [(p.name, p.read_bytes()) for p in sorted(FIXTURES.glob("SYNTHETIC_*.csv"))],
                               temp=20.0))
-    if photos:
-        for c_ in (corsa, cultus, alto):
-            try:
-                car_photos.attach_example_photo(db.get_car(c_["id"]))   # Wikipedia; a drawing if none / offline
-            except Exception:
-                pass
     return user
 
 

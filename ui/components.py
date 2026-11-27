@@ -87,23 +87,6 @@ def empty_state(text: str, button: str = None, page: str = None) -> None:
         st.switch_page(page)
 
 
-def car_photo(car: dict, width="stretch", caption: bool = True) -> None:
-    """The car's picture: the user's photo, else a credited example photo, else a body-type drawing."""
-    from pathlib import Path
-
-    from core import car_photos
-    pic = car_photos.car_picture(car)
-    if pic["kind"] == "drawing":
-        st.image(Path(pic["path"]).read_text(encoding="utf-8"), width=width)   # SVG markup
-    else:
-        st.image(pic["path"], width=width)
-    if caption:
-        text = pic["caption"]
-        if pic.get("credit_url"):
-            text += f" ([source]({pic['credit_url']}))"
-        st.caption(text)
-
-
 def fit_view(lats, lons, width_px: int = 480, height_px: int = 320, padding: float = 1.35,
              max_zoom: float = 15.0) -> dict:
     """Centre and zoom (Web Mercator) so the bounding box fits the map with some padding."""
