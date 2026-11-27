@@ -28,6 +28,7 @@ from core import pk_reference, scoring
 TIERS = ["behaviour_only", "full_no_load", "full"]
 MAX_ROUTE_POINTS = 400
 MAX_SPEED_POINTS = 600
+MAX_ECO_SAVING = 0.25        # the "eco driver" estimate is at most 25 % below the trip's own figure
 # calibration store used when no path is given (MOTORLYTICS_CALIB overrides, e.g. for tests)
 APP_CALIB = Path(os.environ.get("MOTORLYTICS_CALIB", mf.CALIB_PATH))
 
@@ -200,6 +201,16 @@ def predict_logs(dfs, car: dict, car_key=None, petrol=None, temp=np.nan, feature
             r["measured_l_per_100km_from_maf"] = round(measured, 2)
             main = measured
             r["eco_l_per_100km"] = round(measured * (tip_eco / tip_pred) if tip_pred > 0 else measured, 2)
+        # "eco driver" estimate = trip figure x (model's eco prediction / model's prediction as driven), capped at a
+        # plausible saving: the eco prediction is never below the 25th percentile of eco trips on this road type
+        # (compared in the model's own units, the training fleet), and the saving is at most MAX_ECO_SAVING
+        p25 = ((style.get("eco_p25") or {}).get(r.get("road_type")) or (style.get("eco_p25") or {}).get("all")
+               or {}).get("l_per_100km")
+        eco_model = max(tip_eco, p25) if p25 and p25 == p25 else tip_eco
+        ratio = eco_model / tip_pred if tip_pred > 0 else 1.0
+        ratio = min(1.0, max(ratio, 1 - MAX_ECO_SAVING))
+        r["eco_l_per_100km"] = round(main * ratio, 2)
+        r["possible_saving_pct"] = round((1 - ratio) * 100, 1)
         if petrol:
             r["trip_cost_pkr"] = round(main / 100 * t["dist_km"] * petrol, 0)
             r["cost_per_100km_pkr"] = round(main * petrol, 0)

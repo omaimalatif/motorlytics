@@ -121,12 +121,15 @@ eco = t[t["style"] == eco_name]
 # (many eco medians are 0, e.g. hard brakes, so "above median" would flag almost everyone)
 eco_profile = {"all": eco.median(numeric_only=True).to_dict()}
 eco_p75 = {"all": eco.quantile(0.75, numeric_only=True).to_dict()}
+# 25th percentile of eco trips: the "eco driver" estimate is never below this (a plausible floor per road type)
+eco_p25 = {"all": eco.quantile(0.25, numeric_only=True).to_dict()}
 print("\neco profile per road type (used for tips):")
 for rt in mf.ROAD_TYPES:
     e = eco[eco["road_type"] == rt]
     if len(e) >= 20:
         eco_profile[rt] = e.median(numeric_only=True).to_dict()
         eco_p75[rt] = e.quantile(0.75, numeric_only=True).to_dict()
+        eco_p25[rt] = e.quantile(0.25, numeric_only=True).to_dict()
         print(f"  {rt:8s} p75      " + "  ".join(
             f"{c}={eco_p75[rt][c]:.3f}" for c in STYLE + CONTEXT + ["l_per_100km"]))
         print(f"  {rt:8s} n={len(e):5d}  " + "  ".join(
@@ -136,7 +139,7 @@ for rt in mf.ROAD_TYPES:
 mf.MODELS.mkdir(exist_ok=True)
 joblib.dump({"scaler": scaler, "kmeans": km, "features": STYLE, "label_map": label_map,
              "clip_lo": X.quantile(0.01).to_dict(), "clip_hi": X.quantile(0.99).to_dict(),
-             "eco_profile": eco_profile, "eco_p75": eco_p75, "profile": prof}, mf.MODELS / "driving_style.joblib")
+             "eco_profile": eco_profile, "eco_p75": eco_p75, "eco_p25": eco_p25, "profile": prof}, mf.MODELS / "driving_style.joblib")
 t[["trip_key", "vehid", "style", "style_em", "road_type"]].to_parquet(mf.PROC / "trip_styles.parquet", index=False)
 prof.to_csv(mf.PROC / "style_profiles.csv")
 print(f"\nsaved {mf.MODELS / 'driving_style.joblib'}")
