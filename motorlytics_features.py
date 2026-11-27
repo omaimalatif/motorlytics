@@ -121,9 +121,11 @@ def _accel_over_1s(df: pd.DataFrame, g) -> np.ndarray:
     the latest earlier sample of the same trip that is >= ACC_MIN_DT s back; spans longer than
     MAX_DT (logging gaps) give NaN. df must be sorted by trip_key, t.
     """
+    t = df["t"].to_numpy(dtype=float)
+    if len(t) == 0 or np.isnan(t).all():                       # nothing usable left (e.g. all glitches)
+        return np.full(len(t), np.nan)
     vs = (g["speed"].rolling(3, center=True, min_periods=1).mean()
           .reset_index(level=0, drop=True).to_numpy() / 3.6)
-    t = df["t"].to_numpy(dtype=float)
     code = pd.factorize(df["trip_key"], sort=False)[0].astype(float)
     span = np.nanmax(t) - np.nanmin(t) + 10 * MAX_DT if len(t) else 1.0
     key = code * span + (t - np.nanmin(t))                      # increasing within and across trips

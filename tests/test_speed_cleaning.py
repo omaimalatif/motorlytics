@@ -72,4 +72,11 @@ buf = io.StringIO()
 spiked.to_csv(buf, index=False)
 res = app_core.predict_logs([pd.read_csv(io.StringIO(buf.getvalue()))], {"disp_L": 2.5, "cylinders": 4})
 c.ok(max(s for _, s in res["trips"][0]["speed_trace"]) < 250, "CLI/core path (predict_logs) cleans too")
+# a log with nothing usable left after cleaning gets the normal message, not a crash
+try:
+    app_core.predict_logs([pd.DataFrame({"time": ["2026-01-01 10:00:00", "2026-01-01 10:00:05"], "speed": [255, 255]})],
+                          {"disp_L": 1.2, "cylinders": 4})
+    c.ok(False, "all-glitch log rejected with a clear message")
+except ValueError as e:
+    c.ok("1 km" in str(e), "all-glitch log rejected with a clear message", str(e))
 c.done()
