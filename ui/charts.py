@@ -47,7 +47,7 @@ def speed_area(sp: list, stop_kmh: float = 2.0) -> go.Figure:
             first = False
     fig.add_trace(go.Scatter(
         x=d["minute"], y=d["speed"], mode="lines", name="speed", line=dict(color=theme.ORANGE, width=2.5),
-        fill="tozeroy", fillcolor="rgba(31,143,214,0.12)",
+        fill="tozeroy", fillcolor="rgba(249,115,22,0.10)",
         hovertemplate="%{x:.1f} min · %{y:.0f} km/h<extra></extra>"))
     fig.update_xaxes(title="minutes")
     fig.update_yaxes(title="km/h", rangemode="tozero")

@@ -34,13 +34,13 @@ def first_start() -> bool:
 first_start()
 db.init_db()
 theme.setup()
-st.logo(image=theme.LOGO, size="large")   # the wordmark everywhere (no separate icon)
 
 
 uid = st.session_state.get("user_id")
 user = db.get_user(uid) if uid else None
 if not user:
     # signed out: only the public pages, in a top bar (no app pages, no sidebar)
+    st.logo(image=theme.LOGO, size="large")          # dark-text wordmark on the light top bar
     public = st.navigation([st.Page("app_pages/welcome.py", title="Welcome", icon=":material/home:", default=True),
                             st.Page("app_pages/sign_in.py", title="Sign in", icon=":material/login:")], position="top")
     public.run()
@@ -49,6 +49,8 @@ if not user:
 from core import cars  # noqa: E402  (signed in: the app pages need these)
 from ui import components as ui  # noqa: E402
 from ui import session  # noqa: E402
+
+st.logo(image=theme.LOGO_LIGHT, size="large")    # light-text wordmark on the dark sidebar
 
 P = session.PAGES
 pages = {

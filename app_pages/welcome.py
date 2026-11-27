@@ -74,19 +74,23 @@ st.html("""<style>
 .st-key-mlhero .ml-lockup { margin: 64px 0 12px 0; }
 @media (max-width: 640px) { .st-key-mlhero .ml-wordmark { font-size: 46px !important; } }
 @media (max-width: 640px) { .st-key-mlhero { padding-top: 40px; } }
+.ml-hot { color: #EA580C; }
+/* the hero call to action in the warm accent */
+.st-key-hero_start button { background: #F97316 !important; border-color: #F97316 !important; color: #FFFFFF !important; }
+.st-key-hero_start button:hover { background: #EA580C !important; border-color: #EA580C !important; }
 .ml-hero-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(2rem, 4.6vw, 3.4rem);
   line-height: 1.08; letter-spacing: -0.03em; text-align: center; margin: 0; color: #0B1220; }
-.ml-hero-sub { color: #5B6B7F; text-align: center; font-size: clamp(1rem, 1.6vw, 1.15rem); max-width: 720px;
+.ml-hero-sub { color: #3E4C5E; text-align: center; font-size: clamp(1rem, 1.6vw, 1.15rem); max-width: 720px;
   margin: 14px auto 0 auto; line-height: 1.55; }
 .ml-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 8px 0 0 0; }
-.ml-stat { background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: 12px; padding: 18px 20px; }
-.ml-stat-value { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 2rem; letter-spacing: -0.02em; }
-.ml-stat-label { color: #5B6B7F; font-size: .875rem; margin-top: 2px; }
+.ml-stat { background: #0B1220; border: 1px solid #0B1220; border-radius: 12px; padding: 20px 22px; }
+.ml-stat-value { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 2rem; letter-spacing: -0.02em; color: #FDBA74; }
+.ml-stat-label { color: #CBD5E1; font-size: .9rem; margin-top: 2px; }
 .ml-section { margin: 56px 0 8px 0; }
-.ml-eyebrow { color: #14689E; font-weight: 600; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
+.ml-eyebrow { color: #C2410C; font-weight: 700; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
 .ml-h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: clamp(1.5rem, 2.6vw, 2rem);
   letter-spacing: -0.02em; margin: 6px 0 6px 0; color: #0B1220; }
-.ml-lead { color: #5B6B7F; max-width: 720px; margin: 0 0 20px 0; line-height: 1.6; }
+.ml-lead { color: #3E4C5E; max-width: 720px; margin: 0 0 20px 0; line-height: 1.6; }
 .ml-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .ml-step, .ml-feature { background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: 12px;
   padding: 22px; transition: transform .15s ease, border-color .15s ease; }
@@ -96,13 +100,13 @@ st.html("""<style>
 .ml-ic { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
   color: #14689E; background: #EEF7FC; border: 1px solid #D6E8F3; }
 .ml-step h4, .ml-feature h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.05rem; margin: 0 0 6px 0; color: #0B1220; }
-.ml-step p, .ml-feature p { color: #5B6B7F; font-size: .92rem; line-height: 1.55; margin: 0; }
+.ml-step p, .ml-feature p { color: #3E4C5E; font-size: .92rem; line-height: 1.55; margin: 0; }
 .ml-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
 .ml-feature .ml-ic { margin-bottom: 14px; }
 .ml-ml-card { background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: 12px; padding: 22px 24px; }
 .ml-ml-card h4 { font-family: 'Plus Jakarta Sans', sans-serif; margin: 16px 0 6px 0; font-size: 1rem; color: #0B1220; }
 .ml-ml-card h4:first-child { margin-top: 0; }
-.ml-ml-card p { color: #5B6B7F; line-height: 1.6; margin: 0; font-size: .93rem; }
+.ml-ml-card p { color: #3E4C5E; line-height: 1.6; margin: 0; font-size: .93rem; }
 .ml-ml-card b { color: #0B1220; font-weight: 600; }
 .ml-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0 0; }
 .ml-chip { border-radius: 999px; padding: 3px 11px; font-size: .78rem; font-weight: 600; border: 1px solid var(--ml-border);
@@ -122,7 +126,7 @@ s = headline_stats()
 # ---------------- 1. hero (black) ----------------
 with st.container(key="mlhero", horizontal_alignment="center", gap="medium"):
     st.html(theme.brand_lockup(88))
-    st.html('<h1 class="ml-hero-title">Know what every trip <span class="ml-grad-text">really costs</span></h1>'
+    st.html('<h1 class="ml-hero-title">Know what every trip <span class="ml-hot">really costs</span></h1>'
             '<p class="ml-hero-sub">Motorlytics predicts your car\'s fuel use for each trip from its trip log, scores '
             'how you drive, and turns it into rupees, with tips to spend less.</p>')
     with st.container(horizontal=True, horizontal_alignment="center", gap="small"):
@@ -137,7 +141,7 @@ stats = [(f"{s['trips']:,}", "training trips (VED)"), (f"{s['vehicles']:,}", "ve
          (f"{s['test_mape']:.1f} %", "error on unseen cars (best course model)"),
          (f"{s['cal_mape']:.1f} %", "after 3-trip calibration on European cars")]
 st.html('<div class="ml-section" style="margin-top:32px"><div class="ml-stats">' + "".join(
-    f'<div class="ml-stat"><div class="ml-stat-value ml-grad-text">{E(v)}</div><div class="ml-stat-label">{E(k)}</div></div>'
+    f'<div class="ml-stat"><div class="ml-stat-value">{E(v)}</div><div class="ml-stat-label">{E(k)}</div></div>'
     for v, k in stats) + "</div></div>")
 
 # ---------------- 3. how it works ----------------

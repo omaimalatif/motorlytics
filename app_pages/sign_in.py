@@ -25,10 +25,10 @@ st.html("""<style>
 .ml-benefit .ml-ic { flex: none; width: 40px; height: 40px; border-radius: 11px; display: inline-flex; align-items: center;
   justify-content: center; color: #14689E; background: #EEF7FC; border: 1px solid #D6E8F3; }
 .ml-benefit b { color: #0B1220; font-family: 'Plus Jakarta Sans', sans-serif; display: block; margin-bottom: 2px; }
-.ml-benefit span.t { color: #5B6B7F; font-size: .9rem; line-height: 1.5; }
+.ml-benefit span.t { color: #3E4C5E; font-size: .9rem; line-height: 1.5; }
 .ml-auth-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1.6rem; margin: 0;
   letter-spacing: -0.02em; color: #0B1220; }
-.ml-auth-sub { color: #5B6B7F; margin: 4px 0 0 0; font-size: .92rem; }
+.ml-auth-sub { color: #3E4C5E; margin: 4px 0 0 0; font-size: .92rem; }
 </style>""")
 
 benefits = [("fuel", "Fuel use per trip", "Measured from MAF, or predicted by the ML model from how you drove."),

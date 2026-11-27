@@ -1,4 +1,4 @@
-# Motorlytics theme: clean light theme in white, sky blue and black, whatever the OS setting.
+# Motorlytics theme: white, sky blue and black with a dark sidebar and an orange accent, whatever the OS setting.
 # Colours, fonts and the CSS that goes beyond these options live in ui/theme.py (single source of truth;
 # keep the values below in sync with it).
 
@@ -8,7 +8,7 @@ toolbarMode = "minimal"          # no Deploy button or main menu
 
 [theme]
 base = "light"
-primaryColor = "#0B1220"
+primaryColor = "#F97316"          # orange: toggles, progress bars, sparklines, focus
 backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#F5F9FC"
 textColor = "#0B1220"
@@ -30,9 +30,18 @@ yellowColor = "#A16207"
 blueColor = "#14689E"
 violetColor = "#6D28D9"
 grayColor = "#5B6B7F"
-chartCategoricalColors = ["#1F8FD6", "#0B1220", "#8BA3B8"]
+chartCategoricalColors = ["#1F8FD6", "#0B1220", "#F97316"]
 
-[theme.sidebar]
-backgroundColor = "#F8FBFD"
-secondaryBackgroundColor = "#EEF7FC"
-borderColor = "#E3EAF0"
+[theme.sidebar]                  # dark sidebar for contrast
+backgroundColor = "#0B1220"
+secondaryBackgroundColor = "#1E293B"
+borderColor = "#334155"
+textColor = "#E2E8F0"
+primaryColor = "#F97316"
+# badge colours readable on the dark sidebar
+greenColor = "#4ADE80"
+blueColor = "#7DD3FC"
+orangeColor = "#FDBA74"
+redColor = "#F87171"
+yellowColor = "#FCD34D"
+grayColor = "#CBD5E1"

@@ -60,7 +60,7 @@ with ui.chart_card("Fuel use over time", take or "Each dot is a trip; the line i
                                          hovertemplate="%{text}<br>%{y:.1f} L/100 km · %{customdata[0]:.1f} km<extra></extra>"))
         if len(d) >= 3:
             fig.add_trace(go.Scatter(x=d["day"], y=roll, mode="lines", name="7-trip average",
-                                     line=dict(color=theme.MUTED, width=2.5, dash="dot", shape="spline"),
+                                     line=dict(color=theme.ORANGE, width=2.5, dash="dot", shape="spline"),
                                      hovertemplate="7-trip average %{y:.1f} L/100 km<extra></extra>"))
         lo, hi = d["day"].min(), d["day"].max()
         pad = pd.Timedelta(days=3) if (hi - lo) < pd.Timedelta(days=7) else pd.Timedelta(days=1)

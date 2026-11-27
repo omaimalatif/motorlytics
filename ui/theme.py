@@ -15,7 +15,8 @@ import streamlit as st          # Plotly is imported only when a chart is drawn 
 
 ROOT = Path(__file__).resolve().parents[1]
 # brand: the name only, "Motorlytics", with the first "o" drawn as a gauge (no separate icon)
-LOGO = "assets/brand/motorlytics_wordmark.png"      # the wordmark as an image: sidebar (st.logo needs an image)
+LOGO = "assets/brand/motorlytics_wordmark.png"      # the wordmark as an image, dark text: public top bar
+LOGO_LIGHT = "assets/brand/motorlytics_wordmark_light.png"   # light text: the dark sidebar after sign-in
 ICON = "assets/brand/gauge_o.png"                   # the gauge "o" alone: browser tab only (it needs an image)
 GAUGE_O_SVG = ROOT / "assets" / "brand" / "gauge_o.svg"   # the gauge "o" inside the live wordmark on the pages
 ICONS = ROOT / "assets" / "icons"
@@ -28,14 +29,18 @@ SURFACE = "#FFFFFF"        # cards (with a 1px border)
 RAISED = "#F5F9FC"         # tiles, inputs, table headers
 BORDER = "#E3EAF0"
 TEXT = INK
-MUTED = "#5B6B7F"
-GRID = "#EEF2F6"
-SKY = "#D4ECF8"            # sky blue bands: Welcome hero, Sign-in panel, active nav item
+MUTED = "#3E4C5E"          # secondary text: dark enough to read easily (about 9:1 on white)
+GRID = "#E6ECF2"
+SKY = "#D4ECF8"            # sky blue bands: Welcome hero, Sign-in panel
 SKY_SOFT = "#EEF7FC"       # soft sky: hover, highlighted cards, upload area
 ACCENT = "#1F8FD6"         # sky blue accent: charts, map route, the "lytics" of the name
-ACCENT_TEXT = "#14689E"    # the accent for text on white (readable contrast)
-SIDEBAR = "#F8FBFD"
-BLACK = INK                # the black elements (footer, primary buttons)
+ACCENT_TEXT = "#14689E"    # sky blue for text on white (readable contrast)
+ORANGE = "#F97316"         # the warm pop colour: active nav item, key numbers, highlights, sparklines
+ORANGE_TEXT = "#C2410C"    # orange for small text on white (readable contrast)
+ORANGE_SOFT = "#FDBA74"    # orange numbers on the dark tiles
+SIDEBAR = INK              # dark sidebar for contrast
+SIDE_TEXT = "#E2E8F0"
+BLACK = INK                # the black elements (sidebar, footer, primary buttons, highlight tiles)
 RED = "#D92D20"            # destructive actions
 GRADIENT = INK             # kept name for older callers: a flat colour now (no gradients)
 
@@ -43,9 +48,8 @@ SUCCESS, WARNING, ERROR = "#15803D", "#B45309", "#D92D20"    # always with an ic
 
 # charts (colour-blind checked on white); style names are always shown as text as well
 STYLE_COLORS = {"eco": "#0E9384", "normal": "#C98500", "aggressive": "#E5484D"}
-CATEGORICAL = [ACCENT, INK, "#8BA3B8"]                        # fixed order
+CATEGORICAL = [ACCENT, INK, ORANGE]                           # fixed order
 MEASURED, PREDICTED, SINGLE = INK, ACCENT, ACCENT
-ORANGE = ACCENT            # kept name for older callers: the accent colour
 
 # badge kinds -> Streamlit palette names (their colours are set in config.toml) and a default icon
 BADGE = {"good": ("green", ":material/check_circle:"), "info": ("blue", ":material/info:"),
@@ -163,6 +167,7 @@ CSS = f"""
   --ml-ink: {INK}; --ml-bg: {BG}; --ml-surface: {SURFACE}; --ml-raised: {RAISED}; --ml-border: {BORDER};
   --ml-text: {TEXT}; --ml-muted: {MUTED}; --ml-sky: {SKY}; --ml-sky-soft: {SKY_SOFT}; --ml-accent: {ACCENT};
   --ml-accent-text: {ACCENT_TEXT}; --ml-red: {RED}; --ml-r-card: {R_CARD}px; --ml-r-input: {R_INPUT}px;
+  --ml-orange: {ORANGE}; --ml-orange-text: {ORANGE_TEXT}; --ml-orange-soft: {ORANGE_SOFT};
 }}
 
 /* ---------- base ---------- */
@@ -174,13 +179,16 @@ html, body, .stApp, .stMarkdown, button, input, textarea, select {{ font-family:
 [data-testid="stMain"] {{ overflow-x: hidden; }}
 [data-testid="stMainBlockContainer"] {{ padding-top: 2.5rem; padding-bottom: 4rem; max-width: 1280px; }}
 [data-testid="stHeader"] {{ background: #FFFFFF; }}
-[data-testid="stCaptionContainer"], .stCaption {{ color: var(--ml-muted); }}
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p, .stCaption {{ color: var(--ml-muted) !important;
+  font-size: .9rem; opacity: 1 !important; }}   /* Streamlit fades captions to 60 %: too light to read */
 a {{ color: var(--ml-accent-text); }}
 hr {{ border-color: var(--ml-border) !important; }}
 .ml-num, [data-testid="stMetricValue"], .ml-stat-value {{ font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }}
 
 /* ---------- page header: a thin divider under the title ---------- */
-.ml-accent-line {{ height: 1px; width: 100%; background: var(--ml-border); margin: 12px 0 8px 0; }}
+.ml-accent-line {{ height: 1px; width: 100%; background: var(--ml-border); margin: 14px 0 8px 0; position: relative; }}
+.ml-accent-line::before {{ content: ""; position: absolute; left: 0; top: -1px; width: 56px; height: 3px;
+  border-radius: 2px; background: var(--ml-orange); }}
 
 /* ---------- cards: st.container(key="mlcard-...") ---------- */
 [class*="st-key-mlcard"] {{
@@ -190,11 +198,12 @@ hr {{ border-color: var(--ml-border) !important; }}
 [class*="st-key-mlcard-raised"] {{ background: var(--ml-raised); }}
 [class*="st-key-mlcard-hero"] {{ background: var(--ml-sky-soft); border-color: #D6E8F3; }}
 [class*="st-key-mlcard-click"] {{ transition: border-color .15s ease; }}
-[class*="st-key-mlcard-click"]:hover {{ border-color: var(--ml-accent); }}
+[class*="st-key-mlcard-click"]:hover {{ border-color: var(--ml-orange); }}
+[class*="st-key-mlcard"] [data-testid="stMarkdownContainer"] strong {{ color: var(--ml-ink); }}
 .ml-takeaway {{ color: var(--ml-muted); font-size: .85rem; margin: 0; }}
 
 /* formula strip (Quick estimate): Model x factor = result */
-.st-key-mlformula {{ background: var(--ml-raised); border: 1px solid var(--ml-border); border-left: 3px solid var(--ml-accent);
+.st-key-mlformula {{ background: var(--ml-raised); border: 1px solid var(--ml-border); border-left: 3px solid var(--ml-orange);
   border-radius: var(--ml-r-card); padding: 12px 16px; }}
 .st-key-mlformula p {{ font-variant-numeric: tabular-nums; margin: 0; }}
 
@@ -203,9 +212,17 @@ hr {{ border-color: var(--ml-border) !important; }}
   background: var(--ml-surface); border: 1px solid var(--ml-border); border-radius: var(--ml-r-card);
   padding: 14px 16px; height: 100%;
 }}
-[data-testid="stMetricLabel"] p, [data-testid="stMetricLabel"] {{ color: var(--ml-muted) !important; font-size: .8rem; font-weight: 500; }}
+[data-testid="stMetricLabel"] p, [data-testid="stMetricLabel"] {{ color: var(--ml-muted) !important; font-size: .82rem; font-weight: 600; }}
 [data-testid="stMetricValue"] {{ font-family: {FONT_HEAD}; color: var(--ml-text); font-size: 1.75rem; font-weight: 700; }}
-[class*="st-key-mlkpi-accent"] [data-testid="stMetricValue"] {{ color: var(--ml-accent-text); }}
+/* the key number of a page: a dark tile with an orange value */
+[class*="st-key-mlkpi-accent"] [data-testid="stMetric"] {{ background: var(--ml-ink); border-color: var(--ml-ink); }}
+[class*="st-key-mlkpi-accent"] [data-testid="stMetricLabel"] p, [class*="st-key-mlkpi-accent"] [data-testid="stMetricLabel"] {{
+  color: #CBD5E1 !important; }}
+[class*="st-key-mlkpi-accent"] [data-testid="stMetricValue"] {{ color: var(--ml-orange-soft); }}
+[class*="st-key-mlkpi-accent"] [data-testid="stMetricDelta"] div, [class*="st-key-mlkpi-accent"] [data-testid="stMetricDeltaDescription"] {{
+  color: #E2E8F0 !important; }}
+[class*="st-key-mlkpi-accent"] [data-testid="stTooltipIcon"] svg, [class*="st-key-mlkpi-accent"] [data-testid="stTooltipHoverTarget"] svg {{
+  color: #CBD5E1; stroke: #CBD5E1; }}
 
 /* ---------- buttons: primary solid black, secondary white with a border ---------- */
 [data-testid^="stBaseButton-primary"] {{
@@ -239,7 +256,7 @@ hr {{ border-color: var(--ml-border) !important; }}
 [data-testid="stTabs"] [role="tablist"] {{ gap: 6px; border-bottom: 1px solid var(--ml-border); }}
 [data-testid="stTab"] {{ color: var(--ml-muted); font-weight: 600; padding: 8px 14px; }}
 [data-testid="stTab"]:hover {{ color: var(--ml-text); }}
-[data-testid="stTab"][aria-selected="true"] {{ color: var(--ml-text); box-shadow: inset 0 -2px 0 var(--ml-ink); }}
+[data-testid="stTab"][aria-selected="true"] {{ color: var(--ml-text); box-shadow: inset 0 -3px 0 var(--ml-orange); }}
 
 /* ---------- expanders, dataframes, uploader, alerts ---------- */
 [data-testid="stExpander"] details {{ background: var(--ml-surface); border: 1px solid var(--ml-border) !important;
@@ -252,17 +269,24 @@ hr {{ border-color: var(--ml-border) !important; }}
 [data-testid="stAlertContainer"] {{ border-radius: var(--ml-r-card); }}
 
 /* ---------- sidebar ---------- */
-[data-testid="stSidebar"] {{ background: {SIDEBAR}; border-right: 1px solid var(--ml-border); }}
-[data-testid="stSidebarNavLink"] {{ border-radius: 8px; margin: 1px 0; transition: background .15s; }}
-[data-testid="stSidebarNavLink"]:hover {{ background: var(--ml-sky-soft); }}
-[data-testid="stSidebarNavLink"][aria-current="page"] {{ background: var(--ml-sky); }}
-[data-testid="stSidebarNavLink"][aria-current="page"] span {{ color: var(--ml-ink) !important; font-weight: 600; }}
-[data-testid="stSidebarNavLink"][aria-current="page"] [data-testid="stIconMaterial"] {{ color: var(--ml-ink) !important; }}
-[data-testid="stNavSectionHeader"] {{ color: #8091A5; text-transform: uppercase; letter-spacing: .08em; font-size: .7rem; }}
+/* dark sidebar: light text, orange bar on the active page */
+[data-testid="stSidebar"] {{ background: {SIDEBAR}; border-right: 1px solid {SIDEBAR}; }}
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {{ color: {SIDE_TEXT}; }}
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"], [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {{
+  color: #AEBBCB !important; }}
+[data-testid="stSidebarNavLink"] {{ border-radius: 8px; margin: 1px 0; border-left: 3px solid transparent; transition: background .15s; }}
+[data-testid="stSidebarNavLink"] span, [data-testid="stSidebarNavLink"] [data-testid="stIconMaterial"] {{ color: #CBD5E1 !important; }}
+[data-testid="stSidebarNavLink"]:hover {{ background: rgba(255,255,255,.06); }}
+[data-testid="stSidebarNavLink"][aria-current="page"] {{ background: rgba(249,115,22,.16); border-left-color: var(--ml-orange); }}
+[data-testid="stSidebarNavLink"][aria-current="page"] span {{ color: #FFFFFF !important; font-weight: 600; }}
+[data-testid="stSidebarNavLink"][aria-current="page"] [data-testid="stIconMaterial"] {{ color: var(--ml-orange) !important; }}
+[data-testid="stNavSectionHeader"] {{ color: #7DD3FC !important; text-transform: uppercase; letter-spacing: .1em; font-size: .7rem; font-weight: 700; }}
+[data-testid="stSidebar"] [data-testid="stSelectbox"] > div > div {{ background: #1E293B !important; border-color: #334155 !important; }}
+[data-testid="stSidebar"] hr {{ border-color: #1E293B !important; }}
 [data-testid="stSidebarLogo"], [data-testid="stSidebarHeader"] [data-testid="stLogo"] {{ height: 2.4rem !important; max-width: 100%; }}
 [data-testid="stSidebarHeader"] {{ height: auto; padding-top: 1rem; }}
 [data-testid="stTopNav"] [data-testid="stLogo"], [data-testid="stHeader"] [data-testid="stLogo"] {{ height: 2rem !important; }}
-[data-testid="stTopNavLink"][aria-current="page"] {{ background: var(--ml-sky); }}
+[data-testid="stTopNavLink"][aria-current="page"] {{ box-shadow: inset 0 -3px 0 var(--ml-orange); }}
 
 /* ---------- badges, pills, brand ---------- */
 [data-testid="stMarkdownBadge"], .ml-pill {{ border-radius: {R_PILL}px !important; padding: 2px 10px; font-weight: 600; }}

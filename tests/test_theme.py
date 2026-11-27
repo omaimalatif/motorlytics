@@ -18,7 +18,7 @@ from ui.components import route_deck  # noqa: E402
 c = Checks("test_theme")
 cfg = tomllib.loads((ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8"))
 th = cfg["theme"]
-c.ok(th["base"] == "light" and th["primaryColor"] == theme.INK and th["backgroundColor"] == theme.BG
+c.ok(th["base"] == "light" and th["primaryColor"] == theme.ORANGE and th["backgroundColor"] == theme.BG
      and th["secondaryBackgroundColor"] == theme.RAISED and th["textColor"] == theme.TEXT,
      "config.toml base colours match ui/theme.py")
 c.ok(cfg["client"]["toolbarMode"] == "minimal", "Deploy button and main menu hidden")
