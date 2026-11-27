@@ -43,8 +43,9 @@ for sel in ['st-key-mlcard', 'stMetric', 'stBaseButton-primary', 'stBaseButton-s
     if sel not in theme.CSS:
         c.ok(False, f"CSS styles {sel}")
 c.ok(all(s in theme.CSS for s in ['st-key-mlcard', 'stSidebarNavLink', 'stFileUploaderDropzone']), "CSS covers the widgets")
-c.ok(all((ROOT / p).exists() for p in [theme.LOGO, theme.ICON]) and theme.MARK_SVG.exists()
-     and ".ml-brandmark" in theme.icon_css() and "Motor" in theme.brand_lockup(), "minimal logo: mark, lockup and icon")
+c.ok(all((ROOT / p).exists() for p in [theme.LOGO, theme.ICON]) and theme.GAUGE_O_SVG.exists()
+     and ".ml-gauge-o" in theme.icon_css() and 'M<span class="ml-gauge-o"' in theme.brand_lockup(),
+     "logo: the wordmark with a gauge 'o' (no separate icon)")
 c.ok(hashlib.sha256((ROOT / "assets/brand/motorlytics_logo.png").read_bytes()).hexdigest().startswith("89d72e8742b39654"),
      "the first logo file is kept unchanged")
 
@@ -62,7 +63,7 @@ at.run()
 c.ok(any("st-key-mlcard" in e.proto.body for e in at.get("html")), "theme CSS injected (app.py runs theme.setup() "
      "before every page)")
 src = (ROOT / "app.py").read_text(encoding="utf-8")
-c.ok("page_icon=theme.ICON" in src and "st.logo(image=theme.LOGO" in src and theme.LOGO.endswith("lockup.png"),
+c.ok("page_icon=theme.ICON" in src and "st.logo(image=theme.LOGO" in src and theme.LOGO.endswith("wordmark.png"),
      "logo file used for the sidebar and the browser tab")
 svgs = list((ROOT / "assets" / "icons").glob("*.svg")) + list((ROOT / "assets" / "images").glob("*.svg"))
 c.ok(len(svgs) >= 10 and all(p.read_text(encoding="utf-8").lstrip().startswith("<svg") and "<image" not in

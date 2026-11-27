@@ -14,10 +14,10 @@ import plotly.io as pio
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
-# brand: a minimal gauge mark in the brand gradient (original); the first logo stays in assets/brand, unused
-LOGO = "assets/brand/motorlytics_lockup.png"        # mark + wordmark, transparent: sidebar (st.logo)
-ICON = "assets/brand/motorlytics_mark.png"          # mark only: browser tab, collapsed sidebar
-MARK_SVG = ROOT / "assets" / "brand" / "motorlytics_mark.svg"   # mark for the HTML lockup on public pages
+# brand: the name only, "Motorlytics", with the first "o" drawn as a gauge (no separate icon)
+LOGO = "assets/brand/motorlytics_wordmark.png"      # the wordmark as an image: sidebar (st.logo needs an image)
+ICON = "assets/brand/gauge_o.png"                   # the gauge "o" alone: browser tab only (it needs an image)
+GAUGE_O_SVG = ROOT / "assets" / "brand" / "gauge_o.svg"   # the gauge "o" inside the live wordmark on the pages
 ICONS = ROOT / "assets" / "icons"
 IMAGES = ROOT / "assets" / "images"
 
@@ -116,16 +116,16 @@ def icon_css(color: str = ORANGE) -> str:
     for p in sorted(ICONS.glob("*.svg")):
         svg = p.read_text(encoding="utf-8").strip().replace("currentColor", color)
         rules.append(f'.ml-icon-{p.stem} {{ background-image: url("{_data_uri(svg)}"); }}')
-    if MARK_SVG.exists():
-        rules.append(f'.ml-brandmark {{ background-image: url("{_data_uri(MARK_SVG.read_text(encoding="utf-8"))}"); }}')
+    if GAUGE_O_SVG.exists():
+        rules.append(f'.ml-gauge-o {{ background-image: url("{_data_uri(GAUGE_O_SVG.read_text(encoding="utf-8"))}"); }}')
     return "\n".join(rules)
 
 
 def brand_lockup(size: int = 64) -> str:
-    """The logo as HTML: gauge mark + 'Motorlytics' wordmark in the heading font ('lytics' in the brand gradient)."""
-    return (f'<div class="ml-lockup" style="gap:{size * 0.28:.0f}px"><span class="ml-brandmark" '
-            f'style="width:{size}px;height:{size}px" aria-hidden="true"></span><span class="ml-wordmark" '
-            f'style="font-size:{size * 0.72:.0f}px">Motor<span class="ml-grad-text">lytics</span></span></div>')
+    """The logo as HTML: the word 'Motorlytics' in the heading font, the first 'o' a gauge, 'lytics' in the brand
+    gradient. size: font size in px."""
+    return (f'<div class="ml-lockup"><span class="ml-wordmark" style="font-size:{size}px" aria-label="Motorlytics">'
+            f'M<span class="ml-gauge-o" aria-hidden="true"></span>tor<span class="ml-grad-text">lytics</span></span></div>')
 
 
 def icon(name: str, size: int = 22) -> str:
@@ -275,8 +275,8 @@ hr {{ border-color: var(--ml-border) !important; }}
 .ml-pill {{ display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; border: 1px solid var(--ml-border);
   background: var(--ml-raised); color: var(--ml-text); }}
 .ml-icon {{ display: inline-block; background-repeat: no-repeat; background-position: center; background-size: contain; }}
-.ml-brandmark {{ display: inline-block; flex: none; background-size: contain; background-repeat: no-repeat;
-  filter: drop-shadow(0 8px 24px {_hex_rgba(RED, .35)}); }}
+.ml-gauge-o {{ display: inline-block; width: .6em; height: .6em; margin: 0 .025em; vertical-align: -0.02em;
+  background-size: contain; background-repeat: no-repeat; background-position: center; }}
 .ml-lockup {{ display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }}
 .ml-wordmark {{ font-family: {FONT_HEAD}; font-weight: 800; letter-spacing: -0.03em; color: var(--ml-text); line-height: 1; }}
 .ml-grad-text {{ background: var(--ml-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }}

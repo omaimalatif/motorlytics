@@ -40,7 +40,7 @@ benefits = [("fuel", "Fuel use per trip", "Measured from MAF, or predicted by th
 left, right = st.columns([1, 1.05], gap="large")
 with left:
     with st.container(key="mlbrand", horizontal_alignment="center", gap="medium"):
-        st.html(theme.brand_lockup(60))
+        st.html(theme.brand_lockup(56))
         st.html('<div class="ml-benefits">' + "".join(
             f'<div class="ml-benefit"><span class="ml-ic">{theme.icon(ic, 20)}</span><div><b>{E(t)}</b>'
             f'<span class="t">{E(d)}</span></div></div>' for ic, t, d in benefits) + "</div>")

@@ -33,7 +33,7 @@ def first_start() -> bool:
 first_start()
 db.init_db()
 theme.setup()
-st.logo(image=theme.LOGO, size="large", icon_image=theme.ICON)   # mark + wordmark; mark when collapsed
+st.logo(image=theme.LOGO, size="large")   # the wordmark everywhere (no separate icon)
 
 
 user = session.user()

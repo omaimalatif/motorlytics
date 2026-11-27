@@ -32,7 +32,8 @@ c.ok(public.count("st.Page(") == 2 and "welcome.py" in public and "sign_in.py" i
      "signed out: navigation has only Welcome and Sign in")
 imgs = [e for e in at.main if type(e).__name__ == "Image"]
 c.ok(len(imgs) == 1, "car illustration shown")
-c.ok('class="ml-lockup"' in html and "ml-brandmark" in html, "logo (mark + wordmark) shown in the hero")
+c.ok('class="ml-lockup"' in html and "ml-gauge-o" in html and "brandmark" not in html,
+     "logo: the name only, with the gauge 'o', in the hero")
 
 # Sign in button -> Sign in page with the two tabs; wrong password -> inline error
 [b for b in at.button if b.label == "Sign in"][0].click().run()
