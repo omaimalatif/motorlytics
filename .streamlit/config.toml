@@ -2,6 +2,9 @@
 # Colours, fonts and the CSS that goes beyond these options live in ui/theme.py (single source of truth;
 # keep the values below in sync with it).
 
+[server]
+enableWebsocketCompression = true   # smaller messages: faster on slow mobile connections
+
 [client]
 toolbarMode = "minimal"          # no Deploy button or main menu
 # the page files live in app_pages/ (not pages/), so Streamlit never shows its automatic page list on start

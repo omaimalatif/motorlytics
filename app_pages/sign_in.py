@@ -16,6 +16,7 @@ st.html("""<style>
 [data-testid="stHeader"] { background: #FFFFFF; }
 [data-testid="stMainBlockContainer"] { padding-top: 5.5rem; max-width: 1180px; }
 .st-key-mlbrand .ml-lockup { margin: 16px 0 20px 0; }
+@media (max-width: 640px) { .st-key-mlbrand .ml-wordmark { font-size: 40px !important; } }
 .st-key-mlbrand { background: #D4ECF8; border: 1px solid #C3E1F2; border-radius: 16px; padding: 32px 28px;
   min-height: 100%; position: relative; overflow: hidden; }
 @media (max-width: 640px) {   /* phones: the form first, the brand panel under it */
@@ -64,6 +65,10 @@ with right:
                     st.error("Email or password is not correct.", icon=":material/error:")
             st.caption(":material/info: Just looking? Sign in with the demo account: **demo@motorlytics.test** / "
                        "**demo12345**")
+            if not auth.db.get_user_by_email("demo@motorlytics.test") and \
+                    __import__("os").environ.get("MOTORLYTICS_NO_DEMO") != "1":
+                st.caption(":material/hourglass_top: The demo account is being set up after a restart; try again in "
+                           "a few seconds.")
         with tab_up:
             with st.form("register", border=False):
                 name = st.text_input("Name")

@@ -58,6 +58,15 @@ def trip_calibration_line(trip: dict) -> str:
     return "Not calibrated yet: upload a trip with MAF or log a fill-up to calibrate your car."
 
 
+def is_phone() -> bool:
+    """True on a phone browser (from the User-Agent), to keep heavy widgets such as maps off the first load."""
+    try:
+        ua = st.context.headers.get("User-Agent", "") or ""
+    except Exception:
+        return False
+    return any(k in ua for k in ("iPhone", "Android", "Mobile"))
+
+
 def user() -> dict | None:
     uid = st.session_state.get("user_id")
     return db.get_user(uid) if uid else None

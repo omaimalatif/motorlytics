@@ -28,6 +28,9 @@ c.ok("gradient" not in theme.CSS and "box-shadow: 0 " not in theme.CSS and "tran
 c.ok(not (ROOT / "pages").exists() and (ROOT / "app_pages").is_dir(),
      "page files in app_pages/ (no automatic page list flashes on start)")
 c.ok(th["chartCategoricalColors"] == theme.CATEGORICAL, "categorical chart colours in the fixed order")
+c.ok("Plus Jakarta Sans:https://fonts.googleapis.com" in th["headingFont"] and "@import" not in theme.CSS,
+     "fonts loaded once (config.toml), no duplicate @import")
+c.ok(cfg["server"]["enableWebsocketCompression"] is True, "websocket compression on (faster on mobile data)")
 
 t = theme.template().layout
 c.ok(pio.templates.default == "motorlytics" and t.paper_bgcolor == "rgba(0,0,0,0)" and t.yaxis.gridcolor == theme.GRID
@@ -47,7 +50,7 @@ c.ok("positron" in spec["mapStyle"] and spec["layers"][0]["getColor"] == theme.M
 
 for sel in ['st-key-mlcard', 'stMetric', 'stBaseButton-primary', 'stBaseButton-secondary', 'stTextInputRootElement',
             'stTab', 'stExpander', 'stDataFrame', 'stFileUploaderDropzone', 'stSidebarNavLink', 'aria-current',
-            'stMarkdownBadge', 'Plus+Jakarta+Sans', 'tabular-nums']:
+            'stMarkdownBadge', 'tabular-nums', 'max-width: 640px', 'font-size: 16px']:
     if sel not in theme.CSS:
         c.ok(False, f"CSS styles {sel}")
 c.ok(all(s in theme.CSS for s in ['st-key-mlcard', 'stSidebarNavLink', 'stFileUploaderDropzone']), "CSS covers the widgets")

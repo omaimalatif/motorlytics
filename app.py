@@ -14,10 +14,14 @@ import streamlit as st
 from core import db          # light: sqlite only. pandas, Plotly and the models load only after sign-in
 from ui import theme
 
-st.set_page_config(page_title="Motorlytics", page_icon=theme.ICON, layout="wide")
+_ua = (st.context.headers.get("User-Agent", "") or "") if st.context.headers else ""
+PHONE = any(k in _ua for k in ("iPhone", "Android", "Mobile"))
+# phones: the sidebar starts closed (open, it covers the whole screen); open it with the menu button
+st.set_page_config(page_title="Motorlytics", page_icon=theme.ICON, layout="wide",
+                   initial_sidebar_state="collapsed" if PHONE else "auto")
 
 
-@st.cache_resource(show_spinner="Setting up the demo account (first start only)...")
+@st.cache_resource(show_spinner=False)
 def first_start() -> bool:
     """Once per server process: database + calibration store, and the demo account if there are no users (online the
     disk starts empty and resets on restart). MOTORLYTICS_NO_DEMO=1 turns the demo off (tests)."""
@@ -27,8 +31,17 @@ def first_start() -> bool:
     calib = os.environ.get("MOTORLYTICS_CALIB") or db.ROOT / "models" / "calibration.json"
     if db.user_count() and os.path.exists(calib):         # normal start: nothing to set up, nothing heavy to import
         return False
-    from core import demo
-    return demo.ensure_first_start()
+
+    def build():                                          # in the background: the first page shows right away
+        try:
+            from core import demo
+            demo.ensure_first_start()
+        except Exception as e:                            # never break the app over the demo account
+            print("demo account setup failed:", e)
+
+    import threading
+    threading.Thread(target=build, name="demo-setup", daemon=True).start()
+    return True
 
 
 first_start()
@@ -40,6 +53,10 @@ uid = st.session_state.get("user_id")
 user = db.get_user(uid) if uid else None
 if not user:
     # signed out: only the public pages, in a top bar (no app pages, no sidebar)
+    # signed out: no sidebar at all (it can stay open from a signed-in session, half empty)
+    st.html('<style>[data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"], '
+            '[data-testid="stSidebarCollapseButton"], [data-testid="stExpandSidebarButton"] '
+            '{ display: none !important; }</style>')
     st.logo(image=theme.LOGO, size="large")          # dark-text wordmark on the light top bar
     public = st.navigation([st.Page("app_pages/welcome.py", title="Welcome", icon=":material/home:", default=True),
                             st.Page("app_pages/sign_in.py", title="Sign in", icon=":material/login:")], position="top")

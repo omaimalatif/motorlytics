@@ -73,7 +73,8 @@ st.html("""<style>
   border-bottom: 1px solid #C3E1F2; position: relative; }
 .st-key-mlhero .ml-lockup { margin: 64px 0 12px 0; }
 @media (max-width: 640px) { .st-key-mlhero .ml-wordmark { font-size: 46px !important; } }
-@media (max-width: 640px) { .st-key-mlhero { padding-top: 40px; } }
+@media (max-width: 640px) { .st-key-mlhero { padding-top: 40px; }
+  [data-testid="stMainBlockContainer"] { padding-top: 0 !important; } }   /* hero flush with the top bar */
 .ml-hot { color: #EA580C; }
 /* the hero call to action in the warm accent */
 .st-key-hero_start button { background: #F97316 !important; border-color: #F97316 !important; color: #FFFFFF !important; }

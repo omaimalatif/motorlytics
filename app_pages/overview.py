@@ -141,7 +141,14 @@ with r1:
                     session.open_trip(r["id"])
 with r2:
     with ui.card("Last trip", f"{session.fmt_dt(last['started'])} · {last['dist_km']:.1f} km · {last['l100']:.1f} L/100 km"):
-        ui.route_map((last["route"] or {}).get("path"), height=330, key="overview_map", width_px=560)
+        path = (last["route"] or {}).get("path")
+        # phones: the map engine is the heaviest part of this page, so it loads only when asked for
+        if session.is_phone() and path and not st.session_state.get("overview_show_map"):
+            if st.button("Show route map", icon=":material/map:", key="overview_map_btn", width="stretch"):
+                st.session_state["overview_show_map"] = True
+                st.rerun()
+        else:
+            ui.route_map(path, height=300 if session.is_phone() else 330, key="overview_map", width_px=560)
 
 # ---------------- top tip ----------------
 best = None

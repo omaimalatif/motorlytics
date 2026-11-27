@@ -65,7 +65,8 @@ with ui.chart_card("Fuel use over time", take or "Each dot is a trip; the line i
         lo, hi = d["day"].min(), d["day"].max()
         pad = pd.Timedelta(days=3) if (hi - lo) < pd.Timedelta(days=7) else pd.Timedelta(days=1)
         span_days = max(1, ((hi + pad) - (lo - pad)).days)
-        step = max(1, -(-span_days // 10))                 # whole days, about 10 ticks: never sub-day ticks
+        n_ticks = 4 if session.is_phone() else 10          # phones: fewer date labels so they do not overlap
+        step = max(1, -(-span_days // n_ticks))            # whole days: never sub-day ticks
         fig.update_xaxes(type="date", tickformat="%d %b %Y", range=[lo - pad, hi + pad], dtick=step * 86_400_000)
         fig.update_yaxes(rangemode="tozero", title="L/100 km")
         fig.update_layout(meta="fuel_over_time")

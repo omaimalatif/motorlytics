@@ -156,7 +156,6 @@ def esc(text) -> str:
 
 # ---------------- CSS ----------------
 CSS = f"""
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {{
   --ml-ink: {INK}; --ml-bg: {BG}; --ml-surface: {SURFACE}; --ml-raised: {RAISED}; --ml-border: {BORDER};
@@ -291,8 +290,31 @@ hr {{ border-color: var(--ml-border) !important; }}
 .ml-gauge-o {{ display: inline-block; width: .6em; height: .6em; margin: 0 .025em; vertical-align: -0.02em;
   background-size: contain; background-repeat: no-repeat; background-position: center; }}
 .ml-lockup {{ display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }}
-.ml-wordmark {{ font-family: {FONT_HEAD}; font-weight: 800; letter-spacing: -0.03em; color: var(--ml-ink); line-height: 1; }}
+.ml-wordmark {{ font-family: {FONT_HEAD}; font-weight: 800; letter-spacing: -0.03em; color: var(--ml-ink); line-height: 1;
+  white-space: nowrap; }}
 .ml-grad-text {{ color: var(--ml-accent); }}
+
+/* ---------- phones (iPhone / Android, up to 640 px) ---------- */
+@media (max-width: 640px) {{
+  [data-testid="stMainBlockContainer"] {{ padding: 4.5rem 1rem 3rem 1rem !important; }}   /* clear of the top bar and menu button */
+  .stApp h1 {{ font-size: 1.6rem; }}
+  .stApp h2 {{ font-size: 1.3rem; }}
+  .stApp h3 {{ font-size: 1.15rem; }}
+  /* 16 px text in fields: iPhones zoom into anything smaller when you tap it */
+  input, textarea, select, [data-testid="stTextInputRootElement"] input, [data-testid="stNumberInputField"] {{
+    font-size: 16px !important; }}
+  [class*="st-key-mlcard"] {{ padding: 14px 14px; }}
+  [data-testid="stMetric"] {{ padding: 10px 12px; }}
+  [data-testid="stMetricValue"] {{ font-size: 1.35rem; }}
+  [data-testid="stMetricLabel"] p {{ font-size: .75rem; }}
+  /* KPI rows: two tiles per row instead of one long column */
+  [data-testid="stHorizontalBlock"]:has([class*="st-key-mlkpi"]):not(:has([class*="st-key-mlcard"])) {{
+    flex-direction: row !important; flex-wrap: wrap !important; gap: 8px !important; }}
+  [data-testid="stHorizontalBlock"]:has([class*="st-key-mlkpi"]):not(:has([class*="st-key-mlcard"])) > [data-testid="stColumn"] {{
+    flex: 1 1 calc(50% - 8px) !important; width: calc(50% - 8px) !important; min-width: calc(50% - 8px) !important; }}
+  [data-testid="stTabs"] [role="tablist"] {{ overflow-x: auto; flex-wrap: nowrap; }}
+  [data-testid="stTab"] {{ padding: 8px 10px; white-space: nowrap; }}
+}}
 """
 
 
