@@ -22,6 +22,16 @@ for f in ["gps_trip1.csv", "gps_trip3.csv", "ved_city_vehicle575.csv", "ved_mixe
     upload(user, car, [SAMPLES / f])
 
 DATE_STR = re.compile(r"^\d{4}-\d{2}-\d{2}")
+
+
+def values(arr):
+    """Plotly arrays come as lists or as {'dtype', 'bdata'} (base64 numpy buffer)."""
+    if isinstance(arr, dict) and "bdata" in arr:
+        import base64
+
+        import numpy as np
+        return np.frombuffer(base64.b64decode(arr["bdata"]), dtype=arr["dtype"]).tolist()
+    return list(arr or [])
 SUBDAY_FMT = re.compile(r"%[HIMSLfp]")
 
 
@@ -57,6 +67,18 @@ for page in ["overview", "analytics", "trip_history", "calibration"]:
     at.switch_page(f"pages/{page}.py").run()
     c.page(at, page)
     specs = check_specs(at, page)
+    if page == "analytics":
+        style = specs[3]
+        bars = [tr for tr in style["data"] if tr["type"] == "bar"]
+        xs = {x for tr in bars for x in values(tr["x"])}
+        ys = [y for tr in bars for y in values(tr["y"])]
+        texts = [x for tr in bars for x in tr.get("text", [])]
+        c.ok(style["layout"].get("barmode") == "group" and xs <= {"city", "mixed", "highway"}
+             and {tr["name"] for tr in bars} <= {"eco", "normal", "aggressive"},
+             "style chart: bars grouped by road type, one colour per style", f"{sorted(xs)}")
+        c.ok(len(texts) == len(ys) and all(re.fullmatch(r"1 trip|\d+ trips", x) for x in texts),
+             "style chart: trip count on every bar", ", ".join(texts))
+        c.ok(style["layout"]["yaxis"]["range"][1] >= max(ys) * 1.1, "style chart: y-axis fits the tallest bar")
     if page == "overview":
         day, hour = specs[0], specs[1]
         labels = [x for tr in day["data"] for x in tr["x"]]

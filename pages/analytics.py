@@ -75,11 +75,16 @@ with b1:
         fig.update_yaxes(title="trips", dtick=1 if len(t) < 10 else None)
         st.plotly_chart(tidy(fig), width="stretch")
 with b2:
-    with ui.card("Fuel use by driving style"):
-        s = t.groupby("style", as_index=False).agg(l100=("l100", "median"), trips=("id", "size"))
+    with ui.card("Fuel use by driving style and road type"):
+        s = t.groupby(["road_type", "style"], as_index=False).agg(l100=("l100", "median"), trips=("id", "size"))
         s["label"] = s["trips"].map(lambda n: session.plural(n, "trip"))
-        fig = px.bar(s, x="style", y="l100", text="label", category_orders={"style": STYLES},
-                     labels={"style": "", "l100": "median L/100 km"}, hover_data={"trips": True, "label": False})
+        fig = px.bar(s, x="road_type", y="l100", color="style", barmode="group", text="label",
+                     category_orders={"road_type": ROADS, "style": STYLES},
+                     color_discrete_map={"eco": "#2ca02c", "normal": "#4c78a8", "aggressive": "#e4572e"},
+                     labels={"road_type": "", "l100": "median L/100 km", "style": "style"},
+                     hover_data={"trips": True, "label": False})
+        fig.update_traces(textposition="outside", cliponaxis=False)
+        fig.update_yaxes(range=[0, float(s["l100"].max()) * 1.25])      # room for the tallest bar and its label
         st.plotly_chart(tidy(fig), width="stretch")
 
 c1, c2 = st.columns(2)
