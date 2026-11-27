@@ -8,6 +8,7 @@ import streamlit as st
 from core import cars, texts, weather
 from ui import components as ui
 from ui import session
+from ui import theme
 
 u = session.require_user()
 car = session.active_car(u)
@@ -123,7 +124,7 @@ with g1:
         # day labels on a category axis: plotly never turns it into a time axis with sub-day ticks
         fig.update_xaxes(type="category", categoryorder="array", categoryarray=list(d["day"]), title=None)
         fig.update_layout(showlegend=False, height=280, margin=dict(l=0, r=0, t=10, b=0))
-        st.plotly_chart(fig, width="stretch")
+        theme.plot(fig, fig.layout.height or 280)
         if note:
             st.caption(note)
 with g2:
@@ -132,4 +133,4 @@ with g2:
         fig = px.bar(x=list(range(24)), y=by_hour.values, labels={"x": "hour of day", "y": "km"})
         fig.update_xaxes(type="linear", tickmode="array", tickvals=list(range(0, 24, 2)), range=[-0.5, 23.5])
         fig.update_layout(height=280, margin=dict(l=0, r=0, t=10, b=0))
-        st.plotly_chart(fig, width="stretch")
+        theme.plot(fig, fig.layout.height or 280)

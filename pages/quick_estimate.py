@@ -6,6 +6,7 @@ import streamlit as st
 from core import cars, quick_estimate, weather
 from ui import components as ui
 from ui import session
+from ui import theme
 
 u = session.require_user()
 ui.page_header("Quick estimate", "No log needed: fuel and cost for a planned or past trip, from typical driving "
@@ -83,7 +84,7 @@ if est:
             fig = px.bar(d, x="style", y="litres", text=d["km/L"].map(lambda x: f"{x:.1f} km/L"),
                          category_orders={"style": quick_estimate.STYLES})
             fig.update_layout(height=260, margin=dict(l=0, r=0, t=10, b=0), xaxis_title=None, yaxis_title="litres")
-            st.plotly_chart(fig, width="stretch")
+            theme.plot(fig, fig.layout.height or 280)
             if est["eco_saving_litres"] > 0.005:
                 st.caption(f"Driving eco would save about {est['eco_saving_litres']:.2f} L"
                            + (f" (PKR {est['eco_saving_pkr']:.0f})" if est["eco_saving_pkr"] else "") + " on this trip.")

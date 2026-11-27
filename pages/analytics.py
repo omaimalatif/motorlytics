@@ -6,6 +6,7 @@ import streamlit as st
 
 from ui import components as ui
 from ui import session
+from ui import theme
 
 u = session.require_user()
 ui.page_header("Analytics", "Your trips over time and what drives your fuel use.")
@@ -52,7 +53,7 @@ with a1:
         step = max(1, -(-span_days // 10))                 # whole days, about 10 ticks: never sub-day ticks
         fig.update_xaxes(type="date", tickformat="%d %b %Y", range=[lo - pad, hi + pad], dtick=step * 86_400_000)
         fig.update_yaxes(rangemode="tozero")
-        st.plotly_chart(tidy(fig), width="stretch")
+        theme.plot(fig)
 with a2:
     with ui.card("Fuel use by road type"):
         counts = t["road_type"].value_counts()
@@ -64,7 +65,7 @@ with a2:
             fig = px.box(t, x="road_type", y="l100", points="all", category_orders={"road_type": ROADS},
                          labels={"road_type": "", "l100": "L/100 km"})
         fig.update_yaxes(rangemode="tozero")
-        st.plotly_chart(tidy(fig), width="stretch")
+        theme.plot(fig)
 
 b1, b2 = st.columns(2)
 with b1:
@@ -73,7 +74,7 @@ with b1:
                                      hovertemplate="eco-score %{x}, trips: %{y}<extra></extra>"))
         fig.update_xaxes(range=[0, 105], dtick=10, title="eco-score (0-100)")
         fig.update_yaxes(title="trips", dtick=1 if len(t) < 10 else None)
-        st.plotly_chart(tidy(fig), width="stretch")
+        theme.plot(fig)
 with b2:
     with ui.card("Fuel use by driving style and road type"):
         s = t.groupby(["road_type", "style"], as_index=False).agg(l100=("l100", "median"), trips=("id", "size"))
@@ -85,7 +86,7 @@ with b2:
                      hover_data={"trips": True, "label": False})
         fig.update_traces(textposition="outside", cliponaxis=False)
         fig.update_yaxes(range=[0, float(s["l100"].max()) * 1.25])      # room for the tallest bar and its label
-        st.plotly_chart(tidy(fig), width="stretch")
+        theme.plot(fig)
 
 c1, c2 = st.columns(2)
 with c1:
@@ -103,7 +104,7 @@ with c1:
                                      line=dict(dash="dash", color="gray")))
             fig.update_xaxes(range=[0, top])
             fig.update_yaxes(range=[0, top], scaleanchor="x", scaleratio=1)
-            st.plotly_chart(tidy(fig, 320), width="stretch")
+            theme.plot(fig, 320)
         else:
             st.caption("No trips with MAF yet.")
 with c2:
@@ -112,6 +113,6 @@ with c2:
             mth = t.assign(month=t["started"].dt.to_period("M").astype(str)).groupby("month", as_index=False)["cost_pkr"].sum()
             fig = px.bar(mth, x="month", y="cost_pkr", labels={"month": "", "cost_pkr": "PKR"})
             fig.update_xaxes(type="category")
-            st.plotly_chart(tidy(fig), width="stretch")
+            theme.plot(fig)
         else:
             st.caption("Set your petrol price on the Account page to see costs for new trips.")

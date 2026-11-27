@@ -2,7 +2,7 @@
 
     streamlit run app.py
 
-Phase 1: structure and plain Streamlit widgets. Logic lives in core/ (no Streamlit code there) and
+Look and feel: ui/theme.py (colours, CSS, chart template) and .streamlit/config.toml. Logic lives in core/ (no Streamlit code there) and
 motorlytics_features.py; reusable widgets in ui/components.py.
 Env vars for testing: MOTORLYTICS_DB (SQLite file), MOTORLYTICS_CALIB (calibration store).
 """
@@ -11,9 +11,11 @@ import streamlit as st
 from core import auth, cars, db
 from ui import components as ui
 from ui import session
+from ui import theme
 
 st.set_page_config(page_title="Motorlytics", page_icon=":material/local_gas_station:", layout="wide")
 db.init_db()
+theme.setup()
 
 
 def login_page():

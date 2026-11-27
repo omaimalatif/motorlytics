@@ -1,4 +1,4 @@
-"""Small reusable UI pieces (phase 1: plain st.* calls; colours and CSS come in phase 2)."""
+"""Small reusable UI pieces, styled by ui/theme.py (cards are keyed containers, tiles are st.metric)."""
 import math
 from contextlib import contextmanager
 
@@ -6,24 +6,41 @@ import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
-BADGE_COLORS = {"good": "green", "info": "blue", "warn": "orange", "bad": "red", "neutral": "gray"}
+from ui import theme
+
+BADGE_COLORS = {k: v[0] for k, v in theme.BADGE.items()}
 
 
-def page_header(title: str, subtitle: str = None, icon: str = None) -> None:
-    st.title(f"{icon} {title}" if icon else title)
-    if subtitle:
-        st.caption(subtitle)
+def page_header(title: str, subtitle: str = None, icon: str = None, actions: bool = False):
+    """The same header on every page: title, one-line subtitle, thin brand accent line. actions=True returns a
+    right-hand column for buttons (with ...)."""
+    if actions:
+        left, right = st.columns([3, 1], vertical_alignment="bottom")
+    else:
+        left, right = st.container(), None
+    with left:
+        st.title(f"{icon} {title}" if icon else title)
+        if subtitle:
+            st.caption(subtitle)
+    st.html('<div class="ml-accent-line"></div>')
+    return right
 
 
-def metric_tile(label: str, value, help: str = None, delta=None, delta_color: str = "normal") -> None:
-    with st.container(border=True):
-        st.metric(label, value, delta=delta, delta_color=delta_color, help=help)
+def metric_tile(label: str, value, help: str = None, delta=None, delta_color: str = "normal", accent: bool = False,
+                chart_data=None, chart_type: str = "area", delta_description: str = None) -> None:
+    """One KPI tile (st.metric, styled as a raised card). accent: orange value and a gradient top line;
+    chart_data: a small sparkline under the value."""
+    with st.container(key=theme.next_key("mlkpi-accent" if accent else "mlkpi")):
+        st.metric(label, value, delta=delta, delta_color=delta_color, help=help, chart_data=chart_data,
+                  chart_type=chart_type, delta_description=delta_description)
 
 
 @contextmanager
-def card(title: str = None, caption: str = None, height: int = None):
-    """with card("Title"): ...  -> a bordered container with an optional heading."""
-    with st.container(border=True, height=height if height else "content"):
+def card(title: str = None, caption: str = None, height: int = None, kind: str = None):
+    """with card("Title"): ...  -> a styled card (keyed container mlcard-...). kind: 'raised', 'hero' or
+    'click' (lifts on hover)."""
+    key = theme.next_key("mlcard" + (f"-{kind}" if kind else ""))
+    with st.container(key=key, height=height if height else "content"):
         if title:
             st.markdown(f"**{title}**")
         if caption:
@@ -31,28 +48,41 @@ def card(title: str = None, caption: str = None, height: int = None):
         yield
 
 
+def chart_card(title: str, takeaway: str = None):
+    """Card for a chart: title and a one-line takeaway under it."""
+    return card(title, takeaway)
+
+
 def badge(text: str, kind: str = "neutral", icon: str = None) -> None:
-    st.badge(text, color=BADGE_COLORS.get(kind, kind), icon=icon)
+    """Status pill: colour + icon + text (never colour alone)."""
+    color, default_icon = theme.BADGE.get(kind, (kind, None))
+    st.badge(text, color=color, icon=icon or default_icon)
+
+
+def style_badge(style: str, suffix: str = " style") -> None:
+    """Driving-style pill in the style colour family, always with the name as text."""
+    color, ic = theme.STYLE_BADGE.get(style, ("gray", None))
+    st.badge(f"{style}{suffix}", color=color, icon=ic)
 
 
 def badges(items) -> None:
     """items: [(text, kind)] shown side by side."""
-    cols = st.columns(len(items) or 1)
-    for c, (text, kind) in zip(cols, items):
-        with c:
+    with st.container(horizontal=True, gap="small"):
+        for text, kind in items:
             badge(text, kind)
 
 
 def tip_card(tip: dict) -> None:
-    """One eco-driving tip: the advice, a plain comparison with eco drivers and the rounded saving."""
+    """One eco-driving tip: the advice, a plain comparison with eco drivers and the saving in bold."""
     from core import texts
-    with st.container(border=True):
-        st.markdown(tip["tip"])
-        st.caption(texts.tip_comparison(tip) + f" Possible saving {texts.saving_text(tip['saving_l_per_100km'])}.")
+    with card(kind="raised"):
+        st.markdown(f":material/lightbulb: {tip['tip']}")
+        st.caption(texts.tip_comparison(tip))
+        st.markdown(f"Possible saving **{texts.saving_text(tip['saving_l_per_100km'])}**")
 
 
 def empty_state(text: str, button: str = None, page: str = None) -> None:
-    st.info(text)
+    st.info(text, icon=":material/info:")
     if button and page and st.button(button):
         st.switch_page(page)
 
@@ -92,20 +122,20 @@ def fit_view(lats, lons, width_px: int = 480, height_px: int = 320, padding: flo
 
 
 def route_deck(path, height: int = 320, width_px: int = 480) -> pdk.Deck:
-    """pydeck map of a GPS route: blue line (4 px) with start (green) and end (red) dots, free CARTO light
-    basemap, view fitted to the route. path: [[lat, lon], ...]."""
+    """pydeck map of a GPS route: orange line (4 px) with start (green) and end (red) dots on the free CARTO
+    dark-matter basemap, view fitted to the route. path: [[lat, lon], ...]."""
     line = [[float(lon), float(lat)] for lat, lon in path]
-    ends = [{"position": line[0], "color": [30, 160, 90]}, {"position": line[-1], "color": [220, 60, 50]}]
+    ends = [{"position": line[0], "color": theme.MAP_START}, {"position": line[-1], "color": theme.MAP_END}]
     view = fit_view([p[1] for p in line], [p[0] for p in line], width_px=width_px, height_px=height)
     return pdk.Deck(
-        layers=[pdk.Layer("PathLayer", data=[{"path": line}], get_path="path", get_color=[40, 110, 220],
+        layers=[pdk.Layer("PathLayer", data=[{"path": line}], get_path="path", get_color=theme.MAP_ROUTE,
                           get_width=4, width_units="pixels", width_min_pixels=3, width_max_pixels=6,
                           cap_rounded=True, joint_rounded=True),
                 pdk.Layer("ScatterplotLayer", data=ends, get_position="position", get_fill_color="color",
                           get_radius=6, radius_units="pixels", radius_min_pixels=4, radius_max_pixels=8,
-                          stroked=True, get_line_color=[255, 255, 255], line_width_min_pixels=1)],
+                          stroked=True, get_line_color=[11, 11, 13], line_width_min_pixels=1)],
         initial_view_state=pdk.ViewState(**view, pitch=0, bearing=0),
-        map_provider="carto", map_style=pdk.map_styles.CARTO_LIGHT)
+        map_provider="carto", map_style=pdk.map_styles.CARTO_DARK)
 
 
 def route_map(path, height: int = 320, key: str = None, width_px: int = 480) -> None:

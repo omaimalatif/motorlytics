@@ -6,6 +6,7 @@ import streamlit as st
 from core import cars, db, scoring, texts
 from ui import components as ui
 from ui import session
+from ui import theme
 
 u = session.require_user()
 P = session.PAGES
@@ -112,7 +113,7 @@ with ui.card("Speed over time"):
         d = pd.DataFrame(sp, columns=["minute", "speed"])
         fig = px.line(d, x="minute", y="speed", labels={"minute": "minutes", "speed": "km/h"})
         fig.update_layout(height=260, margin=dict(l=0, r=0, t=10, b=0))
-        st.plotly_chart(fig, width="stretch")
+        theme.plot(fig, fig.layout.height or 280)
     else:
         st.caption("No speed trace stored for this trip.")
 

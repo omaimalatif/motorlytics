@@ -1,0 +1,38 @@
+# Motorlytics theme: fixed dark theme from the logo (black / red / orange), whatever the OS setting.
+# Colours, fonts and the CSS that goes beyond these options live in ui/theme.py (single source of truth;
+# keep the values below in sync with it).
+
+[client]
+toolbarMode = "minimal"          # no Deploy button or main menu
+
+
+[theme]
+base = "dark"
+primaryColor = "#F26A10"
+backgroundColor = "#0B0B0D"
+secondaryBackgroundColor = "#141417"
+textColor = "#F4F4F5"
+borderColor = "#2A2A31"
+showWidgetBorder = true
+baseRadius = "10px"
+buttonRadius = "10px"
+linkColor = "#F26A10"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap, sans-serif"
+headingFont = "Plus Jakarta Sans:https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap, sans-serif"
+metricValueFontWeight = 700
+dataframeBorderColor = "#2A2A31"
+dataframeHeaderBackgroundColor = "#1B1B20"
+# badge / status colours: success, warning, error (+ calm info, gray); yellow = the "normal" driving style
+greenColor = "#22C55E"
+orangeColor = "#F59E0B"
+redColor = "#DF3511"
+yellowColor = "#C98500"
+blueColor = "#5B9BD5"
+violetColor = "#8B5CF6"
+grayColor = "#A1A1AA"
+chartCategoricalColors = ["#E8650A", "#0D9488", "#8B5CF6"]
+
+[theme.sidebar]
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#141417"
+borderColor = "#1F1F24"
