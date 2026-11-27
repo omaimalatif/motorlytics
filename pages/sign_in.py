@@ -15,7 +15,7 @@ if st.session_state.get("user_id"):           # already signed in (the page stay
 st.html("""<style>
 [data-testid="stHeader"] { background: #000000; }
 [data-testid="stMainBlockContainer"] { padding-top: 5.5rem; max-width: 1180px; }
-.st-key-mlbrand [data-testid="stImage"] { margin: calc(-0.05 * min(440px, 100vw - 90px)) 0 calc(-0.12 * min(440px, 100vw - 90px)) 0; }   /* logo file's own black padding */
+.st-key-mlbrand .ml-lockup { margin: 16px 0 20px 0; }
 .st-key-mlbrand { background: #000000; border: 1px solid #17171B; border-radius: 16px; padding: 32px 28px;
   min-height: 100%; position: relative; overflow: hidden; }
 .st-key-mlbrand::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
@@ -40,7 +40,7 @@ benefits = [("fuel", "Fuel use per trip", "Measured from MAF, or predicted by th
 left, right = st.columns([1, 1.05], gap="large")
 with left:
     with st.container(key="mlbrand", horizontal_alignment="center", gap="medium"):
-        st.image(theme.LOGO, width=440, output_format="PNG")
+        st.html(theme.brand_lockup(60))
         st.html('<div class="ml-benefits">' + "".join(
             f'<div class="ml-benefit"><span class="ml-ic">{theme.icon(ic, 20)}</span><div><b>{E(t)}</b>'
             f'<span class="t">{E(d)}</span></div></div>' for ic, t, d in benefits) + "</div>")

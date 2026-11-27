@@ -39,7 +39,7 @@ c.ok(all(p.exists() and committable(p) and exact_case(p) for p in models), "app 
      ", ".join(p.name for p in models))
 c.ok(app_core.model_path("behaviour_only/LWR").as_posix().endswith("models/trip_behaviour_only_LWR.joblib")
      and "\\" in meta["models"]["behaviour_only/LWR"]["path"], "Windows paths in meta_trip.json resolve on Linux")
-runtime = [mf.MODELS / "meta_trip.json", ROOT / theme.LOGO, ROOT / "assets" / "pk_fuel_reference.csv",
+runtime = [mf.MODELS / "meta_trip.json", ROOT / theme.LOGO, ROOT / theme.ICON, theme.MARK_SVG, ROOT / "assets" / "pk_fuel_reference.csv",
            ROOT / "assets" / "quick_estimate_profiles.csv", ROOT / "assets" / "pk_cycles" / "city.csv",
            ROOT / "assets" / "pk_cycles" / "highway.csv", ROOT / "samples" / "index.csv",
            ROOT / "samples" / "corsa_d_2010_trip1.csv", mf.PROC / "results_trip" / "test_metrics.csv",

@@ -67,8 +67,9 @@ st.html("""<style>
   border-bottom: 1px solid #17171B; position: relative; }
 .st-key-mlhero::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
   background: var(--ml-gradient); opacity: .55; }
-/* the logo file has its own black padding: pull the text closer, in proportion to the logo's shown width */
-.st-key-mlhero [data-testid="stImage"] { margin: calc(-0.065 * min(560px, 100vw - 32px)) 0 calc(-0.14 * min(560px, 100vw - 32px)) 0; }
+.st-key-mlhero .ml-lockup { margin: 64px 0 12px 0; }
+@media (max-width: 640px) { .st-key-mlhero .ml-lockup .ml-brandmark { width: 52px !important; height: 52px !important; }
+  .st-key-mlhero .ml-wordmark { font-size: 38px !important; } }
 @media (max-width: 640px) { .st-key-mlhero { padding-top: 40px; } }
 .ml-hero-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: clamp(2rem, 4.6vw, 3.4rem);
   line-height: 1.08; letter-spacing: -0.03em; text-align: center; margin: 0; color: #F4F4F5; }
@@ -115,9 +116,9 @@ st.html("""<style>
 
 s = headline_stats()
 
-# ---------------- 1. hero (black, so the logo's own black background blends in) ----------------
+# ---------------- 1. hero (black) ----------------
 with st.container(key="mlhero", horizontal_alignment="center", gap="medium"):
-    st.image(theme.LOGO, width=560, output_format="PNG")   # the original file, not re-encoded
+    st.html(theme.brand_lockup(84))
     st.html('<h1 class="ml-hero-title">Know what every trip <span class="ml-grad-text">really costs</span></h1>'
             '<p class="ml-hero-sub">Motorlytics predicts your car\'s fuel use for each trip from its trip log, scores '
             'how you drive, and turns it into rupees, with tips to spend less.</p>')

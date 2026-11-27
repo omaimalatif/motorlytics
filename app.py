@@ -16,7 +16,7 @@ from ui import components as ui
 from ui import session
 from ui import theme
 
-st.set_page_config(page_title="Motorlytics", page_icon=theme.LOGO, layout="wide")
+st.set_page_config(page_title="Motorlytics", page_icon=theme.ICON, layout="wide")
 
 
 @st.cache_resource(show_spinner="Setting up the demo account (first start only)...")
@@ -33,7 +33,7 @@ def first_start() -> bool:
 first_start()
 db.init_db()
 theme.setup()
-st.logo(image=theme.LOGO, size="large", icon_image=theme.LOGO)   # original file, on the black sidebar
+st.logo(image=theme.LOGO, size="large", icon_image=theme.ICON)   # mark + wordmark; mark when collapsed
 
 
 user = session.user()

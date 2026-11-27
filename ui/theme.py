@@ -14,12 +14,15 @@ import plotly.io as pio
 import streamlit as st
 
 ROOT = Path(__file__).resolve().parents[1]
-LOGO = "assets/brand/motorlytics_logo.png"          # 1376x768 on pure black: shown only on #000000 areas
+# brand: a minimal gauge mark in the brand gradient (original); the first logo stays in assets/brand, unused
+LOGO = "assets/brand/motorlytics_lockup.png"        # mark + wordmark, transparent: sidebar (st.logo)
+ICON = "assets/brand/motorlytics_mark.png"          # mark only: browser tab, collapsed sidebar
+MARK_SVG = ROOT / "assets" / "brand" / "motorlytics_mark.svg"   # mark for the HTML lockup on public pages
 ICONS = ROOT / "assets" / "icons"
 IMAGES = ROOT / "assets" / "images"
 
 # ---------------- colours ----------------
-BLACK = "#000000"          # logo areas: Welcome hero, Sign-in brand panel, sidebar
+BLACK = "#000000"          # Welcome hero, Sign-in brand panel, sidebar
 BG = "#0B0B0D"             # page background
 SURFACE = "#141417"        # cards
 RAISED = "#1B1B20"         # raised cards, tiles, inputs
@@ -113,7 +116,16 @@ def icon_css(color: str = ORANGE) -> str:
     for p in sorted(ICONS.glob("*.svg")):
         svg = p.read_text(encoding="utf-8").strip().replace("currentColor", color)
         rules.append(f'.ml-icon-{p.stem} {{ background-image: url("{_data_uri(svg)}"); }}')
+    if MARK_SVG.exists():
+        rules.append(f'.ml-brandmark {{ background-image: url("{_data_uri(MARK_SVG.read_text(encoding="utf-8"))}"); }}')
     return "\n".join(rules)
+
+
+def brand_lockup(size: int = 64) -> str:
+    """The logo as HTML: gauge mark + 'Motorlytics' wordmark in the heading font ('lytics' in the brand gradient)."""
+    return (f'<div class="ml-lockup" style="gap:{size * 0.28:.0f}px"><span class="ml-brandmark" '
+            f'style="width:{size}px;height:{size}px" aria-hidden="true"></span><span class="ml-wordmark" '
+            f'style="font-size:{size * 0.72:.0f}px">Motor<span class="ml-grad-text">lytics</span></span></div>')
 
 
 def icon(name: str, size: int = 22) -> str:
@@ -263,6 +275,10 @@ hr {{ border-color: var(--ml-border) !important; }}
 .ml-pill {{ display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; border: 1px solid var(--ml-border);
   background: var(--ml-raised); color: var(--ml-text); }}
 .ml-icon {{ display: inline-block; background-repeat: no-repeat; background-position: center; background-size: contain; }}
+.ml-brandmark {{ display: inline-block; flex: none; background-size: contain; background-repeat: no-repeat;
+  filter: drop-shadow(0 8px 24px {_hex_rgba(RED, .35)}); }}
+.ml-lockup {{ display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }}
+.ml-wordmark {{ font-family: {FONT_HEAD}; font-weight: 800; letter-spacing: -0.03em; color: var(--ml-text); line-height: 1; }}
 .ml-grad-text {{ background: var(--ml-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; }}
 """
 
