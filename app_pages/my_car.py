@@ -60,6 +60,10 @@ if my_cars:
 
     # ---------------- profile card ----------------
     with ui.card(kind="hero"):
+        if cars.car_image(car) is not None:
+            _, pic_col, _ = st.columns([1, 2, 1])
+            with pic_col:
+                ui.car_image(car)
         st.subheader(cars.car_title(car))
         if car.get("nickname"):
             st.caption(" ".join(str(car[k]) for k in ("make", "model", "year") if car.get(k)))

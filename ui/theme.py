@@ -195,6 +195,8 @@ hr {{ border-color: var(--ml-border) !important; }}
 [class*="st-key-mlcard-click"]:hover {{ border-color: var(--ml-orange); }}
 [class*="st-key-mlcard"] [data-testid="stMarkdownContainer"] strong {{ color: var(--ml-ink); }}
 .ml-takeaway {{ color: var(--ml-muted); font-size: .85rem; margin: 0; }}
+/* car pictures: transparent cutouts with a soft drop shadow (no shadow in the image itself) */
+[class*="st-key-mlcarimg"] img {{ filter: drop-shadow(0 14px 12px rgba(11,18,32,.22)) drop-shadow(0 3px 3px rgba(11,18,32,.16)); }}
 
 /* formula strip (Quick estimate): Model x factor = result */
 .st-key-mlformula {{ background: var(--ml-raised); border: 1px solid var(--ml-border); border-left: 3px solid var(--ml-orange);

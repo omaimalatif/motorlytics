@@ -81,6 +81,18 @@ def tip_card(tip: dict) -> None:
         st.markdown(f"Possible saving **{texts.saving_text(tip['saving_l_per_100km'])}**")
 
 
+def car_image(car: dict, width="stretch") -> bool:
+    """The car's own studio picture (transparent PNG from assets/images/cars) with a soft CSS drop shadow.
+    Returns False (and shows nothing) when there is no picture for this make / model."""
+    from core import cars
+    path = cars.car_image(car)
+    if not path:
+        return False
+    with st.container(key=theme.next_key("mlcarimg")):
+        st.image(str(path), width=width)
+    return True
+
+
 def empty_state(text: str, button: str = None, page: str = None) -> None:
     st.info(text, icon=":material/info:")
     if button and page and st.button(button):

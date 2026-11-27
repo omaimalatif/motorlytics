@@ -34,13 +34,19 @@ if not car:
 c1, c2 = st.columns([3, 2], gap="medium")      # quick actions wide enough for full labels
 with c1:
     with ui.card(kind="hero"):
-        st.subheader(cars.car_title(car))
-        specs = [cars.fmt_disp(car.get("disp_L")) if car.get("disp_L") else None,
-                 f"{car['cylinders']} cylinders" if car.get("cylinders") else None,
-                 car.get("transmission"), car.get("fuel_type")]
-        st.caption(" · ".join(x for x in specs if x) or "Add transmission and fuel type on the My car page.")
-        ui.badge(cal_label, cal_kind)
-        st.caption(cal_text)
+        has_pic = cars.car_image(car) is not None
+        info, pic = st.columns([3, 2], vertical_alignment="center") if has_pic else (st.container(), None)
+        with info:
+            st.subheader(cars.car_title(car))
+            specs = [cars.fmt_disp(car.get("disp_L")) if car.get("disp_L") else None,
+                     f"{car['cylinders']} cylinders" if car.get("cylinders") else None,
+                     car.get("transmission"), car.get("fuel_type")]
+            st.caption(" · ".join(x for x in specs if x) or "Add transmission and fuel type on the My car page.")
+            ui.badge(cal_label, cal_kind)
+            st.caption(cal_text)
+        if pic is not None:
+            with pic:
+                ui.car_image(car)
 with c2:
     with ui.card("Quick actions"):
         a1, a2 = st.columns(2)

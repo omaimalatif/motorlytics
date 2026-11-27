@@ -1,6 +1,7 @@
 """Design system: config.toml agrees with ui/theme.py, the Plotly template and map colours are the brand ones,
 the CSS covers the styled widgets, and every page injects it and renders on the dark theme."""
 import hashlib
+from pathlib import Path
 import json
 import tomllib
 
@@ -92,11 +93,31 @@ for page in ["overview", "upload_trip", "quick_estimate", "trip_detail", "trip_h
     if any(e.proto.theme for e in at.get("plotly_chart")) or any(
             sp["layout"].get("template", {}).get("layout", {}).get("barcornerradius") != 6 for sp in charts):
         c.ok(False, f"{page}: charts use the motorlytics template without Streamlit's chart theme")
-    if page != "about_model" and [e for e in at.main if type(e).__name__ == "Image"]:   # About shows result figures
-        c.ok(False, f"{page}: no car pictures")
-c.ok(True, "every page renders; every chart uses the motorlytics template; no car pictures")
+    n_img = len([e for e in at.main if type(e).__name__ == "Image"])
+    allowed = {"overview": 1, "my_car": 1}.get(page, 0)        # the car's own picture; About shows result figures
+    if page != "about_model" and n_img > allowed:
+        c.ok(False, f"{page}: only the car's own picture", f"{n_img} images")
+    if page in ("overview", "my_car") and n_img != 1:
+        c.ok(False, f"{page}: the Opel Corsa's picture is shown", f"{n_img} images")
+c.ok(True, "every page renders; every chart uses the motorlytics template; car picture only on Overview / My car")
 code = " ".join(p_.read_text(encoding="utf-8") for d in ["core", "ui", "app_pages"] for p_ in (ROOT / d).glob("*.py"))
 code += (ROOT / "app.py").read_text(encoding="utf-8")
 c.ok("wikipedia" not in code.lower() and "car_photo" not in code and "st.logo(image=theme.LOGO_LIGHT" not in code,
-     "no internet car photos, no car pictures, no wordmark in the signed-in sidebar")
+     "no internet car photos, no wordmark in the signed-in sidebar")
+from PIL import Image  # noqa: E402
+
+from core import cars  # noqa: E402
+
+expect = {("Suzuki", "Alto"): "alto_2022", ("Opel", "Corsa"): "corsa_d_2010", ("BMW", "1 Series"): "bmw_1_2013",
+          ("VED", "vehicle 530"): "ved_530", ("VED", "vehicle 157"): "ved_157", ("Suzuki", "Cultus"): None}
+got = {k: (cars.car_image({"make": k[0], "model": k[1]}) or Path("none")).stem for k in expect}
+c.ok(all(got[k] == (v or "none") for k, v in expect.items()), "car pictures matched by make / model", str(got))
+pics = sorted(cars.CAR_IMAGES.glob("*.png"))
+ok = []
+for p_ in pics:
+    im = Image.open(p_).convert("RGBA")
+    ok.append(im.getpixel((0, 0))[3] == 0 and im.getpixel((im.width // 2, im.height // 2))[3] >= 250
+              and p_.stat().st_size < 150_000)
+c.ok(len(pics) == 5 and all(ok), "5 transparent, light car pictures (background removed, under 150 KB)")
+c.ok("drop-shadow" in theme.CSS, "soft CSS drop shadow under the car pictures")
 c.done()

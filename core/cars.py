@@ -134,6 +134,30 @@ def fmt_disp(disp_L, unit: str = " L") -> str:
     return s + unit
 
 
+CAR_IMAGES = mf.ROOT / "assets" / "images" / "cars"
+# (make words, test on the model, file): the project's own studio pictures (transparent PNGs, no internet)
+_CAR_IMAGE_RULES = [
+    (("suzuki",), lambda m: m.startswith("alto"), "alto_2022"),
+    (("opel", "vauxhall"), lambda m: m.startswith("corsa"), "corsa_d_2010"),
+    (("bmw",), lambda m: m.startswith("1"), "bmw_1_2013"),                  # 1 Series, 116i, 118d ...
+    (("ved",), lambda m: "530" in m, "ved_530"),                            # the VED sample vehicles
+    (("ved",), lambda m: "157" in m, "ved_157"),
+]
+
+
+def car_image(car: dict):
+    """Path of this car's picture in assets/images/cars, or None when there is none for this make / model."""
+    if not car:
+        return None
+    make = str(car.get("make") or "").strip().lower()
+    model = str(car.get("model") or "").strip().lower()
+    for makes, test, name in _CAR_IMAGE_RULES:
+        if make in makes and test(model):
+            p = CAR_IMAGES / f"{name}.png"
+            return p if p.exists() else None
+    return None
+
+
 def car_title(car: dict) -> str:
     """Nickname if set, else make model year."""
     if not car:
